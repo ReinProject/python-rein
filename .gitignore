@@ -1,0 +1,7 @@
+build/
+dist/
+c/
+*.log
+*.db
+*.pyc
+rein.egg-info
