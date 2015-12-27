@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 import bitcoinsig
 import re
+import json
 
-# Removes ASCII-armor from a signed message
-# by default exlcudes 'dash-space' headers
 def strip_armor(sig, dash_space=False):
+    '''Removes ASCII-armor from a signed message by default exlcudes 'dash-space' headers'''
     sig = sig.replace('- ----', '-'*5) if dash_space else sig
     sig = re.sub("-{5}BEGIN BITCOIN SIGNED MESSAGE-{5}", "", sig)
     sig = re.sub(
@@ -16,11 +16,13 @@ def strip_armor(sig, dash_space=False):
     sig = re.sub("\n\n", "", sig)
     return sig
 
-# Takes an ASCII-armored signature and returns a dictionary of it's info.
-# Returns the signature string, the signing key, and all of the information
-# assigned within the message, for example:
-#    parse_sig(sig)['Name/handle'] === "David Sterry"
 def parse_sig(sig):
+    '''
+    Takes an ASCII-armored signature and returns a dictionary of it's info.
+    Returns the signature string, the signing key, and all of the information
+    assigned within the message, for example:
+       parse_sig(sig)['Name/handle'] === "David Sterry"
+    '''
     matches = re.finditer("(.+):\s(.+)\n", sig)
     ret = {}
     for match in matches:
@@ -37,8 +39,8 @@ def parse_sig(sig):
         return False
     return ret
 
-# The base function for verifying an ASCII-armored signature.
 def verify_sig(sig):
+    '''The base function for verifying an ASCII-armored signature.'''
     sig_info = parse_sig(sig)
     if sig_info != False:
         valid = bitcoinsig.verify_message(
@@ -48,27 +50,20 @@ def verify_sig(sig):
         )
     else:
         valid = False
-    return [valid, sig_info]
+    return {'valid': valid, 'info': sig_info}
 
-### Begin requested functions
-# Note: I wasn't sure which address to use to verify the signature, so I used
-# the one that is included within the signature. I've left a line of code
-# commented marked '#1' that will check if the address in the signature is the
-# same as the address in the message
 def validate_enrollment(enrollment_signature_text):
     a = verify_sig(enrollment_signature_text)
-    # if a[1]['master'] != a[1]['Master signing address']: a[0] = False #1
-    if a[0] != False:
-        return [a[0], a[1]['master']]
+    if a['valid'] != False:
+        return a 
     else:
         return False
 
 def validate_review(reviewer_text):
     a = verify_sig(reviewer_text)
-    # if a[1]['master'] != a[1]['Master signing address']: a[0] = False #1
     return [
-        a[0],
-        a[1]['master'],
+        a['valid'],
+        a['info']['master'],
         strip_armor(reviewer_text).replace('- ----', '-----')
     ]
 
