@@ -9,7 +9,7 @@ from subprocess import check_output
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from lib.user import User, Base, create_account, import_account
- 
+import lib.config as config
 
 db_filename = 'local.db'
 
@@ -38,17 +38,30 @@ def cli():
 def main():
     '''Rein - decentralized professional services market'''
     click.echo("\nWelcome to Rein.\n")
-    if not os.path.isfile(db_filename):
+    if not os.path.isfile(db_filename) or session.query(User).count() == 0:
         click.echo("It looks like this is your first time running Rein on this computer.\n"\
                 "Do you want to import a backup or create a new account?\n"\
-                "1 - Import\n2 - Create\n")
+                "1 - Import backup\n2 - Create new account\n")
         choice = 0
+        user = None
         while choice not in (1, 2):
             choice = click.prompt("Choice", type=int, default=2)
             if choice == 2:
-                create_account(engine, session, name, contact)
+                user = create_account(engine, session)
             elif choice == 1:
-                import_account(engine, session)
+                user = import_account(engine, session)
+        click.echo("------------")
+        click.echo("The file %s has just been saved with your user details and needs to be signed "\
+                "with your master Bitcoin private key. The private key for this address should be "\
+                "kept offline and multiple encrypted backups made. This key will effectively "\
+                "become your identity in Rein and a delegate address will be used for day to day "\
+                "transactions.\n\n" % config.enroll_filename)
+        enrollment = "Rein User Enrollment\nUser: %s\nContact: %s\nMaster signing address: %s\n" % (user.name, user.contact, user.maddr)
+        f = open(config.enroll_filename, 'w')
+        f.write(enrollment)
+        f.close()
+        click.echo("\n%s\n" % enrollment)
+        signed = click.prompt("File containing signed statement", type=str, default=config.sig_enroll_filename)
     else:
         bold = '\033[1m'
         regular = '\033[0m'
