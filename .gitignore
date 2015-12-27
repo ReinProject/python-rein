@@ -2,6 +2,7 @@ build/
 dist/
 c/
 *.txt
+*.sig
 *.log
 *.json
 *.db

@@ -9,6 +9,7 @@ from subprocess import check_output
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from lib.user import User, Base, create_account, import_account
+from lib.validate import validate_enrollment
 import lib.config as config
 
 db_filename = 'local.db'
@@ -62,6 +63,9 @@ def main():
         f.close()
         click.echo("\n%s\n" % enrollment)
         signed = click.prompt("File containing signed statement", type=str, default=config.sig_enroll_filename)
+        f = open(signed, 'r')
+        sig = f.read()
+        click.echo(validate_enrollment(sig))
     else:
         bold = '\033[1m'
         regular = '\033[0m'
