@@ -2,6 +2,7 @@ build/
 dist/
 c/
 *.log
+*.json
 *.db
 *.pyc
 rein.egg-info
