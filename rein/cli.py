@@ -19,16 +19,6 @@ Base.metadata.bind = engine
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
 
-def yes_or_no(question):
-    reply = str(input(question+' (y/n): ')).lower().strip()
-    
-    if len(reply) > 0 and reply[0] == 'y':
-        return True
-    if len(reply) > 0 and reply[0] == 'n':
-        return False
-    else:
-        return yes_or_no("Please enter ")
-
 #@click.option('--as-cowboy', '-c', is_flag=True, help='Greet as a cowboy.')
 #@click.argument('name', default='world', required=False)
 @click.group()
