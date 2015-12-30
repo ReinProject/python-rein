@@ -1,21 +1,20 @@
-# Rein
+# Python-Rein
 
-A decentralized professional services marketplace.
-
+Python command line interface to the Rein decentralized professional services market.
 
 # Installation
 
-If you don't use `pipsi`, you're missing out.
-Here are [installation instructions](https://github.com/mitsuhiko/pipsi#readme).
+For development:
 
-Simply run:
+    pip install --editable .
 
-    $ pipsi install .
+The --editable flag makes your edits to these files live immediately in your environment.
 
+For production (where data and happiness are produced) use this instead:
+
+    python setup.py install
 
 # Usage
 
-To use it:
-
-    $ rein --help
+    rein --help
 
