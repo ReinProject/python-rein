@@ -1,6 +1,6 @@
 import json
 import re
-import os.path
+import os
 import time
 import click
 import sqlite3
@@ -12,9 +12,13 @@ from lib.user import User, Base, create_account, import_account
 from lib.validate import enroll
 import lib.config as config
 
+config_dir = os.path.join(os.path.expanduser('~'), '.rein')
 db_filename = 'local.db'
 
-engine = create_engine("sqlite:///%s" % db_filename)
+if not os.path.isdir(config_dir):
+    os.mkdir(config_dir)
+
+engine = create_engine("sqlite:///%s" % os.path.join(config_dir, db_filename))
 Base.metadata.bind = engine
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
@@ -32,14 +36,14 @@ def main():
     if not os.path.isfile(db_filename) or session.query(User).count() == 0:
         click.echo("It looks like this is your first time running Rein on this computer.\n"\
                 "Do you want to import a backup or create a new account?\n"\
-                "1 - Import backup\n2 - Create new account\n")
+                "1 - Create new account\n2 - Import backup\n")
         choice = 0
         user = None
         while choice not in (1, 2):
-            choice = click.prompt("Choice", type=int, default=2)
-            if choice == 2:
+            choice = click.prompt("Choice", type=int, default=1)
+            if choice == 1:
                 user = create_account(engine, session)
-            elif choice == 1:
+            elif choice == 2:
                 user = import_account(engine, session)
         click.echo("------------")
         click.echo("The file %s has just been saved with your user details and needs to be signed "\

@@ -2,6 +2,8 @@
 import bitcoinsig
 import re
 import json
+import config
+import click
 
 def strip_armor(sig, dash_space=False):
     '''Removes ASCII-armor from a signed message by default exlcudes 'dash-space' headers'''
