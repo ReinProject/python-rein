@@ -59,6 +59,17 @@ def validate_enrollment(enrollment_signature_text):
     else:
         return False
 
+def enroll(user):
+    enrollment = "Rein User Enrollment\nUser: %s\nContact: %s\nMaster signing address: %s\n" % (user.name, user.contact, user.maddr)
+    f = open(config.enroll_filename, 'w')
+    f.write(enrollment)
+    f.close()
+    click.echo("\n%s\n" % enrollment)
+    signed = click.prompt("File containing signed statement", type=str, default=config.sig_enroll_filename)
+    f = open(signed, 'r')
+    sig = f.read()
+    return nevalidate_enrollment(sig)
+   
 def validate_review(reviewer_text):
     a = verify_sig(reviewer_text)
     return [

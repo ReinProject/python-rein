@@ -9,7 +9,7 @@ from subprocess import check_output
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from lib.user import User, Base, create_account, import_account
-from lib.validate import validate_enrollment
+from lib.validate import enroll
 import lib.config as config
 
 db_filename = 'local.db'
@@ -47,29 +47,31 @@ def main():
                 "kept offline and multiple encrypted backups made. This key will effectively "\
                 "become your identity in Rein and a delegate address will be used for day to day "\
                 "transactions.\n\n" % config.enroll_filename)
-        enrollment = "Rein User Enrollment\nUser: %s\nContact: %s\nMaster signing address: %s\n" % (user.name, user.contact, user.maddr)
-        f = open(config.enroll_filename, 'w')
-        f.write(enrollment)
-        f.close()
-        click.echo("\n%s\n" % enrollment)
-        signed = click.prompt("File containing signed statement", type=str, default=config.sig_enroll_filename)
-        f = open(signed, 'r')
-        sig = f.read()
-        click.echo(validate_enrollment(sig))
+        res = enroll(user)
+        if res['valid']:
+            if click.confirm("Signature verified. Would you like to choose some microhosting servers?"):
+                upload()
+            else:
+                click.echo("Signature stored. Run 'rein --upload' to continue with upload to microhosting.")
     else:
         bold = '\033[1m'
         regular = '\033[0m'
         click.echo("""Available commands:
 
-    info
-    sync
-    post-job
-    post-listing
-    post-bid
-    post-offer
-    accept-bid
-    post-work
-    accept-work
+    info, sync, post-job, post-listing, post-bid, post-offer, accept-bid, post-work, accept-work
 
 For more info visit http://reinproject.org
                 """)
+
+@cli.command()
+def upload():
+    servers = ['http://bitcoinexchangerate.org/causeway']
+    for server in servers:
+        url = '%s%s' % (server, '/info.json')
+        text = check_output('curl',url)
+        try:
+            data = json.loads(text)
+        except:
+            raise RuntimeError('Problem contacting server %s' % server)
+
+        click.echo('%s - %s BTC' % (server, data['price']))
