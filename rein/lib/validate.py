@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 import bitcoinsig
 import re
+import os
 import json
 import config
 import click
+from document import Document
 
 def strip_armor(sig, dash_space=False):
     '''Removes ASCII-armor from a signed message by default exlcudes 'dash-space' headers'''
@@ -62,15 +64,23 @@ def validate_enrollment(enrollment_signature_text):
         return False
 
 def enroll(user):
-    enrollment = "Rein User Enrollment\nUser: %s\nContact: %s\nMaster signing address: %s\n" % (user.name, user.contact, user.maddr)
+    enrollment = "Rein User Enrollment\nUser: %s\nContact: %s\nMaster signing address: %s\nDelegate signing address: %s\n" % (user.name, user.contact, user.maddr, user.daddr)
     f = open(config.enroll_filename, 'w')
     f.write(enrollment)
     f.close()
     click.echo("\n%s\n" % enrollment)
-    signed = click.prompt("File containing signed statement", type=str, default=config.sig_enroll_filename)
-    f = open(signed, 'r')
-    sig = f.read()
-    return nevalidate_enrollment(sig)
+    done = False
+    while not done:
+        filename = click.prompt("File containing signed statement", type=str, default=config.sig_enroll_filename)
+        if os.path.isfile(filename):
+            done = True
+    f = open(filename, 'r')
+    signed = f.read()
+    res = validate_enrollment(signed)
+    if res:
+       # insert signed document into documents table as type 'enrollment'
+       document = Document(signed)
+    return res
    
 def validate_review(reviewer_text):
     a = verify_sig(reviewer_text)
