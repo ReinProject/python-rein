@@ -11,7 +11,7 @@ import sqlite3
 from datetime import datetime
 from subprocess import check_output
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, and_
 from sqlalchemy.orm import sessionmaker
 
 from lib.user import User, Base, create_account, import_account
@@ -166,7 +166,7 @@ def sync():
             raise ValueError('Document is too big. 8192 bytes should be enough for anyone.')
         else:
             # see if we have a placement for this document already
-            placements = session.query(Placement).filter_by(url=url).filter_by(doc_id=doc.id).all()
+            placements = session.query(Placement).filter(and_(Placement.url==url, Placement.doc_id==doc.id)).all()
             if len(placements) == 0:
                 click.echo('no existing placement for %s' % doc.doc_hash)
                 upload.append(doc)
@@ -175,14 +175,20 @@ def sync():
                     # download value, hash and check its hash
                     sel_url = "{0}get?key={1}"
                     answer = requests.get(url=sel_url.format(url, plc.remote_key))
-                    remote_hash = hashlib.sha256(answer.text).hexdigest()
+                    data = answer.json()
+                    value = data['value']
+                    value = value.decode('ascii')
+                    value = value.encode('utf8')
+                    remote_hash = hashlib.sha256(value).hexdigest()
                     if answer.status_code == 404: 
                         # log not found error in db, add to upload
                         #log(doc.id, url, "key not found")
+                        click.echo("document not found")
                         upload.append(doc)
                     elif remote_hash != doc.doc_hash:
                         # log wrong error, add to upload
                         #log(doc.id, url, "incorrect hash")
+                        click.echo("hash mismatch")
                         upload.append(doc)
                     else:
                         #update verified
