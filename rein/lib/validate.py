@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 import bitcoinsig
+import bitcoinecdsa
 import re
 import os
 import json
 import config
 import click
-from document import Document
+from document import Document, Base
 
 def strip_armor(sig, dash_space=False):
     '''Removes ASCII-armor from a signed message by default exlcudes 'dash-space' headers'''
@@ -47,10 +48,12 @@ def verify_sig(sig):
     '''The base function for verifying an ASCII-armored signature.'''
     sig_info = parse_sig(sig)
     if sig_info != False:
-        valid = bitcoinsig.verify_message(
+        #valid = bitcoinsig.verify_message(
+        message = strip_armor(sig)
+        valid = bitcoinecdsa.verify(
             sig_info['master'],
-            sig_info['signature'],
-            strip_armor(sig)
+            message,
+            sig_info['signature']
         )
     else:
         valid = False
@@ -63,7 +66,8 @@ def validate_enrollment(enrollment_signature_text):
     else:
         return False
 
-def enroll(user):
+def enroll(session, engine, user):
+    Base.metadata.create_all(engine)
     enrollment = "Rein User Enrollment\nUser: %s\nContact: %s\nMaster signing address: %s\nDelegate signing address: %s\n" % (user.name, user.contact, user.maddr, user.daddr)
     f = open(config.enroll_filename, 'w')
     f.write(enrollment)
@@ -78,8 +82,10 @@ def enroll(user):
     signed = f.read()
     res = validate_enrollment(signed)
     if res:
-       # insert signed document into documents table as type 'enrollment'
-       document = Document(signed)
+        # insert signed document into documents table as type 'enrollment'
+        document = Document('enrollment', signed, sig_verified=True)
+        session.add(document)
+        session.commit()
     return res
    
 def validate_review(reviewer_text):

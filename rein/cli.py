@@ -2,6 +2,8 @@ import json
 import re
 import os
 import time
+import random
+import string
 import requests
 import click
 import sqlite3
@@ -10,9 +12,15 @@ from subprocess import check_output
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+
 from lib.user import User, Base, create_account, import_account
-from lib.validate import enroll
 from lib.bucket import Bucket, create_buckets
+from lib.document import Document
+from lib.placement import Placement, create_placements
+from lib.validate import enroll
+from lib.bitcoinaddress import check_bitcoin_address 
+from lib.bitcoinecdsa import sign
+
 import lib.config as config
 
 config_dir = os.path.join(os.path.expanduser('~'), '.rein')
@@ -25,6 +33,7 @@ engine = create_engine("sqlite:///%s" % os.path.join(config_dir, db_filename))
 Base.metadata.bind = engine
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
+Base.metadata.create_all(engine)
 
 @click.group()
 @click.option('--debug/--no-debug', default=False)
@@ -34,15 +43,14 @@ def cli(ctx, debug):
         click.echo("Debuggin'")
     pass
 
-
 @cli.command()
 def setup():
     """
     Setup or import an identity
     """
     click.echo("\nWelcome to Rein.\n")
-    if not os.path.isfile(db_filename) or session.query(User).count() == 0:
-        click.echo("It looks like this is your first time running Rein on this computer.\n"\
+    if not os.path.isfile(os.path.join(config_dir, db_filename)) or session.query(User).count() == 0:
+        click.echo("It looks like this is your first time running Rein.\n"\
                 "Do you want to import a backup or create a new account?\n\n"\
                 "1 - Create new account\n2 - Import backup\n")
         choice = 0
@@ -59,18 +67,19 @@ def setup():
                 "kept offline and multiple encrypted backups made. This key will effectively "\
                 "become your identity in Rein and a delegate address will be used for day to day "\
                 "transactions.\n\n" % config.enroll_filename)
-        res = enroll(user)
+        res = enroll(session, engine, user)
         if res['valid']:
-            if click.confirm("Signature verified. Would you like to choose some microhosting servers?"):
-                upload()
-            else:
-                click.echo("Signature stored. Run 'rein --upload' to continue with upload to microhosting.")
+            click.echo("Enrollment complete. Run 'rein request' to request free microhosting to sync to.")
+        else:
+            click.echo("Signature verification failed. Please try again.")
     else:
         bold = '\033[1m'
         regular = '\033[0m'
-        click.echo("""Available commands:
+        click.echo("""Identity already setup.
 
-    info, sync, post-job, post-listing, post-bid, post-offer, accept-bid, post-work, accept-work
+Available commands:
+
+    request, sync, post-job, post-listing, post-bid, post-offer, accept-bid, post-work, accept-work
 
 For more info visit http://reinproject.org
                 """)
@@ -90,10 +99,9 @@ def request(url):
     
     create_buckets(engine)
     if len(session.query(Bucket).filter_by(url=url).all()) > 5:
-        click.echo("Too many buckets.")
+        click.echo("You have enough buckets from %s" % url)
         return
 
-    primary_address = user.maddr
     sel_url = "{0}request?address={1}&contact={2}"
     answer = requests.get(url=sel_url.format(url, user.maddr, user.contact))
     if answer.status_code != 200:
@@ -124,6 +132,19 @@ def sync():
     """
     Upload records to each registered server
     """ 
+    create_placements(engine)
+
+    #for first try hardcode it
+    url = "http://localhost:5000/"
+
+    # get new nonce from server
+    identity = session.query(User).first()
+    sel_url = url + 'nonce?address={0}'
+    answer = requests.get(url=sel_url.format(identity.maddr))
+    click.echo(answer.text)
+    data = answer.json()
+    nonce = data['nonce']
+    click.echo('nonce = %s' % nonce)
 
     check = []
     upload = []
@@ -131,84 +152,98 @@ def sync():
     failed = []
     verified = []
 
-    listing = glob.glob(os.path.join(args.path, "*.json"))
-    for l in listing:  
-        # check if file is in local key db
-        row = con.execute("select * from files where filename = ?", (l,))
-        filehash = hashlib.sha256(open(l, 'r').read()).hexdigest()
-        if row is None:
-            con.execute("insert into files (filename, filehash) VALUES (?, ?)", (l,filehash))
-            # for new files, we'll upload them
-            upload.append({'name': l})
-        else:
-            # for existing files, download and verify them
-            check.append({'name':row['filename'], 'filehash':row['filehash']})
+    # get list of stored documents
+    documents = session.query(Document).all()
+    for doc in documents:
+        click.echo(doc.doc_hash)
+        check.append(doc)
 
+    click.echo("check " + str(check))
     # now that we know what we need to check and upload let's do the checking first, any that 
     # come back wrong can be added to the upload queue.
     # download each value (later a hash only with some full downloads for verification)
-    for f in check:
-        value = open(f['name'], 'r')
-        data = value.read()
-        value.close()
-        if len(data) > 8192:
-            raise ValueError('File is too big. 8192 bytes should be enough for anyone.')
+    for doc in check:
+        if len(doc.contents) > 8192:
+            raise ValueError('Document is too big. 8192 bytes should be enough for anyone.')
         else:
-            # handle changes on our side, to update or replace local files?
-            row = con.execute("select * from placement inner join files on files.filename = placement.filename\
-                                    where placement.filename = ?", (f['name']))
-            if row is None:
-                upload.append({'name': l})
+            # see if we have a placement for this document already
+            placements = session.query(Placement).filter_by(url=url).filter_by(doc_id=doc.id).count()
+            if placements == 0:
+                click.echo('no placement for %s' % doc.doc_hash)
+                upload.append(doc)
             else:
-                for r in row:
+                for plc in placements:
                     # download value, hash and check its hash
-                    remote_name = row['remote_filename']
                     sel_url = "{0}get?key={1}"
-                    answer = requests.get(url=sel_url.format(args.url, remote_filename))
-                    filehash = hashlib.sha256(answer.text).hexdigest()
+                    answer = requests.get(url=sel_url.format(url, doc.remote_key))
+                    doc_hash = hashlib.sha256(answer.text).hexdigest()
                     if status_code == 404: 
                         # log not found error in db, add to upload
-                        log(f['name'], args.url, "key not found")
-                        upload.append(f['name'])
-                    elif filehash != r['filehash']:
+                        #log(doc.id, url, "key not found")
+                        upload.append(doc)
+                    elif doc_hash != doc.doc_hash:
                         # log wrong error, add to upload
-                        upload.append(f['name'])
-                        log(f['name'], args.url, "incorrect hash")
+                        #log(doc.id, url, "incorrect hash")
+                        upload.append(doc)
                     else:
                         #update verified
-                        verified.append(f['name'])
+                        verified.append(doc)
 
+    click.echo("upload " + str(upload))
     failed = []
     succeeded = []
-    for f in upload:
-        value = open(f['name'], 'r')
-        data = value.read()
-        value.close()
-        remote_filename = ''.join(random.SystemRandom().choice(string.ascii_uppercase \
+    for doc in upload:
+        doc.remote_key = ''.join(random.SystemRandom().choice(string.ascii_uppercase \
                                 + string.digits) for _ in range(32))
 
-        if len(data) > 8192:
-            raise ValueError('File is too big. 8192 bytes should be enough for anyone.')
+        if len(doc.contents) > 8192:
+            raise ValueError('Document is too big. 8192 bytes should be enough for anyone.')
         else:
-            a = ''
-            setattr(a, 'key', remote_filename)
-            setattr(a, 'value', data)
-            setattr(a, 'nonce', args.nonce)
-            res = json.loads(put(a))
+            message = doc.remote_key + doc.contents + identity.daddr + nonce
+            message = message.decode('utf8')
+            message = message.encode('ascii')
+            click.echo("message " + message)
+            signature = sign(identity.dkey, message)
+            data = {"key": doc.remote_key,
+                    "value": doc.contents,
+                    "nonce": nonce,
+                    "signature": signature,
+                    "signature_address": identity.daddr,
+                    "owner": identity.maddr}
+
+            sel_url = "{0}put"
+            body = json.dumps(data)
+            headers = {'Content-Type': 'application/json'}
+            answer = requests.post(url=sel_url.format(url), headers=headers, data=body)
+            click.echo(answer.text)
+            res = answer.json() 
+
             if 'result' not in res or res['result'] != 'success':
                 # houston we have a problem
-                log(f['name'], args.url, 'upload failed')
-                failed.append(f['name'])
+                #log(doc.id, url, 'upload failed')
+                failed.append(doc)
             else:
-                succeeded.append({'name': f['name'], 'remote_filename': remote_filename})
-                log(f['name'], args.url, 'upload succeeded')
+                click.echo('successful placement for %s' % doc.doc_hash)
+                session.commit()
+                succeeded.append(doc)
+                #log(doc.id, url, 'upload succeeded')
 
-    for f in succeeded:
-        row = con.execute("select * from placement where filename = ?", (l,))
-        if row is None:
-            con.execute("insert into placement (filename, remote_filename, url) values (?, ?)", \
-                            (f['name'], f['remote_filename'], args.url))
+    click.echo("succeeded " + str(succeeded))
+    click.echo("failed " + str(failed))
+    for doc in succeeded:
+        placement = session.query(Placement).filter_by(url=url).filter_by(doc_id=doc.id).all()
+        if placement is None:
+            p = Placement(doc.id, url)
+            session.add(p)
+            session.commit()
+            click.echo('create local placement record for %s' % doc.doc_hash)
     
+    # clear nonce
+    sel_url = url + 'nonce?address={0}&clear={1}'
+    answer = requests.get(url=sel_url.format(identity.maddr, nonce))
+    data = answer.json()
+    nonce = data['nonce']
+    click.echo('nonce = %s' % nonce)
 
 @cli.command()
 def upload():

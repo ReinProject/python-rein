@@ -8,3 +8,4 @@ c/
 *.db
 *.pyc
 rein.egg-info
+!requirements.txt

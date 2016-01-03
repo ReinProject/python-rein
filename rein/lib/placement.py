@@ -21,3 +21,6 @@ class Placement(Base):
 
     def clear_verified():
         self.verified = 0
+
+def create_placements(engine):
+    Base.metadata.create_all(engine)
