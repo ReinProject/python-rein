@@ -5,6 +5,7 @@ import time
 import random
 import string
 import requests
+import hashlib
 import click
 import sqlite3
 from datetime import datetime
@@ -141,7 +142,6 @@ def sync():
     identity = session.query(User).first()
     sel_url = url + 'nonce?address={0}'
     answer = requests.get(url=sel_url.format(identity.maddr))
-    click.echo(answer.text)
     data = answer.json()
     nonce = data['nonce']
     click.echo('nonce = %s' % nonce)
@@ -155,7 +155,6 @@ def sync():
     # get list of stored documents
     documents = session.query(Document).all()
     for doc in documents:
-        click.echo(doc.doc_hash)
         check.append(doc)
 
     click.echo("check " + str(check))
@@ -167,21 +166,21 @@ def sync():
             raise ValueError('Document is too big. 8192 bytes should be enough for anyone.')
         else:
             # see if we have a placement for this document already
-            placements = session.query(Placement).filter_by(url=url).filter_by(doc_id=doc.id).count()
-            if placements == 0:
-                click.echo('no placement for %s' % doc.doc_hash)
+            placements = session.query(Placement).filter_by(url=url).filter_by(doc_id=doc.id).all()
+            if len(placements) == 0:
+                click.echo('no existing placement for %s' % doc.doc_hash)
                 upload.append(doc)
             else:
                 for plc in placements:
                     # download value, hash and check its hash
                     sel_url = "{0}get?key={1}"
-                    answer = requests.get(url=sel_url.format(url, doc.remote_key))
-                    doc_hash = hashlib.sha256(answer.text).hexdigest()
-                    if status_code == 404: 
+                    answer = requests.get(url=sel_url.format(url, plc.remote_key))
+                    remote_hash = hashlib.sha256(answer.text).hexdigest()
+                    if answer.status_code == 404: 
                         # log not found error in db, add to upload
                         #log(doc.id, url, "key not found")
                         upload.append(doc)
-                    elif doc_hash != doc.doc_hash:
+                    elif remote_hash != doc.doc_hash:
                         # log wrong error, add to upload
                         #log(doc.id, url, "incorrect hash")
                         upload.append(doc)
@@ -202,7 +201,6 @@ def sync():
             message = doc.remote_key + doc.contents + identity.daddr + nonce
             message = message.decode('utf8')
             message = message.encode('ascii')
-            click.echo("message " + message)
             signature = sign(identity.dkey, message)
             data = {"key": doc.remote_key,
                     "value": doc.contents,
@@ -215,7 +213,6 @@ def sync():
             body = json.dumps(data)
             headers = {'Content-Type': 'application/json'}
             answer = requests.post(url=sel_url.format(url), headers=headers, data=body)
-            click.echo(answer.text)
             res = answer.json() 
 
             if 'result' not in res or res['result'] != 'success':
@@ -232,18 +229,17 @@ def sync():
     click.echo("failed " + str(failed))
     for doc in succeeded:
         placement = session.query(Placement).filter_by(url=url).filter_by(doc_id=doc.id).all()
-        if placement is None:
-            p = Placement(doc.id, url)
+        if len(placement) == 0:
+            p = Placement(doc.id, url, doc.remote_key)
             session.add(p)
             session.commit()
-            click.echo('create local placement record for %s' % doc.doc_hash)
+            click.echo('created placement record for %s' % doc.doc_hash)
     
     # clear nonce
     sel_url = url + 'nonce?address={0}&clear={1}'
     answer = requests.get(url=sel_url.format(identity.maddr, nonce))
     data = answer.json()
     nonce = data['nonce']
-    click.echo('nonce = %s' % nonce)
 
 @cli.command()
 def upload():

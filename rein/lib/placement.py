@@ -12,9 +12,11 @@ class Placement(Base):
     remote_key = Column(String(64), nullable=False)
     verified = Column(Integer, nullable=False)
 
-    def __init__(self, doc_id, url):
+    def __init__(self, doc_id, url, remote_key, verified=0):
         self.doc_id = doc_id
         self.url = url
+        self.remote_key = remote_key
+        self.verified = verified
 
     def set_verified():
         self.verified = 1
