@@ -14,6 +14,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 from bitcoin.wallet import CBitcoinSecret
 from bitcoin.signmessage import BitcoinMessage, VerifyMessage, SignMessage
+from bitcoin.core import b2x
 
 def sign(key, message):
     key = CBitcoinSecret(key)
@@ -23,3 +24,7 @@ def sign(key, message):
 def verify(address, message, signature):
     message = BitcoinMessage(message)
     return VerifyMessage(address, message, signature)
+
+def pubkey(key):
+    key = CBitcoinSecret(key)
+    return b2x(key.pub)

@@ -18,9 +18,9 @@ from lib.user import User, Base, create_account, import_account
 from lib.bucket import Bucket, create_buckets
 from lib.document import Document
 from lib.placement import Placement, create_placements
-from lib.validate import enroll
+from lib.validate import enroll, validate_enrollment
 from lib.bitcoinaddress import check_bitcoin_address 
-from lib.bitcoinecdsa import sign
+from lib.bitcoinecdsa import sign, pubkey
 
 import lib.config as config
 
@@ -85,6 +85,38 @@ Available commands:
 For more info visit http://reinproject.org
                 """)
 
+
+@cli.command()
+def post():
+    """
+    Post a job.
+    """
+    click.echo("Post a job.")
+
+    name = click.prompt("Job name")
+    user = session.query(User).first()
+    key = pubkey(user.dkey)
+    category = click.prompt("Category")
+    description = click.prompt("Description")
+    job_posting = "Rein Job Posting\nJob Name: %s\nJob Creator's Name: %s\nJob Creator's Public Key: %s\nCategory: %s\nJob Description: %s\n" % (name, user.name, key, category, description)
+    f = open('job_posting.txt', 'w')
+    f.write(job_posting)
+    f.close()
+    click.echo("\n%s\n" % job_posting)
+    done = False
+    while not done:
+        filename = click.prompt("File containing signed job posting", type=str, default='job_posting.txt.sig')
+        if os.path.isfile(filename):
+            done = True
+    f = open(filename, 'r')
+    signed = f.read()
+    res = validate_enrollment(signed)
+    if res:
+        # insert signed document into documents table as type 'enrollment'
+        document = Document('job_posting', signed, sig_verified=True)
+        session.add(document)
+        session.commit()
+    return res
 
 @cli.command()
 @click.argument('url', required=True)

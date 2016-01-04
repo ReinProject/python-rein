@@ -23,7 +23,7 @@ def strip_armor(sig, dash_space=False):
 
 def parse_sig(sig):
     '''
-    Takes an ASCII-armored signature and returns a dictionary of it's info.
+    Takes an ASCII-armored signature and returns a dictionary of its info.
     Returns the signature string, the signing key, and all of the information
     assigned within the message, for example:
        parse_sig(sig)['Name/handle'] === "David Sterry"
@@ -38,7 +38,7 @@ def parse_sig(sig):
         sig
     )
     if m:
-        ret['master'] = m.group(1)
+        ret['signature_address'] = m.group(1)
         ret['signature'] = m.group(2)
     else:
         return False
@@ -51,7 +51,7 @@ def verify_sig(sig):
         #valid = bitcoinsig.verify_message(
         message = strip_armor(sig)
         valid = bitcoinecdsa.verify(
-            sig_info['master'],
+            sig_info['signature_address'],
             message,
             sig_info['signature']
         )
@@ -92,7 +92,7 @@ def validate_review(reviewer_text):
     a = verify_sig(reviewer_text)
     return [
         a['valid'],
-        a['info']['master'],
+        a['info']['signing_address'],
         strip_armor(reviewer_text).replace('- ----', '-----')
     ]
 
@@ -113,7 +113,7 @@ def validate_audit(auditor_text):
         ret += line + '\n'
     return [
         a[0],
-        a[1]['master'],
+        a[1]['signing_address'],
         ret
     ]
 
