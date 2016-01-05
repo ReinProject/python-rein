@@ -21,6 +21,7 @@ from lib.placement import Placement, create_placements
 from lib.validate import enroll, validate_enrollment
 from lib.bitcoinaddress import check_bitcoin_address 
 from lib.bitcoinecdsa import sign, pubkey
+from lib.market import create_signed_document
 
 import lib.config as config
 
@@ -91,32 +92,13 @@ def post():
     """
     Post a job.
     """
-    click.echo("Post a job.")
-
-    name = click.prompt("Job name")
     user = session.query(User).first()
     key = pubkey(user.dkey)
-    category = click.prompt("Category")
-    description = click.prompt("Description")
-    job_posting = "Rein Job Posting\nJob Name: %s\nJob Creator's Name: %s\nJob Creator's Public Key: %s\nCategory: %s\nJob Description: %s\n" % (name, user.name, key, category, description)
-    f = open('job_posting.txt', 'w')
-    f.write(job_posting)
-    f.close()
-    click.echo("\n%s\n" % job_posting)
-    done = False
-    while not done:
-        filename = click.prompt("File containing signed job posting", type=str, default='job_posting.txt.sig')
-        if os.path.isfile(filename):
-            done = True
-    f = open(filename, 'r')
-    signed = f.read()
-    res = validate_enrollment(signed)
-    if res:
-        # insert signed document into documents table as type 'enrollment'
-        document = Document('job_posting', signed, sig_verified=True)
-        session.add(document)
-        session.commit()
-    return res
+
+    create_signed_document(session, "Job", 'job_posting', ['user', 'key', 'name', 'category', 'description'], \
+            ['Job creator\'s name', 'Job creator\'s public key', 'Job name', 'Category', 'Description'], \
+            [user.name, key], user.daddr, user.dkey)
+
 
 @cli.command()
 @click.argument('url', required=True)
@@ -126,21 +108,29 @@ def request(url):
     """
     if url[-1] != '/':
         url = url + '/'
-    if not re.match('/https?:\/\//', url):
+    if url.find('http://') < 0 and url.find('https://') < 0:
         url = 'http://' + url
     user = session.query(User).first()
     
     create_buckets(engine)
     if len(session.query(Bucket).filter_by(url=url).all()) > 5:
-        click.echo("You have enough buckets from %s" % url)
+        click.echo("You already have enough buckets from %s" % url)
         return
 
-    sel_url = "{0}request?address={1}&contact={2}"
-    answer = requests.get(url=sel_url.format(url, user.maddr, user.contact))
+    sel_url = "{0}request?owner={1}&contact={2}"
+    try:
+        answer = requests.get(url=sel_url.format(url, user.maddr, user.contact))
+    except:
+        click.echo('Error connecting to server.')
+        return
     if answer.status_code != 200:
-        print("Request failed.")
+        click.echo("Request failed. Please try again later or with a different server.")
+        return
     else:
         data = json.loads(answer.text)
+    
+    if 'result' in data and data['result'] == 'error':
+        click.echo('The server returned an error: %s' % data['message'])
 
     for bucket in data['buckets']:
         b = session.query(Bucket).filter_by(url=url).filter_by(date_created=bucket['created']).first()
@@ -189,7 +179,7 @@ def sync():
     for doc in documents:
         check.append(doc)
 
-    click.echo("check " + str(check))
+    #click.echo("check " + str(check))
     # now that we know what we need to check and upload let's do the checking first, any that 
     # come back wrong can be added to the upload queue.
     # download each value (later a hash only with some full downloads for verification)
@@ -200,7 +190,7 @@ def sync():
             # see if we have a placement for this document already
             placements = session.query(Placement).filter(and_(Placement.url==url, Placement.doc_id==doc.id)).all()
             if len(placements) == 0:
-                click.echo('no existing placement for %s' % doc.doc_hash)
+                #click.echo('no existing placement for %s' % doc.doc_hash)
                 upload.append(doc)
             else:
                 for plc in placements:
@@ -226,7 +216,7 @@ def sync():
                         #update verified
                         verified.append(doc)
 
-    click.echo("upload " + str(upload))
+    #click.echo("upload " + str(upload))
     failed = []
     succeeded = []
     for doc in upload:
@@ -258,20 +248,20 @@ def sync():
                 #log(doc.id, url, 'upload failed')
                 failed.append(doc)
             else:
-                click.echo('successful placement for %s' % doc.doc_hash)
+                click.echo('uploaded %s' % doc.doc_hash)
                 session.commit()
                 succeeded.append(doc)
                 #log(doc.id, url, 'upload succeeded')
 
-    click.echo("succeeded " + str(succeeded))
-    click.echo("failed " + str(failed))
+    #click.echo("succeeded " + str(succeeded))
+    #click.echo("failed " + str(failed))
     for doc in succeeded:
         placement = session.query(Placement).filter_by(url=url).filter_by(doc_id=doc.id).all()
         if len(placement) == 0:
             p = Placement(doc.id, url, doc.remote_key)
             session.add(p)
             session.commit()
-            click.echo('created placement record for %s' % doc.doc_hash)
+            click.echo('recorded_upload %s' % doc.doc_hash)
     
     # clear nonce
     sel_url = url + 'nonce?address={0}&clear={1}'

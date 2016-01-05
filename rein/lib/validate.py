@@ -8,6 +8,35 @@ import config
 import click
 from document import Document, Base
 
+def enroll(session, engine, user):
+    Base.metadata.create_all(engine)
+    mediator_extras = ''
+    if user.will_mediate:
+        mediator_extras = "\nMediator pubkey: %s\nMediation fee: %s%%" % \
+                (bitcoinecdsa.pubkey(user.dkey), user.mediation_fee)
+    enrollment = "Rein User Enrollment\nUser: %s\nContact: %s\nMaster signing address: %s" \
+                "\nDelegate signing address: %s\nWilling to mediate: %s%s" % \
+                (user.name, user.contact, user.maddr, user.daddr, user.will_mediate, mediator_extras)
+    f = open(config.enroll_filename, 'w')
+    f.write(enrollment)
+    f.close()
+    click.echo("\n%s\n" % enrollment)
+    done = False
+    while not done:
+        filename = click.prompt("File containing signed statement", type=str, default=config.sig_enroll_filename)
+        if os.path.isfile(filename):
+            done = True
+    f = open(filename, 'r')
+    signed = f.read()
+    res = validate_enrollment(signed)
+    if res:
+        # insert signed document into documents table as type 'enrollment'
+        document = Document('enrollment', signed, sig_verified=True)
+        session.add(document)
+        session.commit()
+    return res
+
+
 def strip_armor(sig, dash_space=False):
     '''Removes ASCII-armor from a signed message by default exlcudes 'dash-space' headers'''
     sig = sig.replace('- ----', '-'*5) if dash_space else sig
@@ -20,6 +49,7 @@ def strip_armor(sig, dash_space=False):
     sig = re.sub("^\n", "", sig)
     sig = re.sub("\n\n", "", sig)
     return sig
+
 
 def parse_sig(sig):
     '''
@@ -44,6 +74,7 @@ def parse_sig(sig):
         return False
     return ret
 
+
 def verify_sig(sig):
     '''The base function for verifying an ASCII-armored signature.'''
     sig_info = parse_sig(sig)
@@ -59,6 +90,7 @@ def verify_sig(sig):
         valid = False
     return {'valid': valid, 'info': sig_info}
 
+
 def validate_enrollment(enrollment_signature_text):
     a = verify_sig(enrollment_signature_text)
     if a['valid'] != False:
@@ -66,27 +98,6 @@ def validate_enrollment(enrollment_signature_text):
     else:
         return False
 
-def enroll(session, engine, user):
-    Base.metadata.create_all(engine)
-    enrollment = "Rein User Enrollment\nUser: %s\nContact: %s\nMaster signing address: %s\nDelegate signing address: %s\n" % (user.name, user.contact, user.maddr, user.daddr)
-    f = open(config.enroll_filename, 'w')
-    f.write(enrollment)
-    f.close()
-    click.echo("\n%s\n" % enrollment)
-    done = False
-    while not done:
-        filename = click.prompt("File containing signed statement", type=str, default=config.sig_enroll_filename)
-        if os.path.isfile(filename):
-            done = True
-    f = open(filename, 'r')
-    signed = f.read()
-    res = validate_enrollment(signed)
-    if res:
-        # insert signed document into documents table as type 'enrollment'
-        document = Document('enrollment', signed, sig_verified=True)
-        session.add(document)
-        session.commit()
-    return res
    
 def validate_review(reviewer_text):
     a = verify_sig(reviewer_text)
@@ -95,6 +106,7 @@ def validate_review(reviewer_text):
         a['info']['signing_address'],
         strip_armor(reviewer_text).replace('- ----', '-----')
     ]
+
 
 def validate_audit(auditor_text):
     a = verify_sig(auditor_text)
@@ -116,6 +128,7 @@ def validate_audit(auditor_text):
         a[1]['signing_address'],
         ret
     ]
+
 
 if __name__ == "__main__":
     # enrollment sig
