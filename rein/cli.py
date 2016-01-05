@@ -166,7 +166,7 @@ def sync():
     answer = requests.get(url=sel_url.format(identity.maddr))
     data = answer.json()
     nonce = data['nonce']
-    click.echo('nonce = %s' % nonce)
+    #click.echo('nonce = %s' % nonce)
 
     check = []
     upload = []
