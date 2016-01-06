@@ -19,7 +19,7 @@ from lib.user import User, Base, create_account, import_account
 from lib.bucket import Bucket, create_buckets
 from lib.document import Document
 from lib.placement import Placement, create_placements
-from lib.validate import enroll, validate_enrollment
+from lib.validate import enroll, validate_enrollment, verify_sig
 from lib.bitcoinaddress import check_bitcoin_address 
 from lib.bitcoinecdsa import sign, pubkey
 from lib.market import create_signed_document
@@ -101,6 +101,16 @@ def post():
     """
     user = session.query(User).first()
     key = pubkey(user.dkey)
+    url = "http://localhost:5000/"
+    #query for a mediator
+    sel_url = "{0}query?owner={1}&query=mediators"
+    answer = requests.get(url=sel_url.format(url, user.maddr))
+    data = answer.json()
+    for m in data['mediators']:
+        click.echo(verify_sig(m))
+
+    # show menu of available mediators
+    return
     log.info('got user and key for post')
     res = create_signed_document(session, "Job", 'job_posting',\
             ['user', 'key', 'name', 'category', 'description'],\
@@ -169,6 +179,8 @@ def sync():
     documents = session.query(Document).all()
     for doc in documents:
         check.append(doc)
+    if len(check) == 0:
+        click.echo("Nothing to do.")
     # now that we know what we need to check and upload let's do the checking first, any that 
     # come back wrong can be added to the upload queue.
     # download each value (later a hash only with some full downloads for verification)
@@ -245,7 +257,7 @@ def sync():
     sel_url = url + 'nonce?address={0}&clear={1}'
     answer = requests.get(url=sel_url.format(identity.maddr, nonce))
     log.info('nonce cleared for %s' % (url))
-
+    click.echo('%s docs checked, %s uploaded.' % (len(check),len(succeeded)))
 
 @cli.command()
 def upload():
