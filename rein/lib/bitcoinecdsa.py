@@ -28,3 +28,11 @@ def verify(address, message, signature):
 def pubkey(key):
     key = CBitcoinSecret(key)
     return b2x(key.pub)
+
+def privkey_to_address(privkey):
+    try:
+        key = CBitcoinSecret(privkey)
+        address = P2PKHBitcoinAddress.from_pubkey(key.pub)
+    except:
+        return False
+    return address

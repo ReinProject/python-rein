@@ -127,7 +127,7 @@ def request(url):
     """
     if not url.endswith('/'):
         url = url + '/'
-    if not url.startswith('http://') and not url.startwith('https://'):
+    if not url.startswith('http://') and not url.startswith('https://'):
         url = 'http://' + url
     user = session.query(User).first()
     log.info('got user for request')    
@@ -168,11 +168,13 @@ def sync():
     """ 
     create_placements(engine)
     url = "http://localhost:5000/"
-    identity = session.query(User).first()
+#identity = session.query(User).first()
+#    click.echo(identity)
     sel_url = url + 'nonce?address={0}'
-    answer = requests.get(url=sel_url.format(identity.maddr))
-    data = answer.json()
-    nonce = data['nonce']
+#    answer = requests.get(url=sel_url.format(identity.maddr))
+#    data = answer.json()
+#    nonce = data['nonce']
+    nonce = ''
     log.info('server returned nonce %s' % nonce)
 
     check = []

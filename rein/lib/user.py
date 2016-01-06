@@ -7,7 +7,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy import create_engine
 from bitcoinaddress import check_bitcoin_address
-from pybitcointools import privkey_to_address
+from bitcoinecdsa import privkey_to_address
 import config
 
 Base = declarative_base()
@@ -33,19 +33,31 @@ class User(Base):
         self.will_mediate = will_mediate
         self.mediation_fee = mediation_fee
 
+def btc_addr_prompt(name):
+    title = name.capitalize() + " Bitcoin address"
+    addr = click.prompt(title, type=str)
+    while not check_bitcoin_address(addr):
+        addr = click.prompt("Invalid.\n" + title, type=str)
+    return addr
+
+def btc_privkey_prompt(name, addr=None):
+    title = name.capitalize()+" Bitcoin private key: "
+    privkey = getpass.getpass(title)
+    if addr:
+        while privkey_to_address(privkey) != addr:
+            privkey = getpass.getpass("Doesn't match target address.\n"+title)
+    else:
+        while not privkey_to_address(privkey):
+            privkey = getpass.getpass("Invalid private key.\n"+title)
+    return privkey
+
 def create_account(engine, session):
     Base.metadata.create_all(engine)
     name = click.prompt("Enter name or handle", type=str)
     contact = click.prompt("Email or BitMessage address", type=str)
-    maddr = click.prompt("Master Bitcoin address", type=str)
-    while not check_bitcoin_address(maddr):
-        maddr = click.prompt("Invalid.\nMaster Bitcoin address", type=str)
-    daddr = click.prompt("Delegate Bitcoin address", type=str)
-    while not check_bitcoin_address(daddr):
-        daddr = click.prompt("Invalid.\nDelegate Bitcoin address", type=str)
-    dkey = click.prompt("Delegate Bitcoin private key", type=str)
-    while privkey_to_address(dkey) != daddr:
-        dkey = click.prompt("Invalid or doesn't match address.\nDelegate Bitcoin address private key", type=str)
+    maddr = btc_addr_prompt("Master")
+    daddr = btc_addr_prompt("Delegate")
+    dkey = btc_privkey_prompt("Delegate")
     will_mediate = click.confirm("Willing to mediate:", default=False)
     mediation_fee = 1
     if will_mediate:
