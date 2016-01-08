@@ -1,7 +1,8 @@
-from sqlalchemy import Column, ForeignKey, Integer, String, DateTime
+from sqlalchemy import Column, Integer, String, DateTime
 from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
+
 
 class Bucket(Base):
     __tablename__ = 'bucket'
@@ -21,11 +22,12 @@ class Bucket(Base):
         self.bytes_free = bytes_free
         self.date_created = date_created
 
-    def update(url = None, remote_id = None, bytes_free = None, expires = None):
+    def update(self, url=None, remote_id=None, bytes_free=None, expires=None):
         if url: self.url = url
         if remote_id: self.remote_id
         if bytes_free: self.bytes_free
         if expires: self.expires
+
 
 def create_buckets(engine):
     Base.metadata.create_all(engine)
