@@ -12,28 +12,31 @@
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-import bitcoin
 from bitcoin.wallet import CBitcoinSecret, P2PKHBitcoinAddress
 from bitcoin.signmessage import BitcoinMessage, VerifyMessage, SignMessage
 from bitcoin.core import b2x
+
 
 def sign(key, message):
     key = CBitcoinSecret(key)
     message = BitcoinMessage(message)
     return SignMessage(key, message).decode('ascii')
 
+
 def verify(address, message, signature):
     message = BitcoinMessage(message)
     return VerifyMessage(address, message, signature)
+
 
 def pubkey(key):
     key = CBitcoinSecret(key)
     return b2x(key.pub)
 
+
 def privkey_to_address(privkey):
-    #try:
-    key = CBitcoinSecret(privkey)
-    address = P2PKHBitcoinAddress.from_pubkey(key.pub)
-    #except:
-    #    return False
+    try:
+        key = CBitcoinSecret(privkey)
+        address = P2PKHBitcoinAddress.from_pubkey(key.pub)
+    except:
+        return False
     return address

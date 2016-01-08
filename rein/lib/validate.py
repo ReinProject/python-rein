@@ -1,9 +1,7 @@
 #!/usr/bin/env python
-import bitcoinsig
 import bitcoinecdsa
 import re
 import os
-import json
 import config
 import click
 from document import Document, Base
@@ -79,7 +77,6 @@ def verify_sig(sig):
     '''The base function for verifying an ASCII-armored signature.'''
     sig_info = parse_sig(sig)
     if sig_info != False:
-        #valid = bitcoinsig.verify_message(
         message = strip_armor(sig)
         valid = bitcoinecdsa.verify(
             sig_info['signature_address'],

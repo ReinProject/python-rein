@@ -12,7 +12,7 @@ from subprocess import check_output
 from sqlalchemy import create_engine, and_
 from sqlalchemy.orm import sessionmaker
 
-from lib.user import User, Base, create_account, import_account, select_identity, get_user
+from lib.user import User, Base, create_account, import_account, get_user
 from lib.bucket import Bucket, create_buckets
 from lib.document import Document
 from lib.placement import Placement, create_placements
@@ -59,34 +59,34 @@ def setup(multi):
     """
     log.info('entering setup')
     if not os.path.isfile(os.path.join(config_dir, db_filename)) or \
-        (multi or session.query(User).count() == 0):
-            click.echo("\nWelcome to Rein.\n"\
-                "Do you want to import a backup or create a new account?\n\n"\
-                "1 - Create new account\n2 - Import backup\n")
-            user = None
-            choice = click.prompt("Choice", type=int, default=1)
-            if choice == 1:
-                user = create_account(engine, session)
-                log.info('account created')
-            elif choice == 2:
-                user = import_account(engine, session)
-                log.info('account imported')
-            else:
-                click.echo('Invalid choice')
-                return
-            click.echo("------------")
-            click.echo("The file %s has just been saved with your user details and needs to be signed "\
-                "with your master Bitcoin private key. The private key for this address should be "\
-                "kept offline and multiple encrypted backups made. This key will effectively "\
-                "become your identity in Rein and a delegate address will be used for day-to-day "\
-                "transactions.\n\n" % config.enroll_filename)
-            res = enroll(session, engine, user)
-            if res['valid']:
-                click.echo("Enrollment complete. Run 'rein request' to request free microhosting to sync to.")
-                log.info('enrollment complete')
-            else:
-                click.echo("Signature verification failed. Please try again.")
-                log.error('enrollment failed')
+            (multi or session.query(User).count() == 0):
+        click.echo("\nWelcome to Rein.\n"
+                   "Do you want to import a backup or create a new account?\n\n"
+                   "1 - Create new account\n2 - Import backup\n")
+        user = None
+        choice = click.prompt("Choice", type=int, default=1)
+        if choice == 1:
+            user = create_account(engine, session)
+            log.info('account created')
+        elif choice == 2:
+            user = import_account(engine, session)
+            log.info('account imported')
+        else:
+            click.echo('Invalid choice')
+            return
+        click.echo("------------")
+        click.echo("The file %s has just been saved with your user details and needs to be signed "
+                   "with your master Bitcoin private key. The private key for this address should be "
+                   "kept offline and multiple encrypted backups made. This key will effectively "
+                   "become your identity in Rein and a delegate address will be used for day-to-day "
+                   "transactions.\n\n" % config.enroll_filename)
+        res = enroll(session, engine, user)
+        if res['valid']:
+            click.echo("Enrollment complete. Run 'rein request' to request free microhosting to sync to.")
+            log.info('enrollment complete')
+        else:
+            click.echo("Signature verification failed. Please try again.")
+            log.error('enrollment failed')
     elif session.query(Document).filter(Document.doc_type == 'enrollment').count() < \
             session.query(User).count():
         click.echo('Continuing previously unfinished setup.')
@@ -99,8 +99,6 @@ def setup(multi):
             click.echo("Signature verification failed. Please try again.")
             log.error('enrollment failed')
     else:
-        bold = '\033[1m'
-        regular = '\033[0m'
         click.echo("Identity already setup.")
     log.info('exiting setup')
 
@@ -121,7 +119,6 @@ def post(multi, identity):
     key = pubkey(user.dkey)
     url = "http://localhost:5000/"
     click.echo("Querying %s for mediators..." % url)
-    #query for a mediator
     sel_url = "{0}query?owner={1}&query=mediators"
     answer = requests.get(url=sel_url.format(url, user.maddr))
     data = answer.json()
@@ -129,15 +126,14 @@ def post(multi, identity):
         click.echo('None found')
     for m in data['mediators']:
         click.echo(verify_sig(m))
-    
-
-    # show menu of available mediators
+    # finish this
     return
     log.info('got user and key for post')
-    res = create_signed_document(session, "Job", 'job_posting',\
-            ['user', 'key', 'name', 'category', 'description'],\
-            ['Job creator\'s name', 'Job creator\'s public key', 'Job name', 'Category', 'Description'],\
-            [user.name, key], user.daddr, user.dkey)
+    res = create_signed_document(session, "Job", 'job_posting',
+                                 ['user', 'key', 'name', 'category', 'description'],
+                                 ['Job creator\'s name', 'Job creator\'s public key', 'Job name',
+                                  'Category', 'Description'], [user.name, key],
+                                 user.daddr, user.dkey)
     log.info('posting signed') if res else log.error('posting failed')
 
 
@@ -154,7 +150,7 @@ def request(multi, identity, url):
         return
 
     user = get_user(session, multi, identity)
-    log.info('got user for request')    
+    log.info('got user for request')
 
     if not url.endswith('/'):
         url = url + '/'
@@ -190,7 +186,8 @@ def request(multi, identity, url):
     for bucket in data['buckets']:
         b = session.query(Bucket).filter_by(url=url).filter_by(date_created=bucket['created']).first()
         if b is None:
-            b = Bucket(url, user.id, bucket['id'], bucket['bytes_free'], datetime.strptime(bucket['created'], '%Y-%m-%d %H:%M:%S'))
+            b = Bucket(url, user.id, bucket['id'], bucket['bytes_free'],
+                       datetime.strptime(bucket['created'], '%Y-%m-%d %H:%M:%S'))
             session.add(b)
             session.commit()
         log.info('saved bucket created %s' % bucket['created'])
@@ -202,7 +199,7 @@ def request(multi, identity, url):
 def sync(multi, identity):
     """
     Upload records to each registered server
-    """ 
+    """
     if not os.path.isfile(os.path.join(config_dir, db_filename)) or session.query(User).count() == 0:
         click.echo("Please run setup.")
         return
@@ -210,7 +207,7 @@ def sync(multi, identity):
     create_placements(engine)
     url = "http://localhost:5000/"
     user = get_user(session, multi, identity)
-    #click.echo(identity)
+    # click.echo(identity)
     sel_url = url + 'nonce?address={0}'
     answer = requests.get(url=sel_url.format(user.maddr))
     data = answer.json()
@@ -224,7 +221,7 @@ def sync(multi, identity):
         check.append(doc)
     if len(check) == 0:
         click.echo("Nothing to do.")
-    # now that we know what we need to check and upload let's do the checking first, any that 
+    # now that we know what we need to check and upload let's do the checking first, any that
     # come back wrong can be added to the upload queue.
     # download each value (later a hash only with some full downloads for verification)
     upload = []
@@ -234,7 +231,7 @@ def sync(multi, identity):
             click.echo('Document is too big. 8192 bytes should be enough for anyone.')
             log.error("Document oversized %s" % doc.doc_hash)
         else:
-            placements = session.query(Placement).filter(and_(Placement.url==url, Placement.doc_id==doc.id)).all()
+            placements = session.query(Placement).filter(and_(Placement.url == url, Placement.doc_id == doc.id)).all()
             if placements is None:
                 upload.append(doc)
             else:
@@ -246,7 +243,7 @@ def sync(multi, identity):
                     value = value.decode('ascii')
                     value = value.encode('utf8')
                     remote_hash = hashlib.sha256(value).hexdigest()
-                    if answer.status_code == 404: 
+                    if answer.status_code == 404:
                         log("%s not found at %s" % (doc.doc_hash, url))
                         click.echo("document not found")
                         upload.append(doc)
@@ -256,12 +253,12 @@ def sync(multi, identity):
                         upload.append(doc)
                     else:
                         verified.append(doc)
-    
+
     failed = []
     succeeded = []
     for doc in upload:
-        doc.remote_key = ''.join(random.SystemRandom().choice(string.ascii_uppercase \
-                                + string.digits) for _ in range(32))
+        doc.remote_key = ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits)
+                                 for _ in range(32))
         if len(doc.contents) > 8192:
             log.error("Document oversized %s" % doc.doc_hash)
             click.echo('Document is too big. 8192 bytes should be enough for anyone.')
@@ -279,7 +276,7 @@ def sync(multi, identity):
             body = json.dumps(data)
             headers = {'Content-Type': 'application/json'}
             answer = requests.post(url='{0}put'.format(url), headers=headers, data=body)
-            res = answer.json() 
+            res = answer.json()
             if 'result' not in res or res['result'] != 'success':
                 log.error('upload failed %s %s' % (doc.id, url))
                 failed.append(doc)
@@ -296,11 +293,12 @@ def sync(multi, identity):
             session.add(p)
             session.commit()
             log.info('upload succeeded %s %s' % (doc.id, url))
-    
+
     sel_url = url + 'nonce?address={0}&clear={1}'
     answer = requests.get(url=sel_url.format(user.maddr, nonce))
     log.info('nonce cleared for %s' % (url))
-    click.echo('%s docs checked, %s uploaded.' % (len(check),len(succeeded)))
+    click.echo('%s docs checked, %s uploaded.' % (len(check), len(succeeded)))
+
 
 @cli.command()
 def upload():
@@ -310,11 +308,10 @@ def upload():
     servers = ['http://bitcoinexchangerate.org/causeway']
     for server in servers:
         url = '%s%s' % (server, '/info.json')
-        text = check_output('curl',url)
+        text = check_output('curl', url)
         try:
             data = json.loads(text)
         except:
             raise RuntimeError('Problem contacting server %s' % server)
 
         click.echo('%s - %s BTC' % (server, data['price']))
-
