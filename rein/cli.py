@@ -104,8 +104,8 @@ def setup(multi):
 
 
 @cli.command()
-@click.option('--multi/--no-multi', default=False)
-@click.option('--identity', type=click.Choice(['Alice', 'Bob', 'Charlie', 'Dan']), default=None)
+@click.option('--multi/--no-multi', default=False, help="prompt for identity to use")
+@click.option('--identity', type=click.Choice(['Alice', 'Bob', 'Charlie', 'Dan']), default=None, help="identity to use")
 def post(multi, identity):
     """
     Post a job.
@@ -138,8 +138,8 @@ def post(multi, identity):
 
 
 @cli.command()
-@click.option('--multi/--no-multi', default=False)
-@click.option('--identity', type=click.Choice(['Alice', 'Bob', 'Charlie', 'Dan']), default=None)
+@click.option('--multi/--no-multi', default=False, help="prompt for identity to use")
+@click.option('--identity', type=click.Choice(['Alice', 'Bob', 'Charlie', 'Dan']), default=None, help="identity to use")
 @click.argument('url', required=True)
 def request(multi, identity, url):
     """
@@ -194,8 +194,8 @@ def request(multi, identity, url):
 
 
 @cli.command()
-@click.option('--multi/--no-multi', default=False)
-@click.option('--identity', type=click.Choice(['Alice', 'Bob', 'Charlie', 'Dan']), default=None)
+@click.option('--multi/--no-multi', default=False, help="prompt for identity to use")
+@click.option('--identity', type=click.Choice(['Alice', 'Bob', 'Charlie', 'Dan']), default=None, help="identity to use")
 def sync(multi, identity):
     """
     Upload records to each registered server
