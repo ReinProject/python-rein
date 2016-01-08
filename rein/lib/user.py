@@ -1,17 +1,16 @@
 import click
 import os
-import sys 
+import sys
 import json
 import getpass
-from sqlalchemy import Column, ForeignKey, Integer, String, Float, Boolean
+from sqlalchemy import Column, Integer, String, Float, Boolean
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship
-from sqlalchemy import create_engine
 from bitcoinaddress import check_bitcoin_address
 from bitcoinecdsa import privkey_to_address
 import config
 
 Base = declarative_base()
+
 
 class User(Base):
     __tablename__ = 'identity'
@@ -34,6 +33,7 @@ class User(Base):
         self.will_mediate = will_mediate
         self.mediation_fee = mediation_fee
 
+
 def btc_addr_prompt(name):
     title = name.capitalize() + " Bitcoin address"
     addr = click.prompt(title, type=str)
@@ -41,18 +41,20 @@ def btc_addr_prompt(name):
         addr = click.prompt("Invalid.\n" + title, type=str)
     return addr
 
+
 def btc_privkey_prompt(name, addr=None):
-    title = name.capitalize()+" Bitcoin private key: "
+    title = name.capitalize() + " Bitcoin private key: "
     privkey = getpass.getpass(title)
     if addr:
         while privkey_to_address(privkey) != addr:
-            privkey = getpass.getpass("Doesn't match target address.\n"+title)
+            privkey = getpass.getpass("Doesn't match target address.\n" + title)
     else:
         click.echo(privkey)
         click.echo(privkey_to_address(privkey))
         while not privkey_to_address(privkey):
-            privkey = getpass.getpass("Invalid private key.\n"+title)
+            privkey = getpass.getpass("Invalid private key.\n" + title)
     return privkey
+
 
 def create_account(engine, session):
     Base.metadata.create_all(engine)
@@ -68,15 +70,15 @@ def create_account(engine, session):
     new_identity = User(name, contact, maddr, daddr, dkey, will_mediate, mediation_fee)
     session.add(new_identity)
     session.commit()
-    data = {'name': name, 
-            'contact': contact, 
-            'maddr': maddr, 
-            'daddr': daddr, 
+    data = {'name': name,
+            'contact': contact,
+            'maddr': maddr,
+            'daddr': daddr,
             'dkey': dkey,
             'will_mediate': will_mediate,
             'mediation_fee': mediation_fee}
     if not os.path.isfile(config.backup_filename):
-        f = open(config.backup_filename,'w')
+        f = open(config.backup_filename, 'w')
         try:
             f.write(json.dumps(data))
             click.echo("Backup saved successfully to %s" % config.backup_filename)
@@ -84,13 +86,14 @@ def create_account(engine, session):
             raise RuntimeError('Problem writing user details to json backup file.')
         f.close()
     else:
-        click.echo("Backup file already exists. Please run with --backup to save "\
+        click.echo("Backup file already exists. Please run with --backup to save "
                    "user details to file.")
     return new_identity
 
+
 def import_account(engine, session):
     Base.metadata.create_all(engine)
-    backup_filename = click.prompt("Enter backup file name", type=str, default=config.backup_filename)    
+    backup_filename = click.prompt("Enter backup file name", type=str, default=config.backup_filename)
     f = open(backup_filename, 'r')
     try:
         data = json.loads(f.read())
@@ -99,12 +102,12 @@ def import_account(engine, session):
     if not check_bitcoin_address(data['maddr']) or not check_bitcoin_address(data['daddr']):
         click.echo("Invalid Bitcoin address(es) in backup file.")
         sys.exit()
-    new_identity = User(data['name'], 
-                        data['contact'], 
-                        data['maddr'], 
-                        data['daddr'], 
-                        data['dkey'], 
-                        data['will_mediate'], 
+    new_identity = User(data['name'],
+                        data['contact'],
+                        data['maddr'],
+                        data['daddr'],
+                        data['dkey'],
+                        data['will_mediate'],
                         data['mediation_fee'])
     session.add(new_identity)
     session.commit()
@@ -113,7 +116,7 @@ def import_account(engine, session):
 
 def select_identity(session):
     names = ['Alice', 'Bob', 'Charlie', 'Dan']
-    user_count = session.query(User).count() 
+    user_count = session.query(User).count()
     index = 1
     for name in names[0:user_count]:
         click.echo('%s - %s' % (str(index), name))
@@ -121,7 +124,7 @@ def select_identity(session):
     i = click.prompt('Please choose an identity', type=int)
     while i > user_count or i < 1:
         i = click.prompt('Please choose an identity', type=int)
-    return session.query(User).filter(User.name == names[i-1]).first()
+    return session.query(User).filter(User.name == names[i - 1]).first()
 
 
 def get_user(session, multi, identity):
@@ -131,4 +134,4 @@ def get_user(session, multi, identity):
         user = select_identity(session)
     else:
         user = session.query(User).first()
-    return user    
+    return user

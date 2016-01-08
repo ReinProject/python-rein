@@ -1,7 +1,8 @@
-from sqlalchemy import Column, ForeignKey, Integer, String
+from sqlalchemy import Column, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
+
 
 class Placement(Base):
     __tablename__ = 'placement'
@@ -18,11 +19,12 @@ class Placement(Base):
         self.remote_key = remote_key
         self.verified = verified
 
-    def set_verified():
+    def set_verified(self):
         self.verified = 1
 
-    def clear_verified():
+    def clear_verified(self):
         self.verified = 0
+
 
 def create_placements(engine):
     Base.metadata.create_all(engine)

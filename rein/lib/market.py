@@ -1,9 +1,12 @@
 from document import Document
 from validate import validate_enrollment
-from bitcoinecdsa import pubkey, sign, verify
+from bitcoinecdsa import sign, verify
+import os
 import click
 
-def create_signed_document(session, title, doc_type, fields, labels, defaults, signature_address=False, signature_key=False):
+
+def create_signed_document(session, title, doc_type, fields, labels, defaults,
+                           signature_address=False, signature_key=False):
     """
     Prompt for info, save to file, validate and store signed document.
     """
@@ -19,23 +22,23 @@ def create_signed_document(session, title, doc_type, fields, labels, defaults, s
         else:
             data[fields[i]] = defaults[i]
 
-    #passed as defaults, put defaults first to avoid having to pass lots of '' defaults
-    #user = session.query(User).first()
-    #key = pubkey(user.dkey)
+    # passed as defaults, put defaults first to avoid having to pass lots of '' defaults
+    # user = session.query(User).first()
+    # key = pubkey(user.dkey)
 
-    display = "Rein %s\n" % title 
+    display = "Rein %s\n" % title
     for key in data.keys():
         display = display + display_labels[key] + ": " + data[key] + "\n"
 
     validated = False
     if signature_key is False:  # signing will happen outside app
-        f = open(doc_type+'.txt', 'w')
+        f = open(doc_type + '.txt', 'w')
         f.write(display)
         f.close()
         click.echo("\n%s\n" % display)
         done = False
         while not done:
-            filename = click.prompt("File containing signed job posting", type=str, default=doc_type+'.sig.txt')
+            filename = click.prompt("File containing signed job posting", type=str, default=doc_type + '.sig.txt')
             if os.path.isfile(filename):
                 done = True
         f = open(filename, 'r')
@@ -44,7 +47,7 @@ def create_signed_document(session, title, doc_type, fields, labels, defaults, s
         if res:
             validated = True
     else:                       # sign with stored delegate key
-        signature = sign(signature_key, display) 
+        signature = sign(signature_key, display)
         validated = verify(signature_address, display, signature)
 
     if validated:
@@ -52,9 +55,8 @@ def create_signed_document(session, title, doc_type, fields, labels, defaults, s
         b = "-----BEGIN BITCOIN SIGNED MESSAGE-----"
         c = "-----BEGIN SIGNATURE-----"
         d = "-----END BITCOIN SIGNED MESSAGE-----"
-        signed="%s\n%s\n%s\n%s\n%s\n%s\n" % (b, display, c, signature_address, signature, d)
+        signed = "%s\n%s\n%s\n%s\n%s\n%s\n" % (b, display, c, signature_address, signature, d)
         document = Document(doc_type, signed, sig_verified=True)
         session.add(document)
         session.commit()
-    return validated 
-
+    return validated

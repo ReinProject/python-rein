@@ -128,7 +128,7 @@ def b58encode(v):
 
     long_value = 0L
     for (i, c) in enumerate(v[::-1]):
-        long_value += (256**i) * ord(c)
+        long_value += (256 ** i) * ord(c)
 
     result = ''
     while long_value >= __b58base:
@@ -144,7 +144,7 @@ def b58encode(v):
         if c == '\0': nPad += 1
         else: break
 
-    return (__b58chars[0]*nPad) + result
+    return (__b58chars[0] * nPad) + result
 
 
 def decbin(d, l=0, rev=False):
@@ -245,7 +245,7 @@ def verify_message(address, signature, message):
         compressed = False
     recid = nV - 27
     # 1.1
-    x = r + (recid/2) * order
+    x = r + (recid / 2) * order
     # 1.3
     alpha = (x * x * x + curve.a() * x + curve.b()) % curve.p()
     beta = modular_sqrt(alpha, curve.p())

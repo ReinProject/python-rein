@@ -1,8 +1,7 @@
-from sqlalchemy import create_engine, and_
+from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from user import Base
 import os
-import config
 import logging
 
 log = logging.getLogger('python-rein')

@@ -6,15 +6,16 @@ import config
 import click
 from document import Document, Base
 
+
 def enroll(session, engine, user):
     Base.metadata.create_all(engine)
     mediator_extras = ''
     if user.will_mediate:
         mediator_extras = "\nMediator pubkey: %s\nMediation fee: %s%%" % \
-                (bitcoinecdsa.pubkey(user.dkey), user.mediation_fee)
+                          (bitcoinecdsa.pubkey(user.dkey), user.mediation_fee)
     enrollment = "Rein User Enrollment\nUser: %s\nContact: %s\nMaster signing address: %s" \
-                "\nDelegate signing address: %s\nWilling to mediate: %s%s" % \
-                (user.name, user.contact, user.maddr, user.daddr, user.will_mediate, mediator_extras)
+                 "\nDelegate signing address: %s\nWilling to mediate: %s%s" % \
+                 (user.name, user.contact, user.maddr, user.daddr, user.will_mediate, mediator_extras)
     f = open(config.enroll_filename, 'w')
     f.write(enrollment)
     f.close()
@@ -37,7 +38,7 @@ def enroll(session, engine, user):
 
 def strip_armor(sig, dash_space=False):
     '''Removes ASCII-armor from a signed message by default exlcudes 'dash-space' headers'''
-    sig = sig.replace('- ----', '-'*5) if dash_space else sig
+    sig = sig.replace('- ----', '-' * 5) if dash_space else sig
     sig = re.sub("-{5}BEGIN BITCOIN SIGNED MESSAGE-{5}", "", sig)
     sig = re.sub(
         "\n+-{5}BEGIN SIGNATURE-{5}[\n\dA-z+=/]+-{5}END BITCOIN SIGNED MESSAGE-{5}\n*",
@@ -76,7 +77,7 @@ def parse_sig(sig):
 def verify_sig(sig):
     '''The base function for verifying an ASCII-armored signature.'''
     sig_info = parse_sig(sig)
-    if sig_info != False:
+    if sig_info:
         message = strip_armor(sig)
         valid = bitcoinecdsa.verify(
             sig_info['signature_address'],
@@ -90,12 +91,12 @@ def verify_sig(sig):
 
 def validate_enrollment(enrollment_signature_text):
     a = verify_sig(enrollment_signature_text)
-    if a['valid'] != False:
-        return a 
+    if a['valid']:
+        return a
     else:
         return False
 
-   
+
 def validate_review(reviewer_text):
     a = verify_sig(reviewer_text)
     return [
@@ -129,7 +130,7 @@ def validate_audit(auditor_text):
 
 if __name__ == "__main__":
     # enrollment sig
-    sig = """-----BEGIN BITCOIN SIGNED MESSAGE-----
+    sig1 = """-----BEGIN BITCOIN SIGNED MESSAGE-----
 Name/handle: Test Person
 Contact: tester@example.com
 Master signing address: 1CptxARjqcfkVwGFSjR82zmPT8YtRMubub
@@ -146,7 +147,8 @@ Contact: knightdk on Bitcointalk.org
 Master signing address: 16mT7jrpkjnJBD7a3TM2awyxHub58H6r6Z
 Delegate signing address: N/A
 Willing to mediate: Y
-Mediation public key: 04594f2582c859c4f65084ee7fe8e9ec2d695bb988a3f53db48eaaff6ff3a0282b2be0c79fefca01277404d0fdc3a923e8ed02efd6ab96980f3e229a81fbe032e9
+Mediation public key: 04594f2582c859c4f65084ee7fe8e9ec2d695bb988a3f53db48eaaff6ff3a0282b2be0c79"""\
+"""fefca01277404d0fdc3a923e8ed02efd6ab96980f3e229a81fbe032e9
 - ----BEGIN SIGNATURE-----
 16mT7jrpkjnJBD7a3TM2awyxHub58H6r6Z
 GxHE6iJH2aMpsRk7cszvXsLieDawzArpt7XDdOPhVFD5KVqIvKve1fwUKeN6ct4bld41XLdrZ7Dvaj7x1Oiw0uo=
@@ -164,7 +166,8 @@ Contact: knightdk on Bitcointalk.org
 Master signing address: 16mT7jrpkjnJBD7a3TM2awyxHub58H6r6Z
 Delegate signing address: N/A
 Willing to mediate: Y
-Mediation public key: 04594f2582c859c4f65084ee7fe8e9ec2d695bb988a3f53db48eaaff6ff3a0282b2be0c79fefca01277404d0fdc3a923e8ed02efd6ab96980f3e229a81fbe032e9
+Mediation public key: 04594f2582c859c4f65084ee7fe8e9ec2d695bb988a3f53db48eaaff6ff3a0282b2be0c79"""\
+"""fefca01277404d0fdc3a923e8ed02efd6ab96980f3e229a81fbe032e9
 - ----BEGIN SIGNATURE-----
 16mT7jrpkjnJBD7a3TM2awyxHub58H6r6Z
 GxHE6iJH2aMpsRk7cszvXsLieDawzArpt7XDdOPhVFD5KVqIvKve1fwUKeN6ct4bld41XLdrZ7Dvaj7x1Oiw0uo=
@@ -179,7 +182,7 @@ IMcU7MvLl7T+hY0mmMw6mblLstnXd9Ly36z7uYMqv7ZZEuZQOvuXN2GjYU0Nq4So9GKQRkQwIis7EiN6
 -----END BITCOIN SIGNED MESSAGE-----"""
 
     # Test all of the functions
-    print(validate_enrollment(sig))
+    print(validate_enrollment(sig1))
     print(validate_review(sig2))
     print(validate_audit(sig3))
 
