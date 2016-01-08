@@ -2,6 +2,7 @@ import click
 import os
 import sys 
 import json
+import getpass
 from sqlalchemy import Column, ForeignKey, Integer, String, Float, Boolean
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
@@ -47,6 +48,8 @@ def btc_privkey_prompt(name, addr=None):
         while privkey_to_address(privkey) != addr:
             privkey = getpass.getpass("Doesn't match target address.\n"+title)
     else:
+        click.echo(privkey)
+        click.echo(privkey_to_address(privkey))
         while not privkey_to_address(privkey):
             privkey = getpass.getpass("Invalid private key.\n"+title)
     return privkey
@@ -106,3 +109,26 @@ def import_account(engine, session):
     session.add(new_identity)
     session.commit()
     return new_identity
+
+
+def select_identity(session):
+    names = ['Alice', 'Bob', 'Charlie', 'Dan']
+    user_count = session.query(User).count() 
+    index = 1
+    for name in names[0:user_count]:
+        click.echo('%s - %s' % (str(index), name))
+        index += 1
+    i = click.prompt('Please choose an identity', type=int)
+    while i > user_count or i < 1:
+        i = click.prompt('Please choose an identity', type=int)
+    return session.query(User).filter(User.name == names[i-1]).first()
+
+
+def get_user(session, multi, identity):
+    if multi and identity:
+        user = session.query(User).filter(User.name == identity).first()
+    elif multi:
+        user = select_identity(session)
+    else:
+        user = session.query(User).first()
+    return user    

@@ -8,6 +8,7 @@ class Document(Base):
     __tablename__ = 'document'
 
     id = Column(Integer, primary_key=True)
+    identity = Column(Integer, nullable=False)
     doc_type = Column(String(64), nullable=True)
     doc_hash = Column(String(250), nullable=False)
     contents = Column(String(8192), nullable=False)
@@ -15,8 +16,9 @@ class Document(Base):
     source_key = Column(String(64), nullable=True)
     sig_verified = Column(Integer, default=False)
 
-    def __init__(self, doc_type, contents, source_url='local', 
+    def __init__(self, identity, doc_type, contents, source_url='local', 
             source_key=None, sig_verified = False):
+        self.identity = identity
         self.doc_type = doc_type # enrollment, bid, offer, job, for_hire,  
         self.doc_hash = hashlib.sha256(contents).hexdigest()
         self.contents = contents

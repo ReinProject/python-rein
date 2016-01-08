@@ -31,7 +31,7 @@ def enroll(session, engine, user):
     res = validate_enrollment(signed)
     if res:
         # insert signed document into documents table as type 'enrollment'
-        document = Document('enrollment', signed, sig_verified=True)
+        document = Document(user.id, 'enrollment', signed, sig_verified=True)
         session.add(document)
         session.commit()
     return res
