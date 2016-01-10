@@ -162,10 +162,10 @@ def request(multi, identity, url):
         click.echo("You already have enough (5) buckets from %s" % url)
         log.warning('too many buckets')
         return
-    sel_url = "{0}request?owner={1}&contact={2}"
+    sel_url = "{0}request?owner={1}&delegate={2}&contact={3}"
 
     try:
-        answer = requests.get(url=sel_url.format(url, user.maddr, user.contact))
+        answer = requests.get(url=sel_url.format(url, user.maddr, user.daddr, user.contact))
     except:
         click.echo('Error connecting to server.')
         log.error('server connect error')
@@ -212,7 +212,6 @@ def sync(multi, identity):
     answer = requests.get(url=sel_url.format(user.maddr))
     data = answer.json()
     nonce = data['nonce']
-    nonce = ''
     log.info('server returned nonce %s' % nonce)
 
     check = []
@@ -227,77 +226,86 @@ def sync(multi, identity):
     upload = []
     verified = []
     for doc in check:
+        click.echo('doc in check')
         if len(doc.contents) > 8192:
             click.echo('Document is too big. 8192 bytes should be enough for anyone.')
             log.error("Document oversized %s" % doc.doc_hash)
         else:
             placements = session.query(Placement).filter(and_(Placement.url == url, Placement.doc_id == doc.id)).all()
-            if placements is None:
-                upload.append(doc)
+            if len(placements) == 0:
+                upload.append([doc, url])
             else:
                 for plc in placements:
                     sel_url = "{0}get?key={1}"
                     answer = requests.get(url=sel_url.format(url, plc.remote_key))
                     data = answer.json()
-                    value = data['value']
-                    value = value.decode('ascii')
-                    value = value.encode('utf8')
-                    remote_hash = hashlib.sha256(value).hexdigest()
                     if answer.status_code == 404:
-                        log("%s not found at %s" % (doc.doc_hash, url))
+                        log.error("%s not found at %s" % (doc.doc_hash, url))
                         click.echo("document not found")
-                        upload.append(doc)
-                    elif remote_hash != doc.doc_hash:
-                        log("%s incorrect hash at %s" % (doc.id, url))
-                        click.echo("hash mismatch")
-                        upload.append(doc)
+                        upload.append([doc, url])
                     else:
-                        verified.append(doc)
+                        value = data['value']
+                        value = value.decode('ascii')
+                        value = value.encode('utf8')
+                        remote_hash = hashlib.sha256(value).hexdigest()
+                        if remote_hash != doc.doc_hash:
+                            click.echo("doc_hash " + doc.doc_hash)
+                            log.error("%s %s incorrect hash %s != %s " % (url, doc.id, remote_hash, doc.doc_hash))
+                            click.echo("hash mismatch")
+                            upload.append([doc, url])
+                        else:
+                            verified.append(doc)
 
     failed = []
-    succeeded = []
-    for doc in upload:
-        doc.remote_key = ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits)
+    succeeded = 0 
+    for doc, url in upload:   # 9%$#@^&%$&R^%*^$%854372095843 - should be placements!
+        placement = session.query(Placement).filter_by(url=url).filter_by(doc_id=doc.id).all()
+        if len(placement) == 0 and not doc.remote_key:
+            remote_key = ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits)
                                  for _ in range(32))
+            plc = Placement(doc.id, url, doc.remote_key)
+            session.add(plc)
+            session.commit()
+        else:
+            plc = placement[0]
+            for p in placement[1:]:
+                session.delete(p)
+                session.commit()
+
         if len(doc.contents) > 8192:
             log.error("Document oversized %s" % doc.doc_hash)
             click.echo('Document is too big. 8192 bytes should be enough for anyone.')
         else:
-            message = doc.remote_key + doc.contents + user.daddr + nonce
+            message = plc.remote_key + doc.contents + user.daddr + nonce
             message = message.decode('utf8')
             message = message.encode('ascii')
             signature = sign(user.dkey, message)
-            data = {"key": doc.remote_key,
+            data = {"key": plc.remote_key,
                     "value": doc.contents,
                     "nonce": nonce,
                     "signature": signature,
                     "signature_address": user.daddr,
                     "owner": user.maddr}
             body = json.dumps(data)
+            click.echo(body)
             headers = {'Content-Type': 'application/json'}
             answer = requests.post(url='{0}put'.format(url), headers=headers, data=body)
+            click.echo(answer.text)
             res = answer.json()
             if 'result' not in res or res['result'] != 'success':
-                log.error('upload failed %s %s' % (doc.id, url))
+                log.error('upload failed doc=%s plc=%s url=%s' % (doc.id, plc.id, url))
                 failed.append(doc)
             else:
+                plc.verified += 1
                 session.commit()
-                succeeded.append(doc)
-                log.info('upload succeeded %s %s' % (doc.id, url))
+                log.info('upload succeeded doc=%s plc=%s url=%s' % (doc.id, plc.id, url))
                 click.echo('uploaded %s' % doc.doc_hash)
-
-    for doc in succeeded:
-        placement = session.query(Placement).filter_by(url=url).filter_by(doc_id=doc.id).all()
-        if placement is None:
-            p = Placement(doc.id, url, doc.remote_key)
-            session.add(p)
-            session.commit()
-            log.info('upload succeeded %s %s' % (doc.id, url))
+                succeeded += 1
 
     sel_url = url + 'nonce?address={0}&clear={1}'
     answer = requests.get(url=sel_url.format(user.maddr, nonce))
     log.info('nonce cleared for %s' % (url))
-    click.echo('%s docs checked, %s uploaded.' % (len(check), len(succeeded)))
+    click.echo('%s docs checked, %s uploaded.' % (len(check), str(succeeded)))
 
 
 @cli.command()
