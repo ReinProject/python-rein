@@ -7,8 +7,9 @@ import click
 from document import Document, Base
 
 
-def enroll(session, engine, user):
-    Base.metadata.create_all(engine)
+def enroll(rein):
+    Base.metadata.create_all(rein.engine)
+    user = rein.user
     mediator_extras = ''
     if user.will_mediate:
         mediator_extras = "\nMediator pubkey: %s\nMediation fee: %s%%" % \
@@ -22,7 +23,7 @@ def enroll(session, engine, user):
     click.echo("\n%s\n" % enrollment)
     done = False
     while not done:
-        filename = click.prompt("File containing signed statement", type=str, default=config.sig_enroll_filename)
+        filename = click.prompt("File containing signed statement", type=str, default=rein.sig_enroll_filename)
         if os.path.isfile(filename):
             done = True
     f = open(filename, 'r')

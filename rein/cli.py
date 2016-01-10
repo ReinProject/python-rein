@@ -25,22 +25,18 @@ import lib.config as config
 log = logging.getLogger('python-rein')
 logging.basicConfig(filename="rein.log", filemode="w")
 log.setLevel(logging.INFO)
-
 log.info('starting python-rein')
 
-config_dir = os.path.join(os.path.expanduser('~'), '.rein')
 db_filename = 'local.db'
 
-if not os.path.isdir(config_dir):
-    os.mkdir(config_dir)
+rein = config.Config()
 
-engine = create_engine("sqlite:///%s" % os.path.join(config_dir, db_filename))
-Base.metadata.bind = engine
-DBSession = sessionmaker(bind=engine)
-session = DBSession()
-Base.metadata.create_all(engine)
+rein.engine = create_engine("sqlite:///%s" % os.path.join(rein.config_dir, rein.db_filename))
+Base.metadata.bind = rein.engine
+DBSession = sessionmaker(bind=rein.engine)
+rein.session = DBSession()
+Base.metadata.create_all(rein.engine)
 log.info('database connected')
-
 
 @click.group()
 @click.option('--debug/--no-debug', default=False)
@@ -58,18 +54,17 @@ def setup(multi):
     Setup or import an identity
     """
     log.info('entering setup')
-    if not os.path.isfile(os.path.join(config_dir, db_filename)) or \
-            (multi or session.query(User).count() == 0):
+    if rein.has_no_account():
         click.echo("\nWelcome to Rein.\n"
                    "Do you want to import a backup or create a new account?\n\n"
                    "1 - Create new account\n2 - Import backup\n")
         user = None
         choice = click.prompt("Choice", type=int, default=1)
         if choice == 1:
-            user = create_account(engine, session)
+            rein.user = create_account(engine, session)
             log.info('account created')
         elif choice == 2:
-            user = import_account(engine, session)
+            rein.user = import_account(engine, session)
             log.info('account imported')
         else:
             click.echo('Invalid choice')
@@ -79,19 +74,19 @@ def setup(multi):
                    "with your master Bitcoin private key. The private key for this address should be "
                    "kept offline and multiple encrypted backups made. This key will effectively "
                    "become your identity in Rein and a delegate address will be used for day-to-day "
-                   "transactions.\n\n" % config.enroll_filename)
-        res = enroll(session, engine, user)
+                   "transactions.\n\n" % rein.enroll_filename)
+        res = enroll(rein)
         if res['valid']:
             click.echo("Enrollment complete. Run 'rein request' to request free microhosting to sync to.")
             log.info('enrollment complete')
         else:
             click.echo("Signature verification failed. Please try again.")
             log.error('enrollment failed')
-    elif session.query(Document).filter(Document.doc_type == 'enrollment').count() < \
-            session.query(User).count():
+    elif rein.session.query(Document).filter(Document.doc_type == 'enrollment').count() < \
+            rein.session.query(User).count():
         click.echo('Continuing previously unfinished setup.')
-        user = get_user(session, multi, False)
-        res = enroll(session, engine, user)
+        rein.user = get_user(rein.session, rein.multi, False)
+        res = enroll(rein)
         if res['valid']:
             click.echo("Enrollment complete. Run 'rein request' to request free microhosting to sync to.")
             log.info('enrollment complete')

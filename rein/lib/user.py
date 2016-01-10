@@ -7,7 +7,7 @@ from sqlalchemy import Column, Integer, String, Float, Boolean
 from sqlalchemy.ext.declarative import declarative_base
 from bitcoinaddress import check_bitcoin_address
 from bitcoinecdsa import privkey_to_address
-import config
+#import config
 
 Base = declarative_base()
 
@@ -56,8 +56,8 @@ def btc_privkey_prompt(name, addr=None):
     return privkey
 
 
-def create_account(engine, session):
-    Base.metadata.create_all(engine)
+def create_account(rein):
+    Base.metadata.create_all(rein.engine)
     name = click.prompt("Enter name or handle", type=str)
     contact = click.prompt("Email or BitMessage address", type=str)
     maddr = btc_addr_prompt("Master")
@@ -68,8 +68,8 @@ def create_account(engine, session):
     if will_mediate:
         mediation_fee = click.prompt("Mediation fee (%)", default=1)
     new_identity = User(name, contact, maddr, daddr, dkey, will_mediate, mediation_fee)
-    session.add(new_identity)
-    session.commit()
+    rein.session.add(new_identity)
+    rein.session.commit()
     data = {'name': name,
             'contact': contact,
             'maddr': maddr,
@@ -77,11 +77,11 @@ def create_account(engine, session):
             'dkey': dkey,
             'will_mediate': will_mediate,
             'mediation_fee': mediation_fee}
-    if not os.path.isfile(config.backup_filename):
-        f = open(config.backup_filename, 'w')
+    if not os.path.isfile(rein.backup_filename):
+        f = open(rein.backup_filename, 'w')
         try:
             f.write(json.dumps(data))
-            click.echo("Backup saved successfully to %s" % config.backup_filename)
+            click.echo("Backup saved successfully to %s" % rein.backup_filename)
         except:
             raise RuntimeError('Problem writing user details to json backup file.')
         f.close()
