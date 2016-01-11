@@ -1,9 +1,8 @@
 #!/usr/bin/env python
-import bitcoinecdsa
 import re
 import os
-import config
 import click
+import bitcoinecdsa
 from document import Document, Base
 
 

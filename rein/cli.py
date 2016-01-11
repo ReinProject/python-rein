@@ -1,5 +1,4 @@
 import json
-import os
 import random
 import string
 import requests
@@ -8,10 +7,9 @@ import click
 from datetime import datetime
 from subprocess import check_output
 
-from sqlalchemy import create_engine, and_
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy import and_
 
-from lib.user import User, Base, create_account, import_account, get_user
+from lib.user import User, create_account, import_account, get_user
 from lib.bucket import Bucket, create_buckets
 from lib.document import Document
 from lib.placement import Placement, create_placements
@@ -42,7 +40,6 @@ def setup(multi):
     log = rein.get_log()
     if multi:
         rein.set_multiuser()
-    user = rein.user
     log.info('entering setup')
     if rein.has_no_account():
         click.echo("\nWelcome to Rein.\n"
@@ -50,10 +47,10 @@ def setup(multi):
                    "1 - Create new account\n2 - Import backup\n")
         choice = click.prompt("Choice", type=int, default=1)
         if choice == 1:
-            user = create_account(rein)
+            create_account(rein)
             log.info('account created')
         elif choice == 2:
-            user = import_account(rein)
+            import_account(rein)
             log.info('account imported')
         else:
             click.echo('Invalid choice')
@@ -74,7 +71,7 @@ def setup(multi):
     elif rein.session.query(Document).filter(Document.doc_type == 'enrollment').count() < \
             rein.session.query(User).count():
         click.echo('Continuing previously unfinished setup.')
-        rein.user = get_user(rein, False)
+        get_user(rein, False)
         res = enroll(rein)
         if res['valid']:
             click.echo("Enrollment complete. Run 'rein request' to request free microhosting to sync to.")
@@ -97,7 +94,7 @@ def post(multi, identity):
     log = rein.get_log()
     if multi:
         rein.set_multiuser()
-        
+
     if rein.has_no_account():
         click.echo("Please run setup.")
         return
@@ -237,7 +234,8 @@ def sync(multi, identity):
             click.echo('Document is too big. 8192 bytes should be enough for anyone.')
             log.error("Document oversized %s" % doc.doc_hash)
         else:
-            placements = rein.session.query(Placement).filter(and_(Placement.url == url, Placement.doc_id == doc.id)).all()
+            placements = rein.session.query(Placement).filter(and_(Placement.url == url,
+                                                                   Placement.doc_id == doc.id)).all()
             if len(placements) == 0:
                 upload.append([doc, url])
             else:
@@ -261,8 +259,8 @@ def sync(multi, identity):
                             verified.append(doc)
 
     failed = []
-    succeeded = 0 
-    for doc, url in upload: 
+    succeeded = 0
+    for doc, url in upload:
         placement = rein.session.query(Placement).filter_by(url=url).filter_by(doc_id=doc.id).all()
         if len(placement) == 0:
             remote_key = ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits)

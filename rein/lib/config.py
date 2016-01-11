@@ -6,7 +6,7 @@ from user import User, Base
 
 
 class Config():
-    def __init__(self): 
+    def __init__(self):
         self.db_filename = 'local.db'
         self.backup_filename = 'backup-rein.json'
         self.enroll_filename = 'enrollment.txt'
@@ -24,12 +24,10 @@ class Config():
         self.setup_db()
         self.log.info('database connected')
 
-
     def setup_logging(self):
         self.log = logging.getLogger('python-rein')
-        logging.basicConfig(filename="rein.log", filemode="w")
+        logging.basicConfig(filename="rein.log", filemode="a")
         self.log.setLevel(logging.INFO)
-
 
     def setup_db(self):
         self.engine = create_engine("sqlite:///%s" % os.path.join(self.config_dir, self.db_filename))
@@ -46,7 +44,7 @@ class Config():
 
     def has_no_account(self):
         if not os.path.isfile(os.path.join(self.config_dir, self.db_filename)) or \
-            self.session.query(User).count() == 0:
+           self.session.query(User).count() == 0:
             return True
         else:
             return False

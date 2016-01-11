@@ -10,7 +10,6 @@ def mediator_prompt(rein, eligible_mediators):
     for m in eligible_mediators:
         click.echo('%s - %s %s' % (str(i + 1), m['User'], m['Mediation fee']))
         i += 1
-    #i = click.prompt('Please choose an identity', type=int)
     choice = 0
     while choice > len(eligible_mediators) or choice < 1:
         choice = click.prompt('Please choose a mediator', type=int)
