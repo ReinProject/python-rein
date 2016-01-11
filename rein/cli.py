@@ -7,7 +7,9 @@ import click
 from datetime import datetime
 from subprocess import check_output
 
-from lib.ui import create_account, import_account
+from sqlalchemy import and_
+
+from lib.ui import create_account, import_account, identity_prompt
 from lib.user import User
 from lib.bucket import Bucket, get_bucket_count, create_buckets
 from lib.document import Document
@@ -15,7 +17,6 @@ from lib.placement import Placement, create_placements
 from lib.validate import enroll, verify_sig
 from lib.bitcoinecdsa import sign, pubkey
 from lib.market import mediator_prompt, create_signed_document
-
 import lib.config as config
 
 rein = config.Config()

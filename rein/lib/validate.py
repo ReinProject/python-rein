@@ -1,39 +1,6 @@
 #!/usr/bin/env python
 import re
-import os
-import click
 import bitcoinecdsa
-from document import Document, Base
-
-
-def enroll(rein):
-    Base.metadata.create_all(rein.engine)
-    user = rein.user
-    mediator_extras = ''
-    if user.will_mediate:
-        mediator_extras = "\nMediator pubkey: %s\nMediation fee: %s%%" % \
-                          (bitcoinecdsa.pubkey(user.dkey), user.mediation_fee)
-    enrollment = "Rein User Enrollment\nUser: %s\nContact: %s\nMaster signing address: %s" \
-                 "\nDelegate signing address: %s\nWilling to mediate: %s%s" % \
-                 (user.name, user.contact, user.maddr, user.daddr, user.will_mediate, mediator_extras)
-    f = open(rein.enroll_filename, 'w')
-    f.write(enrollment)
-    f.close()
-    click.echo("\n%s\n" % enrollment)
-    done = False
-    while not done:
-        filename = click.prompt("File containing signed statement", type=str, default=rein.sig_enroll_filename)
-        if os.path.isfile(filename):
-            done = True
-    f = open(filename, 'r')
-    signed = f.read()
-    res = validate_enrollment(signed)
-    if res:
-        # insert signed document into documents table as type 'enrollment'
-        document = Document(rein, 'enrollment', signed, sig_verified=True)
-        rein.session.add(document)
-        rein.session.commit()
-    return res
 
 
 def strip_armor(sig, dash_space=False):

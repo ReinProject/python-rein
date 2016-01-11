@@ -29,7 +29,7 @@ class Bucket(Base):
         if bytes_free: self.bytes_free
         if expires: self.expires
 
-    
+
 def get_bucket_count(rein, url=None):
     if url:
         return rein.session.query(Bucket).filter(and_(Bucket.url == url, Bucket.identity == rein.user.id)).count()
