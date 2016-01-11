@@ -5,7 +5,7 @@ import os
 import click
 
 
-def create_signed_document(session, title, doc_type, fields, labels, defaults,
+def create_signed_document(rein, title, doc_type, fields, labels, defaults,
                            signature_address=False, signature_key=False):
     """
     Prompt for info, save to file, validate and store signed document.
@@ -57,6 +57,6 @@ def create_signed_document(session, title, doc_type, fields, labels, defaults,
         d = "-----END BITCOIN SIGNED MESSAGE-----"
         signed = "%s\n%s\n%s\n%s\n%s\n%s\n" % (b, display, c, signature_address, signature, d)
         document = Document(doc_type, signed, sig_verified=True)
-        session.add(document)
-        session.commit()
+        rein.session.add(document)
+        rein.session.commit()
     return validated

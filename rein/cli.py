@@ -74,7 +74,7 @@ def setup(multi):
     elif rein.session.query(Document).filter(Document.doc_type == 'enrollment').count() < \
             rein.session.query(User).count():
         click.echo('Continuing previously unfinished setup.')
-        rein.user = get_user(rein.session, rein.multi, False)
+        rein.user = get_user(rein, False)
         res = enroll(rein)
         if res['valid']:
             click.echo("Enrollment complete. Run 'rein request' to request free microhosting to sync to.")
@@ -117,11 +117,11 @@ def post(multi, identity):
     # finish this
     return
     log.info('got user and key for post')
-    res = create_signed_document(session, "Job", 'job_posting',
-                                 ['user', 'key', 'name', 'category', 'description'],
-                                 ['Job creator\'s name', 'Job creator\'s public key', 'Job name',
-                                  'Category', 'Description'], [user.name, key],
-                                 user.daddr, user.dkey)
+    res = create_signed_document(rein, "Job", 'job_posting',
+                                 fields=['user', 'key', 'name', 'category', 'description'],
+                                 labels=['Job creator\'s name', 'Job creator\'s public key', 'Job name',
+                                  'Category', 'Description'], defaults=[user.name, key],
+                                 signature_address=user.daddr, signature_key=user.dkey)
     log.info('posting signed') if res else log.error('posting failed')
 
 
@@ -137,11 +137,12 @@ def request(multi, identity, url):
     if multi:
         rein.set_multiuser()
 
+    user = get_user(rein, identity)
+
     if rein.has_no_account():
         click.echo("Please run setup.")
         return
 
-    user = get_user(rein, identity)
     click.echo("User: " + user.name)
     log.info('got user for request')
 
@@ -193,14 +194,20 @@ def sync(multi, identity):
     """
     Upload records to each registered server
     """
-    if not os.path.isfile(os.path.join(config_dir, db_filename)) or session.query(User).count() == 0:
+    log = rein.get_log()
+    if multi:
+        rein.set_multiuser()
+
+    user = get_user(rein, identity)
+
+    if rein.has_no_account():
         click.echo("Please run setup.")
         return
 
-    create_placements(engine)
+    click.echo("User: " + user.name)
+
+    create_placements(rein.engine)
     url = "http://localhost:5000/"
-    user = get_user(session, multi, identity)
-    # click.echo(identity)
     sel_url = url + 'nonce?address={0}'
     answer = requests.get(url=sel_url.format(user.maddr))
     data = answer.json()
@@ -208,7 +215,7 @@ def sync(multi, identity):
     log.info('server returned nonce %s' % nonce)
 
     check = []
-    documents = session.query(Document).filter(Document.identity == user.id).all()
+    documents = rein.session.query(Document).filter(Document.identity == user.id).all()
     for doc in documents:
         check.append(doc)
     if len(check) == 0:
@@ -219,12 +226,11 @@ def sync(multi, identity):
     upload = []
     verified = []
     for doc in check:
-        click.echo('doc in check')
         if len(doc.contents) > 8192:
             click.echo('Document is too big. 8192 bytes should be enough for anyone.')
             log.error("Document oversized %s" % doc.doc_hash)
         else:
-            placements = session.query(Placement).filter(and_(Placement.url == url, Placement.doc_id == doc.id)).all()
+            placements = rein.session.query(Placement).filter(and_(Placement.url == url, Placement.doc_id == doc.id)).all()
             if len(placements) == 0:
                 upload.append([doc, url])
             else:
@@ -251,19 +257,19 @@ def sync(multi, identity):
 
     failed = []
     succeeded = 0 
-    for doc, url in upload:   # 9%$#@^&%$&R^%*^$%854372095843 - should be placements!
-        placement = session.query(Placement).filter_by(url=url).filter_by(doc_id=doc.id).all()
-        if len(placement) == 0 and not doc.remote_key:
+    for doc, url in upload: 
+        placement = rein.session.query(Placement).filter_by(url=url).filter_by(doc_id=doc.id).all()
+        if len(placement) == 0:
             remote_key = ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits)
                                  for _ in range(32))
-            plc = Placement(doc.id, url, doc.remote_key)
-            session.add(plc)
-            session.commit()
+            plc = Placement(doc.id, url, remote_key)
+            rein.session.add(plc)
+            rein.session.commit()
         else:
             plc = placement[0]
             for p in placement[1:]:
-                session.delete(p)
-                session.commit()
+                rein.session.delete(p)
+                rein.session.commit()
 
         if len(doc.contents) > 8192:
             log.error("Document oversized %s" % doc.doc_hash)
@@ -290,7 +296,7 @@ def sync(multi, identity):
                 failed.append(doc)
             else:
                 plc.verified += 1
-                session.commit()
+                rein.session.commit()
                 log.info('upload succeeded doc=%s plc=%s url=%s' % (doc.id, plc.id, url))
                 click.echo('uploaded %s' % doc.doc_hash)
                 succeeded += 1

@@ -117,15 +117,16 @@ def import_account(rein):
 def identity_prompt(rein):
     names = ['Alice', 'Bob', 'Charlie', 'Dan']
     user_count = rein.session.query(User).count()
-    index = 1
+    index = 0
+    i = 0
     for name in names[0:user_count]:
-        click.echo('%s - %s' % (str(index), name))
+        click.echo('%s - %s' % (str(index + 1), name))
         index += 1
-    i = click.prompt('Please choose an identity', type=int)
+    #i = click.prompt('Please choose an identity', type=int)
     while i > user_count or i < 1:
         i = click.prompt('Please choose an identity', type=int)
-    return rein.session.query(User).filter(User.name == names[i - 1]).first()
-
+    rein.user = rein.session.query(User).filter(User.name == names[i - 1]).first()
+    return rein.user
 
 def get_user(rein, identity):
     if rein.multi and identity:
