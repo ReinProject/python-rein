@@ -4,7 +4,6 @@ import random
 import string
 import requests
 import hashlib
-import logging
 import click
 from datetime import datetime
 from subprocess import check_output
@@ -22,21 +21,8 @@ from lib.market import create_signed_document
 
 import lib.config as config
 
-log = logging.getLogger('python-rein')
-logging.basicConfig(filename="rein.log", filemode="w")
-log.setLevel(logging.INFO)
-log.info('starting python-rein')
-
-db_filename = 'local.db'
-
 rein = config.Config()
 
-rein.engine = create_engine("sqlite:///%s" % os.path.join(rein.config_dir, rein.db_filename))
-Base.metadata.bind = rein.engine
-DBSession = sessionmaker(bind=rein.engine)
-rein.session = DBSession()
-Base.metadata.create_all(rein.engine)
-log.info('database connected')
 
 @click.group()
 @click.option('--debug/--no-debug', default=False)
@@ -53,18 +39,21 @@ def setup(multi):
     """
     Setup or import an identity
     """
+    log = rein.get_log()
+    if multi:
+        rein.set_multiuser()
+    user = rein.user
     log.info('entering setup')
     if rein.has_no_account():
         click.echo("\nWelcome to Rein.\n"
                    "Do you want to import a backup or create a new account?\n\n"
                    "1 - Create new account\n2 - Import backup\n")
-        user = None
         choice = click.prompt("Choice", type=int, default=1)
         if choice == 1:
-            rein.user = create_account(engine, session)
+            user = create_account(rein)
             log.info('account created')
         elif choice == 2:
-            rein.user = import_account(engine, session)
+            user = import_account(rein)
             log.info('account imported')
         else:
             click.echo('Invalid choice')
@@ -105,11 +94,15 @@ def post(multi, identity):
     """
     Post a job.
     """
-    if not os.path.isfile(os.path.join(config_dir, db_filename)) or session.query(User).count() == 0:
+    log = rein.get_log()
+    if multi:
+        rein.set_multiuser()
+        
+    if rein.has_no_account():
         click.echo("Please run setup.")
         return
 
-    user = get_user(session, multi, identity)
+    user = get_user(rein, identity)
 
     key = pubkey(user.dkey)
     url = "http://localhost:5000/"
@@ -140,20 +133,25 @@ def request(multi, identity, url):
     """
     Request free microhosting space
     """
-    if not os.path.isfile(os.path.join(config_dir, db_filename)) or session.query(User).count() == 0:
+    log = rein.get_log()
+    if multi:
+        rein.set_multiuser()
+
+    if rein.has_no_account():
         click.echo("Please run setup.")
         return
 
-    user = get_user(session, multi, identity)
+    user = get_user(rein, identity)
+    click.echo("User: " + user.name)
     log.info('got user for request')
 
     if not url.endswith('/'):
         url = url + '/'
     if not url.startswith('http://') and not url.startswith('https://'):
         url = 'http://' + url
-    create_buckets(engine)
+    create_buckets(rein.engine)
 
-    if len(session.query(Bucket).filter(and_(Bucket.url == url, Bucket.identity == user.id)).all()) > 4:
+    if len(rein.session.query(Bucket).filter(and_(Bucket.url == url, Bucket.identity == user.id)).all()) > 4:
         click.echo("You already have enough (5) buckets from %s" % url)
         log.warning('too many buckets')
         return
@@ -179,12 +177,12 @@ def request(multi, identity, url):
         click.echo('The server returned an error: %s' % data['message'])
 
     for bucket in data['buckets']:
-        b = session.query(Bucket).filter_by(url=url).filter_by(date_created=bucket['created']).first()
+        b = rein.session.query(Bucket).filter_by(url=url).filter_by(date_created=bucket['created']).first()
         if b is None:
             b = Bucket(url, user.id, bucket['id'], bucket['bytes_free'],
                        datetime.strptime(bucket['created'], '%Y-%m-%d %H:%M:%S'))
-            session.add(b)
-            session.commit()
+            rein.session.add(b)
+            rein.session.commit()
         log.info('saved bucket created %s' % bucket['created'])
 
 

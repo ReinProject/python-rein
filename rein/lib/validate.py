@@ -17,7 +17,7 @@ def enroll(rein):
     enrollment = "Rein User Enrollment\nUser: %s\nContact: %s\nMaster signing address: %s" \
                  "\nDelegate signing address: %s\nWilling to mediate: %s%s" % \
                  (user.name, user.contact, user.maddr, user.daddr, user.will_mediate, mediator_extras)
-    f = open(config.enroll_filename, 'w')
+    f = open(rein.enroll_filename, 'w')
     f.write(enrollment)
     f.close()
     click.echo("\n%s\n" % enrollment)
@@ -32,8 +32,8 @@ def enroll(rein):
     if res:
         # insert signed document into documents table as type 'enrollment'
         document = Document(user.id, 'enrollment', signed, sig_verified=True)
-        session.add(document)
-        session.commit()
+        rein.session.add(document)
+        rein.session.commit()
     return res
 
 

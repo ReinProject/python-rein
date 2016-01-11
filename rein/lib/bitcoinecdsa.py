@@ -36,7 +36,7 @@ def pubkey(key):
 def privkey_to_address(privkey):
     try:
         key = CBitcoinSecret(privkey)
-        address = P2PKHBitcoinAddress.from_pubkey(key.pub)
+        address = str(P2PKHBitcoinAddress.from_pubkey(key.pub))
     except:
         return False
     return address

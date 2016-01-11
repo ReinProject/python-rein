@@ -47,10 +47,8 @@ def btc_privkey_prompt(name, addr=None):
     privkey = getpass.getpass(title)
     if addr:
         while privkey_to_address(privkey) != addr:
-            privkey = getpass.getpass("Doesn't match target address.\n" + title)
+            privkey = getpass.getpass("Not valid or corresponding to target address.\n" + title)
     else:
-        click.echo(privkey)
-        click.echo(privkey_to_address(privkey))
         while not privkey_to_address(privkey):
             privkey = getpass.getpass("Invalid private key.\n" + title)
     return privkey
@@ -62,11 +60,11 @@ def create_account(rein):
     contact = click.prompt("Email or BitMessage address", type=str)
     maddr = btc_addr_prompt("Master")
     daddr = btc_addr_prompt("Delegate")
-    dkey = btc_privkey_prompt("Delegate")
+    dkey = btc_privkey_prompt("Delegate", daddr)
     will_mediate = click.confirm("Willing to mediate:", default=False)
     mediation_fee = 1
     if will_mediate:
-        mediation_fee = click.prompt("Mediation fee (%)", default=1)
+        mediation_fee = click.prompt("Mediation fee (%)", default=1.0)
     new_identity = User(name, contact, maddr, daddr, dkey, will_mediate, mediation_fee)
     rein.session.add(new_identity)
     rein.session.commit()
@@ -88,12 +86,13 @@ def create_account(rein):
     else:
         click.echo("Backup file already exists. Please run with --backup to save "
                    "user details to file.")
-    return new_identity
+    rein.user = new_identity
+    return rein.user
 
 
-def import_account(engine, session):
-    Base.metadata.create_all(engine)
-    backup_filename = click.prompt("Enter backup file name", type=str, default=config.backup_filename)
+def import_account(rein):
+    Base.metadata.create_all(rein.engine)
+    backup_filename = click.prompt("Enter backup file name", type=str, default=rein.backup_filename)
     f = open(backup_filename, 'r')
     try:
         data = json.loads(f.read())
@@ -109,14 +108,15 @@ def import_account(engine, session):
                         data['dkey'],
                         data['will_mediate'],
                         data['mediation_fee'])
-    session.add(new_identity)
-    session.commit()
-    return new_identity
+    rein.session.add(new_identity)
+    rein.session.commit()
+    rein.user = new_identity
+    return rein.user
 
 
-def select_identity(session):
+def identity_prompt(rein):
     names = ['Alice', 'Bob', 'Charlie', 'Dan']
-    user_count = session.query(User).count()
+    user_count = rein.session.query(User).count()
     index = 1
     for name in names[0:user_count]:
         click.echo('%s - %s' % (str(index), name))
@@ -124,14 +124,14 @@ def select_identity(session):
     i = click.prompt('Please choose an identity', type=int)
     while i > user_count or i < 1:
         i = click.prompt('Please choose an identity', type=int)
-    return session.query(User).filter(User.name == names[i - 1]).first()
+    return rein.session.query(User).filter(User.name == names[i - 1]).first()
 
 
-def get_user(session, multi, identity):
-    if multi and identity:
-        user = session.query(User).filter(User.name == identity).first()
-    elif multi:
-        user = select_identity(session)
+def get_user(rein, identity):
+    if rein.multi and identity:
+        rein.user = rein.session.query(User).filter(User.name == identity).first()
+    elif rein.multi:
+        rein.user = identity_prompt(rein)
     else:
-        user = session.query(User).first()
-    return user
+        rein.user = rein.session.query(User).first()
+    return rein.user
