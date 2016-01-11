@@ -7,10 +7,9 @@ import click
 from datetime import datetime
 from subprocess import check_output
 
-from sqlalchemy import and_
-
-from lib.user import User, create_account, import_account, get_user
-from lib.bucket import Bucket, create_buckets
+from lib.ui import create_account, import_account
+from lib.user import User
+from lib.bucket import Bucket, get_bucket_count, create_buckets
 from lib.document import Document
 from lib.placement import Placement, create_placements
 from lib.validate import enroll, verify_sig
@@ -156,7 +155,7 @@ def request(multi, identity, url):
         url = 'http://' + url
     create_buckets(rein.engine)
 
-    if len(rein.session.query(Bucket).filter(and_(Bucket.url == url, Bucket.identity == user.id)).all()) > 4:
+    if get_bucket_count(rein, url) > 4:
         click.echo("You already have enough (5) buckets from %s" % url)
         log.warning('too many buckets')
         return
@@ -323,3 +322,13 @@ def upload():
             raise RuntimeError('Problem contacting server %s' % server)
 
         click.echo('%s - %s BTC' % (server, data['price']))
+
+
+def get_user(rein, identity):
+    if rein.multi and identity:
+        rein.user = rein.session.query(User).filter(User.name == identity).first()
+    elif rein.multi:
+        rein.user = identity_prompt(rein)
+    else:
+        rein.user = rein.session.query(User).first()
+    return rein.user

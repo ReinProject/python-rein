@@ -1,5 +1,6 @@
 from sqlalchemy import Column, Integer, String, DateTime
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import and_
 
 Base = declarative_base()
 
@@ -27,6 +28,13 @@ class Bucket(Base):
         if remote_id: self.remote_id
         if bytes_free: self.bytes_free
         if expires: self.expires
+
+    
+def get_bucket_count(rein, url=None):
+    if url:
+        return rein.session.query(Bucket).filter(and_(Bucket.url == url, Bucket.identity == rein.user.id)).count()
+    else:
+        return rein.session.query(Bucket).filter(Bucket.identity == rein.user.id).count()
 
 
 def create_buckets(engine):
