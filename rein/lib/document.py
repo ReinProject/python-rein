@@ -17,9 +17,9 @@ class Document(Base):
     source_key = Column(String(64), nullable=True)
     sig_verified = Column(Integer, default=False)
 
-    def __init__(self, identity, doc_type, contents, source_url='local',
+    def __init__(self, rein, doc_type, contents, source_url='local',
                  source_key=None, sig_verified=False):
-        self.identity = identity
+        self.identity = rein.user.id
         self.doc_type = doc_type  # enrollment, bid, offer, job, for_hire,
         self.doc_hash = hashlib.sha256(contents).hexdigest()
         self.contents = contents

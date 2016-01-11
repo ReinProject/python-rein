@@ -5,6 +5,19 @@ import os
 import click
 
 
+def mediator_prompt(rein, eligible_mediators):
+    i = 0
+    for m in eligible_mediators:
+        click.echo('%s - %s %s' % (str(i + 1), m['User'], m['Mediation fee']))
+        i += 1
+    #i = click.prompt('Please choose an identity', type=int)
+    choice = 0
+    while choice > len(eligible_mediators) or choice < 1:
+        choice = click.prompt('Please choose a mediator', type=int)
+    index = choice - 1
+    return eligible_mediators[index]
+
+
 def create_signed_document(rein, title, doc_type, fields, labels, defaults,
                            signature_address=False, signature_key=False):
     """
@@ -56,7 +69,7 @@ def create_signed_document(rein, title, doc_type, fields, labels, defaults,
         c = "-----BEGIN SIGNATURE-----"
         d = "-----END BITCOIN SIGNED MESSAGE-----"
         signed = "%s\n%s\n%s\n%s\n%s\n%s\n" % (b, display, c, signature_address, signature, d)
-        document = Document(doc_type, signed, sig_verified=True)
+        document = Document(rein, doc_type, signed, sig_verified=True)
         rein.session.add(document)
         rein.session.commit()
     return validated

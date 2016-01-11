@@ -31,7 +31,7 @@ def enroll(rein):
     res = validate_enrollment(signed)
     if res:
         # insert signed document into documents table as type 'enrollment'
-        document = Document(user.id, 'enrollment', signed, sig_verified=True)
+        document = Document(rein, 'enrollment', signed, sig_verified=True)
         rein.session.add(document)
         rein.session.commit()
     return res

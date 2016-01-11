@@ -17,7 +17,7 @@ from lib.document import Document
 from lib.placement import Placement, create_placements
 from lib.validate import enroll, verify_sig
 from lib.bitcoinecdsa import sign, pubkey
-from lib.market import create_signed_document
+from lib.market import mediator_prompt, create_signed_document
 
 import lib.config as config
 
@@ -112,16 +112,23 @@ def post(multi, identity):
     data = answer.json()
     if len(data['mediators']) == 0:
         click.echo('None found')
+    eligible_mediators = []
     for m in data['mediators']:
-        click.echo(verify_sig(m))
-    # finish this
-    return
+        data = verify_sig(m)
+        if data['valid']:
+            eligible_mediators.append(data['info'])
+
+    mediator = mediator_prompt(rein, eligible_mediators)
+    click.echo("Chosen mediator: " + str(mediator))
+
     log.info('got user and key for post')
     res = create_signed_document(rein, "Job", 'job_posting',
                                  fields=['user', 'key', 'name', 'category', 'description'],
                                  labels=['Job creator\'s name', 'Job creator\'s public key', 'Job name',
                                   'Category', 'Description'], defaults=[user.name, key],
                                  signature_address=user.daddr, signature_key=user.dkey)
+    if res:
+        click.echo("Posting created. Run 'rein sync' to push to available servers.")
     log.info('posting signed') if res else log.error('posting failed')
 
 
@@ -248,9 +255,7 @@ def sync(multi, identity):
                         value = value.encode('utf8')
                         remote_hash = hashlib.sha256(value).hexdigest()
                         if remote_hash != doc.doc_hash:
-                            click.echo("doc_hash " + doc.doc_hash)
                             log.error("%s %s incorrect hash %s != %s " % (url, doc.id, remote_hash, doc.doc_hash))
-                            click.echo("hash mismatch")
                             upload.append([doc, url])
                         else:
                             verified.append(doc)
@@ -286,10 +291,8 @@ def sync(multi, identity):
                     "signature_address": user.daddr,
                     "owner": user.maddr}
             body = json.dumps(data)
-            click.echo(body)
             headers = {'Content-Type': 'application/json'}
             answer = requests.post(url='{0}put'.format(url), headers=headers, data=body)
-            click.echo(answer.text)
             res = answer.json()
             if 'result' not in res or res['result'] != 'success':
                 log.error('upload failed doc=%s plc=%s url=%s' % (doc.id, plc.id, url))
