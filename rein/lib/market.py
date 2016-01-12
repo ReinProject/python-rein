@@ -17,6 +17,21 @@ def mediator_prompt(rein, eligible_mediators):
     return eligible_mediators[index]
 
 
+def job_prompt(rein, jobs):
+    i = 0
+    for j in jobs:
+        click.echo(j)
+        click.echo('%s - %s - %s' % (str(i + 1), j["Job creator's name"], j['Description']))
+        i += 1
+    choice = 0
+    while (choice > len(jobs) or choice < 1) and choice != 'q':
+        choice = click.prompt('Choose a job (q to quit)', type=str)
+    if choice == 'q':
+        return False
+    index = choice - 1
+    return jobs[index]
+
+
 def create_signed_document(rein, title, doc_type, fields, labels, defaults,
                            signature_address=False, signature_key=False):
     """
@@ -41,6 +56,7 @@ def create_signed_document(rein, title, doc_type, fields, labels, defaults,
     display = "Rein %s\n" % title
     for key in data.keys():
         display = display + display_labels[key] + ": " + data[key] + "\n"
+    display = display[:-1]
 
     validated = False
     if signature_key is False:  # signing will happen outside app
@@ -63,11 +79,12 @@ def create_signed_document(rein, title, doc_type, fields, labels, defaults,
         validated = verify(signature_address, display, signature)
 
     if validated:
-        # insert signed document into documents table as type 'enrollment'
+        # insert signed document into documents table
         b = "-----BEGIN BITCOIN SIGNED MESSAGE-----"
         c = "-----BEGIN SIGNATURE-----"
         d = "-----END BITCOIN SIGNED MESSAGE-----"
-        signed = "%s\n%s\n%s\n%s\n%s\n%s\n" % (b, display, c, signature_address, signature, d)
+        signed = "%s\n%s\n%s\n%s\n%s\n%s" % (b, display, c, signature_address, signature, d)
+        click.echo(signed)
         document = Document(rein, doc_type, signed, sig_verified=True)
         rein.session.add(document)
         rein.session.commit()
