@@ -110,25 +110,28 @@ def bid(multi, identity):
     if len(data['jobs']) == 0:
         click.echo('None found')
     jobs = []
+    fails = 0
     for m in data['jobs']:
-        click.echo(m)
         data = verify_sig(m)
         if data['valid']:
             jobs.append(data['info'])
         else:
-            click.echo('verify_sig failed')
+            fails += 1
+    log.info('spammy fails = %d' % fails)
 
     job = job_prompt(rein, jobs)
     if not job:
         return
-    click.echo("Chosen job: " + str(job))
 
     log.info('got job for bid')
     res = create_signed_document(rein, "Bid", 'bid',
-                                 fields=['user', 'key', 'name', 'amount'],
-                                 labels=['Worker\'s name', 'Worker\'s public key', 'Bid name',
-                                 'Bid amount (BTC)'], defaults=[user.name, key],
-                                 signature_address=user.daddr, signature_key=user.dkey)
+                                 fields=['user', 'key', 'job_creator', 'job_creator_key', 'description', 'amount'],
+                                 labels=['Worker\'s name', 'Worker\'s public key',
+                                         'Job creator\'s name', 'Job creator\'s public key',
+                                         'Bid description', 'Bid amount (BTC)'],
+                                 defaults=[user.name, key, job['Job creator\'s name'], job['Job creator\'s public key']],
+                                 signature_address=user.daddr, 
+                                 signature_key=user.dkey)
     if res:
         click.echo("Bid created. Run 'rein sync' to push to available servers.")
     log.info('bid signed') if res else log.error('bid failed')

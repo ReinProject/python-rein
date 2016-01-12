@@ -8,28 +8,33 @@ import click
 def mediator_prompt(rein, eligible_mediators):
     i = 0
     for m in eligible_mediators:
-        click.echo('%s - %s %s' % (str(i + 1), m['User'], m['Mediation fee']))
+        click.echo('%s - %s %s' % (str(i), m['User'], m['Mediation fee']))
         i += 1
     choice = 0
-    while choice > len(eligible_mediators) or choice < 1:
+    while choice > len(eligible_mediators) - 1 or choice < 0:
         choice = click.prompt('Please choose a mediator', type=int)
-    index = choice - 1
-    return eligible_mediators[index]
+    return eligible_mediators[choice]
 
 
 def job_prompt(rein, jobs):
     i = 0
     for j in jobs:
-        click.echo(j)
-        click.echo('%s - %s - %s' % (str(i + 1), j["Job creator's name"], j['Description']))
+        click.echo('%s - %s - %s' % (str(i), j["Job creator's name"], j['Description'][0:60]))
         i += 1
-    choice = 0
-    while (choice > len(jobs) or choice < 1) and choice != 'q':
+    choice = -1
+    while(choice >= len(jobs) or choice < 0) and choice != 'q':
         choice = click.prompt('Choose a job (q to quit)', type=str)
+        try:
+            choice = int(choice)
+        except:
+            choice = choice
     if choice == 'q':
         return False
-    index = choice - 1
-    return jobs[index]
+    job = jobs[choice]
+    click.echo('You have chosen a Job posted by %s.\nFull description:\n\n%s\n\nPlease pay attention '
+               'to each requirement as you create your bid and provide a time frame to '
+               'complete the job.\n' % (job['Job creator\'s name'], job['Description']))
+    return job
 
 
 def create_signed_document(rein, title, doc_type, fields, labels, defaults,
@@ -84,7 +89,7 @@ def create_signed_document(rein, title, doc_type, fields, labels, defaults,
         c = "-----BEGIN SIGNATURE-----"
         d = "-----END BITCOIN SIGNED MESSAGE-----"
         signed = "%s\n%s\n%s\n%s\n%s\n%s" % (b, display, c, signature_address, signature, d)
-        click.echo(signed)
+        click.echo('\n' + signed + '\n')
         document = Document(rein, doc_type, signed, sig_verified=True)
         rein.session.add(document)
         rein.session.commit()
