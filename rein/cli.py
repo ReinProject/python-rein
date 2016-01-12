@@ -9,14 +9,14 @@ from subprocess import check_output
 
 from sqlalchemy import and_
 
-from lib.ui import create_account, import_account, identity_prompt
+from lib.ui import create_account, import_account, enroll, identity_prompt
 from lib.user import User
 from lib.bucket import Bucket, get_bucket_count, create_buckets
 from lib.document import Document
 from lib.placement import Placement, create_placements
-from lib.validate import enroll, verify_sig
+from lib.validate import verify_sig
 from lib.bitcoinecdsa import sign, pubkey
-from lib.market import mediator_prompt, create_signed_document
+from lib.market import mediator_prompt, job_prompt, create_signed_document
 import lib.config as config
 
 rein = config.Config()
@@ -82,6 +82,56 @@ def setup(multi):
     else:
         click.echo("Identity already setup.")
     log.info('exiting setup')
+
+
+@cli.command()
+@click.option('--multi/--no-multi', default=False, help="prompt for identity to use")
+@click.option('--identity', type=click.Choice(['Alice', 'Bob', 'Charlie', 'Dan']), default=None, help="identity to use")
+def bid(multi, identity):
+    """
+    Bid on a job.
+    """
+    log = rein.get_log()
+    if multi:
+        rein.set_multiuser()
+
+    if rein.has_no_account():
+        click.echo("Please run setup.")
+        return
+
+    user = get_user(rein, identity)
+
+    key = pubkey(user.dkey)
+    url = "http://localhost:5000/"
+    click.echo("Querying %s for jobs..." % url)
+    sel_url = "{0}query?owner={1}&query=jobs"
+    answer = requests.get(url=sel_url.format(url, user.maddr))
+    data = answer.json()
+    if len(data['jobs']) == 0:
+        click.echo('None found')
+    jobs = []
+    for m in data['jobs']:
+        click.echo(m)
+        data = verify_sig(m)
+        if data['valid']:
+            jobs.append(data['info'])
+        else:
+            click.echo('verify_sig failed')
+
+    job = job_prompt(rein, jobs)
+    if not job:
+        return
+    click.echo("Chosen job: " + str(job))
+
+    log.info('got job for bid')
+    res = create_signed_document(rein, "Bid", 'bid',
+                                 fields=['user', 'key', 'name', 'amount'],
+                                 labels=['Worker\'s name', 'Worker\'s public key', 'Bid name',
+                                 'Bid amount (BTC)'], defaults=[user.name, key],
+                                 signature_address=user.daddr, signature_key=user.dkey)
+    if res:
+        click.echo("Bid created. Run 'rein sync' to push to available servers.")
+    log.info('bid signed') if res else log.error('bid failed')
 
 
 @cli.command()
