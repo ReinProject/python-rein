@@ -172,11 +172,15 @@ def post(multi, identity):
     click.echo("Chosen mediator: " + str(mediator))
 
     log.info('got user and key for post')
+    job_guid = ''.join(random.SystemRandom().choice(string.ascii_lowercase + string.digits) for _ in range(20))
     res = create_signed_document(rein, "Job", 'job_posting',
                                  fields=['user', 'key', 'name', 'category', 'description'],
                                  labels=['Job creator\'s name', 'Job creator\'s public key', 'Job name',
-                                  'Category', 'Description'], defaults=[user.name, key],
-                                 signature_address=user.daddr, signature_key=user.dkey)
+                                  'Category', 'Description'], 
+                                 defaults=[user.name, key],
+                                 signature_address=user.daddr, 
+                                 signature_key=user.dkey,
+                                 guid=job_guid)
     if res:
         click.echo("Posting created. Run 'rein sync' to push to available servers.")
     log.info('posting signed') if res else log.error('posting failed')

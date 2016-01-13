@@ -10,9 +10,9 @@ def mediator_prompt(rein, eligible_mediators):
     for m in eligible_mediators:
         click.echo('%s - %s %s' % (str(i), m['User'], m['Mediation fee']))
         i += 1
-    choice = 0
-    while choice > len(eligible_mediators) - 1 or choice < 0:
-        choice = click.prompt('Please choose a mediator', type=int)
+    choice = -1
+    while choice >= len(eligible_mediators) or choice < 0:
+        choice = click.prompt('Choose a mediator', type=int)
     return eligible_mediators[choice]
 
 
@@ -38,7 +38,7 @@ def job_prompt(rein, jobs):
 
 
 def create_signed_document(rein, title, doc_type, fields, labels, defaults,
-                           signature_address=False, signature_key=False):
+                           signature_address=None, signature_key=None, guid=None):
     """
     Prompt for info, save to file, validate and store signed document.
     """
@@ -61,10 +61,12 @@ def create_signed_document(rein, title, doc_type, fields, labels, defaults,
     display = "Rein %s\n" % title
     for key in data.keys():
         display = display + display_labels[key] + ": " + data[key] + "\n"
+    if guid:
+        display = display + "Job ID: " + guid + "\n"
     display = display[:-1]
 
     validated = False
-    if signature_key is False:  # signing will happen outside app
+    if signature_key is None:  # signing will happen outside app
         f = open(doc_type + '.txt', 'w')
         f.write(display)
         f.close()
