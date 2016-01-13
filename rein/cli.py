@@ -125,12 +125,16 @@ def bid(multi, identity):
 
     log.info('got job for bid')
     res = create_signed_document(rein, "Bid", 'bid',
-                                 fields=['user', 'key', 'job_creator', 'job_creator_key', 'description', 'amount'],
-                                 labels=['Worker\'s name', 'Worker\'s public key',
-                                         'Job creator\'s name', 'Job creator\'s public key',
-                                         'Bid description', 'Bid amount (BTC)'],
-                                 defaults=[user.name, key, job['Job creator\'s name'], job['Job creator\'s public key']],
-                                 signature_address=user.daddr, 
+                                 fields=['user', 'key', 'job_id', 'job_creator', 'job_creator_key', 'description', 'amount'],
+                                 labels=['Worker\'s name',
+                                         'Worker\'s public key',
+                                         'Job ID',
+                                         'Job creator\'s name',
+                                         'Job creator\'s public key',
+                                         'Bid description',
+                                         'Bid amount (BTC)'],
+                                 defaults=[user.name, key, job['Job ID'], job['Job creator\'s name'], job['Job creator\'s public key']],
+                                 signature_address=user.daddr,
                                  signature_key=user.dkey)
     if res:
         click.echo("Bid created. Run 'rein sync' to push to available servers.")
