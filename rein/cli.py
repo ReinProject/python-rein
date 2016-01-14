@@ -16,8 +16,10 @@ from lib.document import Document
 from lib.placement import Placement, create_placements
 from lib.validate import verify_sig
 from lib.bitcoinecdsa import sign, pubkey
-from lib.market import mediator_prompt, job_prompt, create_signed_document
+from lib.market import mediator_prompt, job_prompt, bid_prompt, create_signed_document, build_document, sign_and_store_document
 import lib.config as config
+
+import lib.models
 
 rein = config.Config()
 
@@ -41,7 +43,7 @@ def setup(multi):
     if multi:
         rein.set_multiuser()
     log.info('entering setup')
-    if rein.has_no_account():
+    if multi or rein.has_no_account():
         click.echo("\nWelcome to Rein.\n"
                    "Do you want to import a backup or create a new account?\n\n"
                    "1 - Create new account\n2 - Import backup\n")
@@ -131,7 +133,7 @@ def bid(multi, identity):
                                          'Job ID',
                                          'Job creator\'s name',
                                          'Job creator\'s public key',
-                                         'Bid description',
+                                         'Description',
                                          'Bid amount (BTC)'],
                                  defaults=[user.name, key, job['Job ID'], job['Job creator\'s name'], job['Job creator\'s public key']],
                                  signature_address=user.daddr,
@@ -139,6 +141,70 @@ def bid(multi, identity):
     if res:
         click.echo("Bid created. Run 'rein sync' to push to available servers.")
     log.info('bid signed') if res else log.error('bid failed')
+
+
+
+@cli.command()
+@click.option('--multi/--no-multi', default=False, help="prompt for identity to use")
+@click.option('--identity', type=click.Choice(['Alice', 'Bob', 'Charlie', 'Dan']), default=None, help="identity to use")
+def offer(multi, identity):
+    """
+    Offer - award a bid.
+    """
+    log = rein.get_log()
+    if multi:
+        rein.set_multiuser()
+
+    if rein.has_no_account():
+        click.echo("Please run setup.")
+        return
+
+    user = get_user(rein, identity)
+
+    key = pubkey(user.dkey)
+    url = "http://localhost:5000/"
+    click.echo("Querying %s for bids on your jobs..." % url)
+    sel_url = "{0}query?owner={1}&delegate={2}&query=bids"
+    answer = requests.get(url=sel_url.format(url, user.maddr, user.daddr))
+    data = answer.json()
+    if len(data['bids']) == 0:
+        click.echo('None found')
+    bids = []
+    fails = 0
+    for m in data['bids']:
+        data = verify_sig(m)
+        if data['valid']:
+            bids.append(data['info'])
+        else:
+            fails += 1
+    log.info('spammy fails = %d' % fails)
+
+    bid = bid_prompt(rein, bids)
+    if not bid:
+        click.echo('No bids found')
+        return
+
+    log.info('got bid to offer')
+    document = build_document('Offer',  
+                              fields=['user', 'key',
+                                      'worker', 'worker_key',
+                                      'mediator', 'mediator_key',
+                                      'mediator_escrow_address', 'mediator_escrow_redeem',
+                                      'primary_escrow_address', 'primary_escrow_redeem',
+                                      'description', 'amount'],
+                              labels=['Job creator\'s name', 'Job creator\'s public key',
+                                      'Worker\'s name', 'Worker\'s public key',
+                                      'Mediator\'s name', 'Mediator\'s public key',
+                                      'Mediator escrow address', 'Mediator escrow redeem script',
+                                      'Primary escrow address', 'Primary escrow redeem script',
+                                      'Description', 'Bid amount (BTC)'],
+                              defaults=[user.name, key,
+                                        bid['Worker\'s name'], bid['Worker\'s public key'],
+                                        bid['Job creator\'s name'], bid['Job creator\'s public key']], guid=bid['Job ID'])
+    res = sign_and_store_document(rein, 'offer', document, user.daddr, user.dkey)
+    if res:
+        click.echo("Offer created. Run 'rein sync' to push to available servers.")
+    log.info('offer signed') if res else log.error('offer failed')
 
 
 @cli.command()
@@ -178,11 +244,13 @@ def post(multi, identity):
     log.info('got user and key for post')
     job_guid = ''.join(random.SystemRandom().choice(string.ascii_lowercase + string.digits) for _ in range(20))
     res = create_signed_document(rein, "Job", 'job_posting',
-                                 fields=['user', 'key', 'name', 'category', 'description'],
-                                 labels=['Job creator\'s name', 'Job creator\'s public key', 'Job name',
-                                  'Category', 'Description'], 
-                                 defaults=[user.name, key],
-                                 signature_address=user.daddr, 
+                                 fields=['user', 'key', 'mediator', 'mediator_key', 'name', 'category', 'description'],
+                                 labels=['Job creator\'s name', 'Job creator\'s public key', # TODO: add contact
+                                         'Mediator\'s name', 'Mediator\'s public key',
+                                         'Job name', 'Category', 'Description'],
+                                 defaults=[user.name, key,
+                                           mediator['User'], mediator['Mediator pubkey']],
+                                 signature_address=user.daddr,
                                  signature_key=user.dkey,
                                  guid=job_guid)
     if res:
