@@ -127,15 +127,16 @@ def bid(multi, identity):
 
     log.info('got job for bid')
     res = create_signed_document(rein, "Bid", 'bid',
-                                 fields=['user', 'key', 'job_id', 'job_creator', 'job_creator_key', 'description', 'amount'],
+                                 fields=['user', 'key', 'job_name', 'job_id', 'job_creator', 'job_creator_key', 'description', 'amount'],
                                  labels=['Worker\'s name',
                                          'Worker\'s public key',
+                                         'Job name',
                                          'Job ID',
                                          'Job creator\'s name',
                                          'Job creator\'s public key',
                                          'Description',
                                          'Bid amount (BTC)'],
-                                 defaults=[user.name, key, job['Job ID'], job['Job creator\'s name'], job['Job creator\'s public key']],
+                                 defaults=[user.name, key, job['Job name'], job['Job ID'], job['Job creator\'s name'], job['Job creator\'s public key']],
                                  signature_address=user.daddr,
                                  signature_key=user.dkey)
     if res:
@@ -165,7 +166,6 @@ def deliver(multi, identity):
     click.echo("Querying %s for in-process jobs..." % url)
     sel_url = "{0}query?owner={1}&query=in-process&worker={2}"
     answer = requests.get(url=sel_url.format(url, user.maddr, key))
-    click.echo(answer.text)
     results = answer.json()['in-process']
     if len(results) == 0:
         click.echo('None found')
@@ -173,7 +173,9 @@ def deliver(multi, identity):
     fails = 0
     for m in results:
         data = verify_sig(m)
-        if data['valid']:
+        #click.echo(data['info'].keys())
+        headings = data['info'].keys()
+        if data['valid'] and (u'Primary escrow redeem script' in headings):
             valid_results.append(data['info'])
         else:
             fails += 1
@@ -185,14 +187,12 @@ def deliver(multi, identity):
 
     log.info('got offer for delivery')
     res = create_signed_document(rein, "Delivery", 'delivery',
-                                 fields=['user', 'key', 'job_id', 'job_creator', 'job_creator_key', 'description', 'amount'],
-                                 labels=['Job name',
-                                         'Job ID',
+                                 fields=['job_id', 'primary_redeem_script', 'mediator_redeem_script', 'deliverables'],
+                                 labels=['Job ID',
                                          'Primary escrow redeem script',
-                                         'Mediator escrow redeem script'
+                                         'Mediator escrow redeem script',
                                          'Deliverables'],
-                                 defaults=[doc['Job name'],
-                                           doc['Job ID'], 
+                                 defaults=[doc['Job ID'], 
                                            doc['Primary escrow redeem script'],
                                            doc['Mediator escrow redeem script']],
                                  signature_address=user.daddr,
@@ -240,7 +240,7 @@ def offer(multi, identity):
 
     bid = bid_prompt(rein, bids)
     if not bid:
-        click.echo('No bids found')
+        click.echo('None chosen')
         return
 
     log.info('got bid to offer')
@@ -251,13 +251,13 @@ def offer(multi, identity):
                                       'mediator_escrow_address', 'mediator_escrow_redeem',
                                       'primary_escrow_address', 'primary_escrow_redeem',
                                       'description', 'amount'],
-                              labels=['Job creator\'s name', 'Job creator\'s public key',
+                              labels=['Job name', 'Job creator\'s name', 'Job creator\'s public key',
                                       'Worker\'s name', 'Worker\'s public key',
                                       'Mediator\'s name', 'Mediator\'s public key',
                                       'Mediator escrow address', 'Mediator escrow redeem script',
                                       'Primary escrow address', 'Primary escrow redeem script',
                                       'Description', 'Bid amount (BTC)'],
-                              defaults=[user.name, key,
+                              defaults=[bid['Job name'], user.name, key,
                                         bid['Worker\'s name'], bid['Worker\'s public key'],
                                         bid['Job creator\'s name'], bid['Job creator\'s public key']], guid=bid['Job ID'])
     res = sign_and_store_document(rein, 'offer', document, user.daddr, user.dkey)
