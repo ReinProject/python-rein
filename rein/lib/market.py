@@ -69,6 +69,30 @@ def job_prompt(rein, jobs):
     return job
 
 
+def delivery_prompt(rein, choices, detail='Description'):
+    i = 0
+    for c in choices:
+        trimmed_detail = c[detail][0:59]
+        if len(trimmed_detail) == 60:
+            trimmed_detail += '...'
+        click.echo('%s - %s - %s - %s' % (str(i), c["Job name"], c['Bid amount (BTC)'], trimmed_detail))
+        i += 1
+    choice = -1
+    while(choice >= len(choices) or choice < 0) and choice != 'q':
+        choice = click.prompt('Choose a job (q to quit)', type=str)
+        try:
+            choice = int(choice)
+        except:
+            choice = choice
+    if choice == 'q':
+        return False
+    chosen = choices[choice]
+    click.echo('You have chosen to post deliverables for %s created by %s. \n\nDescription: %s\n\nPlease review carefully before posting. '
+               'In a dispute mediators are advised to consider it above other evidence.\n' % 
+               (chosen['Job name'], chosen['Job creator\'s name'], chosen['Description']))
+    return chosen
+
+
 def build_document(title, fields, labels, defaults, guid=None):
     """
     Prompt for info and build a document with it.

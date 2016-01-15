@@ -16,7 +16,7 @@ from lib.document import Document
 from lib.placement import Placement, create_placements
 from lib.validate import verify_sig
 from lib.bitcoinecdsa import sign, pubkey
-from lib.market import mediator_prompt, job_prompt, bid_prompt, create_signed_document, build_document, sign_and_store_document
+from lib.market import mediator_prompt, job_prompt, bid_prompt, delivery_prompt, create_signed_document, build_document, sign_and_store_document
 import lib.config as config
 
 import lib.models
@@ -141,6 +141,65 @@ def bid(multi, identity):
     if res:
         click.echo("Bid created. Run 'rein sync' to push to available servers.")
     log.info('bid signed') if res else log.error('bid failed')
+
+
+@cli.command()
+@click.option('--multi/--no-multi', default=False, help="prompt for identity to use")
+@click.option('--identity', type=click.Choice(['Alice', 'Bob', 'Charlie', 'Dan']), default=None, help="identity to use")
+def deliver(multi, identity):
+    """
+    Deliver on a job.
+    """
+    log = rein.get_log()
+    if multi:
+        rein.set_multiuser()
+
+    if rein.has_no_account():
+        click.echo("Please run setup.")
+        return
+
+    user = get_user(rein, identity)
+
+    key = pubkey(user.dkey)
+    url = "http://localhost:5000/"
+    click.echo("Querying %s for in-process jobs..." % url)
+    sel_url = "{0}query?owner={1}&query=in-process&worker={2}"
+    answer = requests.get(url=sel_url.format(url, user.maddr, key))
+    click.echo(answer.text)
+    results = answer.json()['in-process']
+    if len(results) == 0:
+        click.echo('None found')
+    valid_results = []
+    fails = 0
+    for m in results:
+        data = verify_sig(m)
+        if data['valid']:
+            valid_results.append(data['info'])
+        else:
+            fails += 1
+    log.info('spammy fails = %d' % fails)
+
+    doc = delivery_prompt(rein, valid_results)
+    if not doc:
+        return
+
+    log.info('got offer for delivery')
+    res = create_signed_document(rein, "Delivery", 'delivery',
+                                 fields=['user', 'key', 'job_id', 'job_creator', 'job_creator_key', 'description', 'amount'],
+                                 labels=['Job name',
+                                         'Job ID',
+                                         'Primary escrow redeem script',
+                                         'Mediator escrow redeem script'
+                                         'Deliverables'],
+                                 defaults=[doc['Job name'],
+                                           doc['Job ID'], 
+                                           doc['Primary escrow redeem script'],
+                                           doc['Mediator escrow redeem script']],
+                                 signature_address=user.daddr,
+                                 signature_key=user.dkey)
+    if res:
+        click.echo("Delivery created. Run 'rein sync' to push to available servers.")
+    log.info('delivery signed') if res else log.error('delivery failed')
 
 
 
