@@ -18,7 +18,7 @@ from lib.placement import Placement, create_placements
 from lib.validate import verify_sig
 from lib.bitcoinecdsa import sign, pubkey
 from lib.market import mediator_prompt, accept_prompt, job_prompt, bid_prompt, delivery_prompt,\
-        creatordispute_prompt, create_signed_document, build_document, sign_and_store_document
+        creatordispute_prompt, build_document, sign_and_store_document
 import lib.config as config
 
 import lib.models
@@ -128,19 +128,19 @@ def bid(multi, identity):
         return
 
     log.info('got job for bid')
-    res = create_signed_document(rein, "Bid", 'bid',
-                                 fields=['user', 'key', 'job_name', 'job_id', 'job_creator', 'job_creator_key', 'description', 'amount'],
-                                 labels=['Worker\'s name',
-                                         'Worker\'s public key',
-                                         'Job name',
-                                         'Job ID',
-                                         'Job creator\'s name',
-                                         'Job creator\'s public key',
-                                         'Description',
-                                         'Bid amount (BTC)'],
-                                 defaults=[user.name, key, job['Job name'], job['Job ID'], job['Job creator\'s name'], job['Job creator\'s public key']],
-                                 signature_address=user.daddr,
-                                 signature_key=user.dkey)
+    document = build_document('Bid',
+                              fields=['user', 'key', 'job_name', 'job_id', 'job_creator', 'job_creator_key', 'description', 'amount'],
+                              labels=['Worker\'s name',
+                                      'Worker\'s public key',
+                                      'Job name',
+                                      'Job ID',
+                                      'Job creator\'s name',
+                                      'Job creator\'s public key',
+                                      'Description',
+                                      'Bid amount (BTC)'],
+                              defaults=[user.name, key, job['Job name'], job['Job ID'], job['Job creator\'s name'], job['Job creator\'s public key']]
+                              )
+    res = sign_and_store_document(rein, 'bid', document, user.daddr, user.dkey)
     if res:
         click.echo("Bid created. Run 'rein sync' to push to available servers.")
     log.info('bid signed') if res else log.error('bid failed')
@@ -188,17 +188,17 @@ def deliver(multi, identity):
         return
 
     log.info('got offer for delivery')
-    res = create_signed_document(rein, "Delivery", 'delivery',
-                                 fields=['job_id', 'primary_redeem_script', 'mediator_redeem_script', 'deliverables'],
-                                 labels=['Job ID',
-                                         'Primary escrow redeem script',
-                                         'Mediator escrow redeem script',
-                                         'Deliverables'],
-                                 defaults=[doc['Job ID'], 
-                                           doc['Primary escrow redeem script'],
-                                           doc['Mediator escrow redeem script']],
-                                 signature_address=user.daddr,
-                                 signature_key=user.dkey)
+    document = build_document('Delivery',
+                              fields=['job_id', 'primary_redeem_script', 'mediator_redeem_script', 'deliverables'],
+                              labels=['Job ID',
+                                      'Primary escrow redeem script',
+                                      'Mediator escrow redeem script',
+                                      'Deliverables'],
+                              defaults=[doc['Job ID'],
+                                        doc['Primary escrow redeem script'],
+                                        doc['Mediator escrow redeem script']]
+                              )
+    res = sign_and_store_document(rein, 'delivery', document, user.daddr, user.dkey)
     if res:
         click.echo("Delivery created. Run 'rein sync' to push to available servers.")
     log.info('delivery signed') if res else log.error('delivery failed')
@@ -258,20 +258,19 @@ def accept(multi, identity):
         return
 
     log.info('got delivery for accept')
-    res = create_signed_document(rein, "Accept Delivery", 'accept',
-                                 fields=['job_id', 'primary_redeem_script', 'mediator_redeem_script',
-                                         'primary_payment', 'mediator_payment'],
-                                 labels=['Job ID',
-                                         'Primary escrow redeem script',
-                                         'Mediator escrow redeem script',
-                                         'Signed primary escrow payment',
-                                         'Signed mediator escrow payment',
-                                         ],
-                                 defaults=[doc['Job ID'], 
-                                           doc['Primary escrow redeem script'],
-                                           doc['Mediator escrow redeem script']],
-                                 signature_address=user.daddr,
-                                 signature_key=user.dkey)
+    document = build_document('Accept Delivery',
+                              fields=['job_id', 'primary_redeem_script', 'mediator_redeem_script',
+                                      'primary_payment', 'mediator_payment'],
+                              labels=['Job ID',
+                                      'Primary escrow redeem script',
+                                      'Mediator escrow redeem script',
+                                      'Signed primary escrow payment',
+                                      'Signed mediator escrow payment'],
+                              defaults=[doc['Job ID'],
+                                        doc['Primary escrow redeem script'],
+                                        doc['Mediator escrow redeem script']],
+                              )
+    res = sign_and_store_document(rein, 'accept', document, user.daddr, user.dkey)
     if res:
         click.echo("Accepted delivery. Run 'rein sync' to push to available servers.")
     log.info('accept signed') if res else log.error('accept failed')
@@ -331,21 +330,21 @@ def creatordispute(multi, identity):
         return
 
     log.info('got delivery for dispute')
-    res = create_signed_document(rein, "Dispute Delivery", 'creatordispute',
-                                 fields=['job_id', 'primary_redeem_script', 'mediator_redeem_script',
-                                         'detail' ,'primary_payment', 'mediator_payment'],
-                                 labels=['Job ID',
-                                         'Primary escrow redeem script',
-                                         'Mediator escrow redeem script',
-                                         'Dispute detail',
-                                         'Signed primary escrow payment',
-                                         'Signed mediator escrow payment',
-                                         ],
-                                 defaults=[doc['Job ID'], 
-                                           doc['Primary escrow redeem script'],
-                                           doc['Mediator escrow redeem script']],
-                                 signature_address=user.daddr,
-                                 signature_key=user.dkey)
+    document = build_document('Dispute Delivery',
+                              fields=['job_id', 'primary_redeem_script', 'mediator_redeem_script',
+                                      'detail' ,'primary_payment', 'mediator_payment'],
+                              labels=['Job ID',
+                                      'Primary escrow redeem script',
+                                      'Mediator escrow redeem script',
+                                      'Dispute detail',
+                                      'Signed primary escrow payment',
+                                      'Signed mediator escrow payment',
+                                      ],
+                              defaults=[doc['Job ID'],
+                                        doc['Primary escrow redeem script'],
+                                        doc['Mediator escrow redeem script']],
+                              )
+    res = sign_and_store_document(rein, 'creatordispute', document, user.daddr, user.dkey)
     if res:
         click.echo("Dispute signed by job creator. Run 'rein sync' to push to available servers.")
     log.info('creatordispute signed') if res else log.error('creatordispute failed')
@@ -391,21 +390,20 @@ def workerdispute(multi, identity):
         return
 
     log.info('got in-process job for dispute')
-    res = create_signed_document(rein, "Dispute Offer", 'workerdispute',
-                                 fields=['job_id', 'primary_redeem_script', 'mediator_redeem_script',
-                                         'detail' ,'primary_payment', 'mediator_payment'],
-                                 labels=['Job ID',
-                                         'Primary escrow redeem script',
-                                         'Mediator escrow redeem script',
-                                         'Dispute detail',
-                                         'Signed primary escrow payment',
-                                         'Signed mediator escrow payment',
-                                         ],
-                                 defaults=[doc['Job ID'], 
-                                           doc['Primary escrow redeem script'],
-                                           doc['Mediator escrow redeem script']],
-                                 signature_address=user.daddr,
-                                 signature_key=user.dkey)
+    document = build_document('Dispute Offer',
+                              fields=['job_id', 'primary_redeem_script', 'mediator_redeem_script',
+                                      'detail' ,'primary_payment', 'mediator_payment'],
+                              labels=['Job ID',
+                                      'Primary escrow redeem script',
+                                      'Mediator escrow redeem script',
+                                      'Dispute detail',
+                                      'Signed primary escrow payment',
+                                      'Signed mediator escrow payment'],
+                              defaults=[doc['Job ID'],
+                                        doc['Primary escrow redeem script'],
+                                        doc['Mediator escrow redeem script']],
+                              )
+    res = sign_and_store_document(rein, 'workerdispute', document, user.daddr, user.dkey)
     if res:
         click.echo("Dispute signed by worker. Run 'rein sync' to push to available servers.")
     log.info('workerdispute signed') if res else log.error('workerdispute failed')
@@ -452,7 +450,7 @@ def offer(multi, identity):
         return
 
     log.info('got bid to offer')
-    document = build_document('Offer',  
+    document = build_document('Offer',
                               fields=['user', 'key',
                                       'worker', 'worker_key',
                                       'mediator', 'mediator_key',
@@ -510,16 +508,16 @@ def post(multi, identity):
 
     log.info('got user and key for post')
     job_guid = ''.join(random.SystemRandom().choice(string.ascii_lowercase + string.digits) for _ in range(20))
-    res = create_signed_document(rein, "Job", 'job_posting',
-                                 fields=['user', 'key', 'mediator', 'mediator_key', 'name', 'category', 'description'],
-                                 labels=['Job creator\'s name', 'Job creator\'s public key', # TODO: add contact
-                                         'Mediator\'s name', 'Mediator\'s public key',
-                                         'Job name', 'Category', 'Description'],
-                                 defaults=[user.name, key,
-                                           mediator['User'], mediator['Mediator pubkey']],
-                                 signature_address=user.daddr,
-                                 signature_key=user.dkey,
-                                 guid=job_guid)
+    document = build_document('Job',
+                              fields=['user', 'key', 'mediator', 'mediator_key', 'name', 'category', 'description'],
+                              labels=['Job creator\'s name', 'Job creator\'s public key', # TODO: add contact
+                                      'Mediator\'s name', 'Mediator\'s public key',
+                                      'Job name', 'Category', 'Description'],
+                              defaults=[user.name, key,
+                                        mediator['User'], mediator['Mediator pubkey']],
+                              guid=job_guid
+                              )
+    res = sign_and_store_document(rein, 'job_posting', document, user.daddr, user.dkey)
     if res:
         click.echo("Posting created. Run 'rein sync' to push to available servers.")
     log.info('posting signed') if res else log.error('posting failed')
