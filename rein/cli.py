@@ -350,6 +350,66 @@ def creatordispute(multi, identity):
         click.echo("Dispute signed by job creator. Run 'rein sync' to push to available servers.")
     log.info('creatordispute signed') if res else log.error('creatordispute failed')
 
+@cli.command()
+@click.option('--multi/--no-multi', default=False, help="prompt for identity to use")
+@click.option('--identity', type=click.Choice(['Alice', 'Bob', 'Charlie', 'Dan']), default=None, help="identity to use")
+def workerdispute(multi, identity):
+    """
+    Dispute a job, triggering mediation.
+    """
+    log = rein.get_log()
+    if multi:
+        rein.set_multiuser()
+
+    if rein.has_no_account():
+        click.echo("Please run setup.")
+        return
+
+    user = get_user(rein, identity)
+
+    key = pubkey(user.dkey)
+    url = "http://localhost:5000/"
+    click.echo("Querying %s for offers to you..." % url)
+    valid_results = []
+    fails = 0
+    sel_url = "{0}query?owner={1}&worker={2}&query=in-process"
+    answer = requests.get(url=sel_url.format(url, user.maddr, key))
+    #click.echo(answer.text)
+    results = answer.json()
+    for m in results['in-process']:
+        data = verify_sig(m)
+        if data['valid'] and (u'Primary escrow redeem script' in data['info'].keys()):
+            valid_results.append(data['info'])
+        else:
+            fails += 1
+    if len(valid_results) == 0:
+        click.echo('None found')
+    log.info('spammy fails = %d' % fails)
+
+    doc = creatordispute_prompt(rein, valid_results)
+    if not doc:
+        return
+
+    log.info('got in-process job for dispute')
+    res = create_signed_document(rein, "Dispute Offer", 'workerdispute',
+                                 fields=['job_id', 'primary_redeem_script', 'mediator_redeem_script',
+                                         'detail' ,'primary_payment', 'mediator_payment'],
+                                 labels=['Job ID',
+                                         'Primary escrow redeem script',
+                                         'Mediator escrow redeem script',
+                                         'Dispute detail',
+                                         'Signed primary escrow payment',
+                                         'Signed mediator escrow payment',
+                                         ],
+                                 defaults=[doc['Job ID'], 
+                                           doc['Primary escrow redeem script'],
+                                           doc['Mediator escrow redeem script']],
+                                 signature_address=user.daddr,
+                                 signature_key=user.dkey)
+    if res:
+        click.echo("Dispute signed by worker. Run 'rein sync' to push to available servers.")
+    log.info('workerdispute signed') if res else log.error('workerdispute failed')
+
 
 @cli.command()
 @click.option('--multi/--no-multi', default=False, help="prompt for identity to use")
