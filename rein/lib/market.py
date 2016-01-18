@@ -121,6 +121,32 @@ def accept_prompt(rein, choices, detail='Description'):
     return chosen
 
 
+def creatordispute_prompt(rein, choices, detail='Description'):
+    i = 0
+    for c in choices:
+        if 'Primary escrow redeem script' not in c:
+            continue
+        trimmed_detail = c[detail][0:59]
+        if len(trimmed_detail) == 60:
+            trimmed_detail += '...'
+        click.echo('%s - %s - %s' % (str(i), c['Job ID'], trimmed_detail))
+        i += 1
+    choice = -1
+    while(choice >= len(choices) or choice < 0) and choice != 'q':
+        choice = click.prompt('Choose a delivery (q to quit)', type=str)
+        try:
+            choice = int(choice)
+        except:
+            choice = choice
+    if choice == 'q':
+        return None
+    chosen = choices[choice]
+    click.echo('You have chosen to dispute the following deliverables. \n\n%s: %s\n\nPlease provide as much detail as possible. '
+               'For the primary payment, you should build and sign one that refunds you at %s.\n' % 
+               (detail, chosen[detail], rein.user.daddr))
+    return chosen
+
+
 def build_document(title, fields, labels, defaults, guid=None):
     """
     Prompt for info and build a document with it.

@@ -17,7 +17,8 @@ from lib.document import Document
 from lib.placement import Placement, create_placements
 from lib.validate import verify_sig
 from lib.bitcoinecdsa import sign, pubkey
-from lib.market import mediator_prompt, accept_prompt, job_prompt, bid_prompt, delivery_prompt, create_signed_document, build_document, sign_and_store_document
+from lib.market import mediator_prompt, accept_prompt, job_prompt, bid_prompt, delivery_prompt,\
+        creatordispute_prompt, create_signed_document, build_document, sign_and_store_document
 import lib.config as config
 
 import lib.models
@@ -274,6 +275,80 @@ def accept(multi, identity):
     if res:
         click.echo("Accepted delivery. Run 'rein sync' to push to available servers.")
     log.info('accept signed') if res else log.error('accept failed')
+
+
+@cli.command()
+@click.option('--multi/--no-multi', default=False, help="prompt for identity to use")
+@click.option('--identity', type=click.Choice(['Alice', 'Bob', 'Charlie', 'Dan']), default=None, help="identity to use")
+def creatordispute(multi, identity):
+    """
+    Dispute a delivery, triggering mediation.
+    """
+    log = rein.get_log()
+    if multi:
+        rein.set_multiuser()
+
+    if rein.has_no_account():
+        click.echo("Please run setup.")
+        return
+
+    user = get_user(rein, identity)
+
+    key = pubkey(user.dkey)
+    url = "http://localhost:5000/"
+    click.echo("Querying %s for deliveries..." % url)
+    # get job ids for jobs for which we've made an offer
+    job_ids = []
+    offers = rein.session.query(Document).filter(Document.contents.ilike("%Rein Offer%Job creator's public key: "+key+"%")).all()
+    for o in offers:
+        m = re.search('Job ID: (\S+)', o.contents)
+        if m and m.group(1):
+            job_ids.append(m.group(1))
+    valid_results = []
+    fails = 0
+    for job_id in job_ids:
+        sel_url = "{0}query?owner={1}&job_ids={2}&query=delivery"
+        answer = requests.get(url=sel_url.format(url, user.maddr, job_id))
+        results = answer.json()
+        if 'delivery' in results.keys():
+            results = results['delivery']
+        else:
+            continue
+        for m in results:
+            data = verify_sig(m)
+            #click.echo(data['info'].keys())
+            headings = data['info'].keys()
+            if data['valid'] and (u'Primary escrow redeem script' in headings):
+                valid_results.append(data['info'])
+            else:
+                fails += 1
+    if len(valid_results) == 0:
+        click.echo('None found')
+    log.info('spammy fails = %d' % fails)
+
+    doc = creatordispute_prompt(rein, valid_results, "Deliverables")
+    if not doc:
+        return
+
+    log.info('got delivery for dispute')
+    res = create_signed_document(rein, "Dispute Delivery", 'creatordispute',
+                                 fields=['job_id', 'primary_redeem_script', 'mediator_redeem_script',
+                                         'detail' ,'primary_payment', 'mediator_payment'],
+                                 labels=['Job ID',
+                                         'Primary escrow redeem script',
+                                         'Mediator escrow redeem script',
+                                         'Dispute detail',
+                                         'Signed primary escrow payment',
+                                         'Signed mediator escrow payment',
+                                         ],
+                                 defaults=[doc['Job ID'], 
+                                           doc['Primary escrow redeem script'],
+                                           doc['Mediator escrow redeem script']],
+                                 signature_address=user.daddr,
+                                 signature_key=user.dkey)
+    if res:
+        click.echo("Dispute signed by job creator. Run 'rein sync' to push to available servers.")
+    log.info('creatordispute signed') if res else log.error('creatordispute failed')
 
 
 @cli.command()
