@@ -113,15 +113,8 @@ def bid(multi, identity):
     data = answer.json()
     if len(data['jobs']) == 0:
         click.echo('None found')
-    jobs = []
-    fails = 0
-    for m in data['jobs']:
-        data = verify_sig(m)
-        if data['valid']:
-            jobs.append(data['info'])
-        else:
-            fails += 1
-    log.info('spammy fails = %d' % fails)
+
+    jobs = filter_valid_sigs(data['jobs'])
 
     job = job_prompt(rein, jobs)
     if not job:
@@ -171,17 +164,8 @@ def deliver(multi, identity):
     results = answer.json()['in-process']
     if len(results) == 0:
         click.echo('None found')
-    valid_results = []
-    fails = 0
-    for m in results:
-        data = verify_sig(m)
-        #click.echo(data['info'].keys())
-        headings = data['info'].keys()
-        if data['valid'] and (u'Primary escrow redeem script' in headings):
-            valid_results.append(data['info'])
-        else:
-            fails += 1
-    log.info('spammy fails = %d' % fails)
+
+    valid_results = filter_valid_sigs(results, u'Primary escrow redeem script')
 
     doc = delivery_prompt(rein, valid_results)
     if not doc:
@@ -232,7 +216,6 @@ def accept(multi, identity):
         if m and m.group(1):
             job_ids.append(m.group(1))
     valid_results = []
-    fails = 0
     for job_id in job_ids:
         sel_url = "{0}query?owner={1}&job_ids={2}&query=delivery"
         answer = requests.get(url=sel_url.format(url, user.maddr, job_id))
@@ -241,17 +224,10 @@ def accept(multi, identity):
             results = results['delivery']
         else:
             continue
-        for m in results:
-            data = verify_sig(m)
-            #click.echo(data['info'].keys())
-            headings = data['info'].keys()
-            if data['valid'] and (u'Primary escrow redeem script' in headings):
-                valid_results.append(data['info'])
-            else:
-                fails += 1
+        valid_results += filter_valid_sigs(results, u'Primary escrow redeem script')
+
     if len(valid_results) == 0:
         click.echo('None found')
-    log.info('spammy fails = %d' % fails)
 
     doc = accept_prompt(rein, valid_results, "Deliverables")
     if not doc:
@@ -313,17 +289,10 @@ def creatordispute(multi, identity):
             results = results['delivery']
         else:
             continue
-        for m in results:
-            data = verify_sig(m)
-            #click.echo(data['info'].keys())
-            headings = data['info'].keys()
-            if data['valid'] and (u'Primary escrow redeem script' in headings):
-                valid_results.append(data['info'])
-            else:
-                fails += 1
+        valid_results += filter_valid_sigs(results, u'Primary escrow redeem script')
+
     if len(valid_results) == 0:
         click.echo('None found')
-    log.info('spammy fails = %d' % fails)
 
     doc = creatordispute_prompt(rein, valid_results, "Deliverables")
     if not doc:
@@ -375,15 +344,10 @@ def workerdispute(multi, identity):
     answer = requests.get(url=sel_url.format(url, user.maddr, key))
     #click.echo(answer.text)
     results = answer.json()
-    for m in results['in-process']:
-        data = verify_sig(m)
-        if data['valid'] and (u'Primary escrow redeem script' in data['info'].keys()):
-            valid_results.append(data['info'])
-        else:
-            fails += 1
+    valid_results += filter_valid_sigs(results['in-process'], u'Primary escrow redeem script')
+
     if len(valid_results) == 0:
         click.echo('None found')
-    log.info('spammy fails = %d' % fails)
 
     doc = creatordispute_prompt(rein, valid_results)
     if not doc:
@@ -434,15 +398,8 @@ def offer(multi, identity):
     data = answer.json()
     if len(data['bids']) == 0:
         click.echo('None found')
-    bids = []
-    fails = 0
-    for m in data['bids']:
-        data = verify_sig(m)
-        if data['valid']:
-            bids.append(data['info'])
-        else:
-            fails += 1
-    log.info('spammy fails = %d' % fails)
+
+    bids = filter_valid_sigs(data['bids'], u'Primary escrow redeem script')
 
     bid = bid_prompt(rein, bids)
     if not bid:
@@ -497,11 +454,7 @@ def post(multi, identity):
     data = answer.json()
     if len(data['mediators']) == 0:
         click.echo('None found')
-    eligible_mediators = []
-    for m in data['mediators']:
-        data = verify_sig(m)
-        if data['valid']:
-            eligible_mediators.append(data['info'])
+    eligible_mediators = filter_valid_sigs(data['mediators'])
 
     mediator = mediator_prompt(rein, eligible_mediators)
     click.echo("Chosen mediator: " + str(mediator))
@@ -717,6 +670,25 @@ def upload():
             raise RuntimeError('Problem contacting server %s' % server)
 
         click.echo('%s - %s BTC' % (server, data['price']))
+
+
+def filter_valid_sigs(docs, expected_field=None)
+    valid = []
+    fails = 0
+    for m in docs:
+        data = verify_sig(m)
+        if expected_field:
+            if data['valid'] and (expected_field in data['info'].keys()):
+                valid.append(data['info'])
+            else:
+                fails += 1
+        else:
+            if data['valid']:
+                valid.append(data['info'])
+            else:
+                fails += 1
+    log.info('spammy fails = %d' % fails)
+    return valid
 
 
 def get_user(rein, identity):
