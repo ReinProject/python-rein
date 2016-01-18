@@ -89,7 +89,6 @@ def delivery_prompt(rein, choices, detail='Description'):
     if choice == 'q':
         return None
     chosen = choices[choice]
-    click.echo(chosen)
     click.echo('You have chosen to post deliverables for the following job. \n\nDescription: %s\n\nPlease review carefully before posting. '
                'In a dispute mediators are advised to consider it above other evidence.\n' % 
                (chosen['Description'],))
@@ -99,13 +98,12 @@ def delivery_prompt(rein, choices, detail='Description'):
 def accept_prompt(rein, choices, detail='Description'):
     i = 0
     for c in choices:
-        click.echo(c)
         if 'Primary escrow redeem script' not in c:
             continue
         trimmed_detail = c[detail][0:59]
         if len(trimmed_detail) == 60:
             trimmed_detail += '...'
-        click.echo('%s - %s - %s - %s' % (str(i), c['Job ID'], trimmed_detail))
+        click.echo('%s - %s - %s' % (str(i), c['Job ID'], trimmed_detail))
         i += 1
     choice = -1
     while(choice >= len(choices) or choice < 0) and choice != 'q':
@@ -117,7 +115,6 @@ def accept_prompt(rein, choices, detail='Description'):
     if choice == 'q':
         return None
     chosen = choices[choice]
-    click.echo(chosen)
     click.echo('You have chosen to accept the following deliverables. \n\n%s: %s\n\nPlease review carefully before accepting. '
                'Once you upload your signed statement, the mediator should no longer provide a refund.\n' % 
                (detail, chosen[detail]))

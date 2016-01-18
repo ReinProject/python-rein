@@ -226,10 +226,8 @@ def accept(multi, identity):
     # get job ids for jobs for which we've made an offer
     job_ids = []
     offers = rein.session.query(Document).filter(Document.contents.ilike("%Rein Offer%Job creator's public key: "+key+"%")).all()
-    click.echo(offers)
     for o in offers:
         m = re.search('Job ID: (\S+)', o.contents)
-        click.echo(m.group(0))
         if m and m.group(1):
             job_ids.append(m.group(1))
     valid_results = []
@@ -237,7 +235,6 @@ def accept(multi, identity):
     for job_id in job_ids:
         sel_url = "{0}query?owner={1}&job_ids={2}&query=delivery"
         answer = requests.get(url=sel_url.format(url, user.maddr, job_id))
-        click.echo(answer.text)
         results = answer.json()
         if 'delivery' in results.keys():
             results = results['delivery']
