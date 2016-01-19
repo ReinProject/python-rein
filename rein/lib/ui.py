@@ -10,6 +10,26 @@ from user import User, Base
 from document import Document
 
 
+def shorten(text, length=60):
+    if len(text) > length - 3 and len(text) < length:
+        return text[0:length-1]
+    elif len(text) > length - 3:
+        return text[0:length-1] + '...'
+    else
+        return text
+        
+
+def get_choice(choices, name):
+    choice = -1
+    while(choice >= len(choices) or choice < 0) and choice != 'q':
+        choice = click.prompt('Choose a '+name+' (q to quit)', type=str)
+        try:
+            choice = int(choice)
+        except:
+            choice = choice
+    return choice
+
+
 def btc_addr_prompt(name):
     title = name.capitalize() + " Bitcoin address"
     addr = click.prompt(title, type=str)

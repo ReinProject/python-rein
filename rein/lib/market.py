@@ -3,7 +3,7 @@ from validate import validate_enrollment
 from bitcoinecdsa import sign, verify
 import os
 import click
-
+from ui import shorten, get_choice
 
 def mediator_prompt(rein, eligible_mediators):
     i = 0
@@ -22,21 +22,13 @@ def bid_prompt(rein, bids):
     for b in bids:
         if 'Description' not in b:
             continue 
-        trimmed_description = b['Description'][0:59]
-        if len(trimmed_description) == 60:
-            trimmed_description += '...'
-        click.echo('%s - %s - %s - %s BitCoin' % (str(i), b["Worker's name"], trimmed_description, b['Bid amount (BTC)']))
+        click.echo('%s - %s - %s - %s BitCoin' % (str(i), b["Worker's name"],
+                                                  shorten(b['Description']), b['Bid amount (BTC)']))
         valid_bids.append(b)
         i += 1
     if len(valid_bids) == 0:
         return None
-    choice = -1
-    while(choice >= len(bids) or choice < 0) and choice != 'q':
-        choice = click.prompt('Choose a bid (q to quit)', type=str)
-        try:
-            choice = int(choice)
-        except:
-            choice = choice
+    choice = get_choice(valid_bids, 'bid')
     if choice == 'q':
         return False
     bid = valid_bids[choice]
@@ -48,18 +40,10 @@ def bid_prompt(rein, bids):
 def job_prompt(rein, jobs):
     i = 0
     for j in jobs:
-        trimmed_description = j['Description'][0:59]
-        if len(trimmed_description) == 60:
-            trimmed_description += '...'
-        click.echo('%s - %s - %s - %s' % (str(i), j["Job creator's name"], j['Job name'], trimmed_description))
+        click.echo('%s - %s - %s - %s' % (str(i), j["Job creator's name"],
+                                          j['Job name'], shorten(j['Description'])))
         i += 1
-    choice = -1
-    while(choice >= len(jobs) or choice < 0) and choice != 'q':
-        choice = click.prompt('Choose a job (q to quit)', type=str)
-        try:
-            choice = int(choice)
-        except:
-            choice = choice
+    choice = get_choice(jobs, 'job')
     if choice == 'q':
         return False
     job = jobs[choice]
@@ -74,18 +58,9 @@ def delivery_prompt(rein, choices, detail='Description'):
     for c in choices:
         if 'Bid amount (BTC)' not in c:
             continue
-        trimmed_detail = c[detail][0:59]
-        if len(trimmed_detail) == 60:
-            trimmed_detail += '...'
-        click.echo('%s - %s - %s - %s' % (str(i), c['Job ID'], c['Bid amount (BTC)'], trimmed_detail))
+        click.echo('%s - %s - %s - %s' % (str(i), c['Job ID'], c['Bid amount (BTC)'], shorten(c[detail])))
         i += 1
-    choice = -1
-    while(choice >= len(choices) or choice < 0) and choice != 'q':
-        choice = click.prompt('Choose a job (q to quit)', type=str)
-        try:
-            choice = int(choice)
-        except:
-            choice = choice
+    choice = get_choice(choices, 'job')
     if choice == 'q':
         return None
     chosen = choices[choice]
@@ -100,18 +75,9 @@ def accept_prompt(rein, choices, detail='Description'):
     for c in choices:
         if 'Primary escrow redeem script' not in c:
             continue
-        trimmed_detail = c[detail][0:59]
-        if len(trimmed_detail) == 60:
-            trimmed_detail += '...'
-        click.echo('%s - %s - %s' % (str(i), c['Job ID'], trimmed_detail))
+        click.echo('%s - %s - %s' % (str(i), c['Job ID'], shorten(c[detail])))
         i += 1
-    choice = -1
-    while(choice >= len(choices) or choice < 0) and choice != 'q':
-        choice = click.prompt('Choose a delivery (q to quit)', type=str)
-        try:
-            choice = int(choice)
-        except:
-            choice = choice
+    choice = get_choice(choices, 'delivery')
     if choice == 'q':
         return None
     chosen = choices[choice]
@@ -126,18 +92,9 @@ def creatordispute_prompt(rein, choices, detail='Description'):
     for c in choices:
         if 'Primary escrow redeem script' not in c:
             continue
-        trimmed_detail = c[detail][0:59]
-        if len(trimmed_detail) == 60:
-            trimmed_detail += '...'
-        click.echo('%s - %s - %s' % (str(i), c['Job ID'], trimmed_detail))
+        click.echo('%s - %s - %s' % (str(i), c['Job ID'], shorten(c[detail])))
         i += 1
-    choice = -1
-    while(choice >= len(choices) or choice < 0) and choice != 'q':
-        choice = click.prompt('Choose a delivery (q to quit)', type=str)
-        try:
-            choice = int(choice)
-        except:
-            choice = choice
+    choice = get_choice(choices, 'delivery')
     if choice == 'q':
         return None
     chosen = choices[choice]
@@ -152,18 +109,9 @@ def workerdispute_prompt(rein, choices, detail='Description'):
     for c in choices:
         if 'Primary escrow redeem script' not in c:
             continue
-        trimmed_detail = c[detail][0:59]
-        if len(trimmed_detail) == 60:
-            trimmed_detail += '...'
-        click.echo('%s - %s - %s' % (str(i), c['Job ID'], trimmed_detail))
+        click.echo('%s - %s - %s' % (str(i), c['Job ID'], shorten(c[detail])))
         i += 1
-    choice = -1
-    while(choice >= len(choices) or choice < 0) and choice != 'q':
-        choice = click.prompt('Choose a delivery (q to quit)', type=str)
-        try:
-            choice = int(choice)
-        except:
-            choice = choice
+    choice = get_choice(choices, 'delivery')
     if choice == 'q':
         return None
     chosen = choices[choice]
