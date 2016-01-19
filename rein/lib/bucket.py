@@ -1,6 +1,7 @@
 from sqlalchemy import Column, Integer, String, DateTime
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import and_
+import click
 
 Base = declarative_base()
 
@@ -36,6 +37,12 @@ def get_bucket_count(rein, url=None):
     else:
         return rein.session.query(Bucket).filter(Bucket.identity == rein.user.id).count()
 
+def get_urls(rein):
+    buckets = rein.session.query(Bucket).filter(Bucket.identity == rein.user.id).all()
+    urls = []
+    for b in buckets:
+        urls.append(b.url)
+    return urls
 
 def create_buckets(engine):
     Base.metadata.create_all(engine)

@@ -29,3 +29,6 @@ class Document(Base):
 
     def get_hash(self):
         return self.doc_hash
+
+def get_user_documents(rein):
+    return rein.session.query(Document).filter(Document.identity == rein.user.id).all()

@@ -12,9 +12,9 @@ from sqlalchemy import and_
 
 from lib.ui import create_account, import_account, enroll, identity_prompt
 from lib.user import User
-from lib.bucket import Bucket, get_bucket_count, create_buckets
-from lib.document import Document
-from lib.placement import Placement, create_placements
+from lib.bucket import Bucket, get_bucket_count, get_urls, create_buckets
+from lib.document import Document, get_user_documents
+from lib.placement import Placement, create_placements, get_remote_document_hash, get_placements
 from lib.validate import verify_sig
 from lib.bitcoinecdsa import sign, pubkey
 from lib.market import mediator_prompt, accept_prompt, job_prompt, bid_prompt, delivery_prompt,\
@@ -609,66 +609,43 @@ def sync(multi, identity):
     click.echo("User: " + user.name)
 
     create_placements(rein.engine)
-    url = "http://localhost:5000/"
-    sel_url = url + 'nonce?address={0}'
-    answer = requests.get(url=sel_url.format(user.maddr))
-    data = answer.json()
-    nonce = data['nonce']
-    log.info('server returned nonce %s' % nonce)
 
-    check = []
-    documents = rein.session.query(Document).filter(Document.identity == user.id).all()
-    for doc in documents:
-        check.append(doc)
-    if len(check) == 0:
-        click.echo("Nothing to do.")
-    # now that we know what we need to check and upload let's do the checking first, any that
-    # come back wrong can be added to the upload queue.
-    # download each value (later a hash only with some full downloads for verification)
     upload = []
-    verified = []
-    for doc in check:
-        if len(doc.contents) > 8192:
-            click.echo('Document is too big. 8192 bytes should be enough for anyone.')
-            log.error("Document oversized %s" % doc.doc_hash)
-        else:
-            placements = rein.session.query(Placement).filter(and_(Placement.url == url,
-                                                                   Placement.doc_id == doc.id)).all()
-            if len(placements) == 0:
-                upload.append([doc, url])
-            else:
-                for plc in placements:
-                    sel_url = "{0}get?key={1}"
-                    answer = requests.get(url=sel_url.format(url, plc.remote_key))
-                    data = answer.json()
-                    if answer.status_code == 404:
-                        log.error("%s not found at %s" % (doc.doc_hash, url))
-                        click.echo("document not found")
-                        upload.append([doc, url])
-                    else:
-                        value = data['value']
-                        value = value.decode('ascii')
-                        value = value.encode('utf8')
-                        remote_hash = hashlib.sha256(value).hexdigest()
-                        if remote_hash != doc.doc_hash:
-                            log.error("%s %s incorrect hash %s != %s " % (url, doc.id, remote_hash, doc.doc_hash))
-                            upload.append([doc, url])
-                        else:
-                            verified.append(doc)
+    nonce = {}
+    urls = get_urls(rein)
+    for url in urls:
+        nonce[url] = get_new_nonce(rein, url)
+        check = get_user_documents(rein) 
+        if len(check) == 0:
+            click.echo("Nothing to do.")
 
+        for doc in check:
+            if len(doc.contents) > 8192:
+                click.echo('Document is too big. 8192 bytes should be enough for anyone.')
+                log.error("Document oversized %s" % doc.doc_hash)
+            else:
+                placements = get_placements(rein, url, doc.id)
+                           
+                if len(placements) == 0:
+                    upload.append([doc, url])
+                else:
+                    for plc in placements:
+                        if get_remote_document_hash(rein, plc) != doc.doc_hash:
+                            upload.append([doc, url])
+    
     failed = []
     succeeded = 0
     for doc, url in upload:
-        placement = rein.session.query(Placement).filter_by(url=url).filter_by(doc_id=doc.id).all()
-        if len(placement) == 0:
+        placements = get_placements(rein, url, doc.id)
+        if len(placements) == 0:
             remote_key = ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits)
                                  for _ in range(32))
             plc = Placement(doc.id, url, remote_key)
             rein.session.add(plc)
             rein.session.commit()
         else:
-            plc = placement[0]
-            for p in placement[1:]:
+            plc = placements[0]
+            for p in placements[1:]:
                 rein.session.delete(p)
                 rein.session.commit()
 
@@ -676,13 +653,13 @@ def sync(multi, identity):
             log.error("Document oversized %s" % doc.doc_hash)
             click.echo('Document is too big. 8192 bytes should be enough for anyone.')
         else:
-            message = plc.remote_key + doc.contents + user.daddr + nonce
+            message = plc.remote_key + doc.contents + user.daddr + nonce[url]
             message = message.decode('utf8')
             message = message.encode('ascii')
             signature = sign(user.dkey, message)
             data = {"key": plc.remote_key,
                     "value": doc.contents,
-                    "nonce": nonce,
+                    "nonce": nonce[url],
                     "signature": signature,
                     "signature_address": user.daddr,
                     "owner": user.maddr}
@@ -700,9 +677,11 @@ def sync(multi, identity):
                 click.echo('uploaded %s' % doc.doc_hash)
                 succeeded += 1
 
-    sel_url = url + 'nonce?address={0}&clear={1}'
-    answer = requests.get(url=sel_url.format(user.maddr, nonce))
-    log.info('nonce cleared for %s' % (url))
+    for url in urls:
+        sel_url = url + 'nonce?address={0}&clear={1}'
+        answer = requests.get(url=sel_url.format(user.maddr, nonce[url]))
+        log.info('nonce cleared for %s' % (url))
+
     click.echo('%s docs checked, %s uploaded.' % (len(check), str(succeeded)))
 
 
@@ -750,3 +729,11 @@ def get_user(rein, identity):
     else:
         rein.user = rein.session.query(User).first()
     return rein.user
+
+
+def get_new_nonce(rein, url):
+    sel_url = url + 'nonce?address={0}'
+    answer = requests.get(url=sel_url.format(rein.user.maddr))
+    data = answer.json()
+    rein.log.info('server returned nonce %s' % data['nonce'])
+    return data['nonce']
