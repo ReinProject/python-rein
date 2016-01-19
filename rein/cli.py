@@ -32,7 +32,7 @@ rein = config.Config()
 def cli(ctx, debug):
     """
     Rein is a decentralized professional services market. Python-rein is a command-line
-    interface to interact with Rein. Use program to create an account, post a job, etc.
+interface to interact with Rein. Use this program to create an account, post a job, etc.
 
 \b
     Quick start:
@@ -51,7 +51,7 @@ def cli(ctx, debug):
 @click.option('--multi/--no-multi', default=False, help="add even if an identity exists")
 def setup(multi):
     """
-    Setup or import an identity
+    Setup or import an identity.
 
     You will choose a name or handle for your account, include public contact information, 
     and a delegate Bitcoin address/private key that the program will use to sign documents
@@ -523,7 +523,7 @@ def post(multi, identity):
 @click.argument('url', required=True)
 def request(multi, identity, url):
     """
-    Request free microhosting space
+    Request free microhosting space.
 
     During the alpha testing phase, reinproject.org will operate
     at least one free microhosting server. The goal is to incentivize
@@ -589,7 +589,7 @@ def request(multi, identity, url):
 @click.option('--identity', type=click.Choice(['Alice', 'Bob', 'Charlie', 'Dan']), default=None, help="identity to use")
 def sync(multi, identity):
     """
-    Upload records to each registered server
+    Upload records to each registered server.
 
     Each user, bid, offer, etc. (i.e. anything except actual payments) is 
     stored as document across a public database that is maintained across
