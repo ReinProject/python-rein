@@ -30,6 +30,18 @@ rein = config.Config()
 @click.option('--debug/--no-debug', default=False)
 @click.pass_context
 def cli(ctx, debug):
+    """
+    Rein is a decentralized professional services market. Python-rein is a command-line
+    interface to interact with Rein. Use program to create an account, post a job, etc.
+
+\b
+    Quick start:
+    $ rein setup     - create an identity
+    $ rein request   - get free microhosting
+    $ rein sync      - push your identity up to your microhosting servers
+
+    For more info visit: http://reinproject.org
+    """
     if debug:
         click.echo("Debuggin'")
     pass
@@ -40,6 +52,11 @@ def cli(ctx, debug):
 def setup(multi):
     """
     Setup or import an identity
+
+    You will choose a name or handle for your account, include public contact information, 
+    and a delegate Bitcoin address/private key that the program will use to sign documents
+    on your behalf. An enrollment document will be creatd and you will need to sign it
+    with your master Bitcoin private key.
     """
     log = rein.get_log()
     if multi:
@@ -94,6 +111,10 @@ def setup(multi):
 def bid(multi, identity):
     """
     Bid on a job.
+
+    Choose from available jobs posted to your registered servers your client knows
+    about, and create a bid. Your bid should include the amount of Bitcoin you need
+    to complete the job and when you expect to have it complete.
     """
     log = rein.get_log()
     if multi:
@@ -145,6 +166,10 @@ def bid(multi, identity):
 def deliver(multi, identity):
     """
     Deliver on a job.
+
+    Share deliverables with the creator of the job when completed. In the
+    event of a dispute, mediators are advised to review the deliverables
+    while deciding how to distribute funds.
     """
     log = rein.get_log()
     if multi:
@@ -194,6 +219,10 @@ def deliver(multi, identity):
 def accept(multi, identity):
     """
     Accept a delivery, completing a job.
+
+    Review and accept deliveries for your jobs. Once a delivery is
+    accpted, mediators are advised not to sign any tranasctions
+    refunding the job creator.
     """
     log = rein.get_log()
     if multi:
@@ -258,6 +287,10 @@ def accept(multi, identity):
 def creatordispute(multi, identity):
     """
     Dispute a delivery, triggering mediation.
+
+    If you are a job creator, file a dispute on one of your jobs, for example
+    because the job is not done on time, they would use this command to file
+    a dispute.
     """
     log = rein.get_log()
     if multi:
@@ -324,6 +357,10 @@ def creatordispute(multi, identity):
 def workerdispute(multi, identity):
     """
     Dispute a job, triggering mediation.
+
+    If you are a worker, file a dispute because the creator is
+    unresponsive or does not accept work that fulfills the job
+    specification, they would use this command to file a dispute.
     """
     log = rein.get_log()
     if multi:
@@ -379,6 +416,10 @@ def workerdispute(multi, identity):
 def offer(multi, identity):
     """
     Offer - award a bid.
+
+    A job creator would use this command to award the job to a specific bid. 
+    Once signed and pushed, escrow addresses should be funded and work can
+    begin.
     """
     log = rein.get_log()
     if multi:
@@ -483,6 +524,11 @@ def post(multi, identity):
 def request(multi, identity, url):
     """
     Request free microhosting space
+
+    During the alpha testing phase, reinproject.org will operate
+    at least one free microhosting server. The goal is to incentivize
+    a paid network of reliable microhosting servers to store and serve
+    all data required for Rein to operate.
     """
     log = rein.get_log()
     if multi:
@@ -544,6 +590,11 @@ def request(multi, identity, url):
 def sync(multi, identity):
     """
     Upload records to each registered server
+
+    Each user, bid, offer, etc. (i.e. anything except actual payments) is 
+    stored as document across a public database that is maintained across
+    a network of paid servers. This command pushes the documents you have
+    created to the servers from which you have purchased hosting. 
     """
     log = rein.get_log()
     if multi:
@@ -672,7 +723,7 @@ def upload():
         click.echo('%s - %s BTC' % (server, data['price']))
 
 
-def filter_valid_sigs(docs, expected_field=None)
+def filter_valid_sigs(docs, expected_field=None):
     valid = []
     fails = 0
     for m in docs:
