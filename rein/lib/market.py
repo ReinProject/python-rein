@@ -122,29 +122,6 @@ def workerdispute_prompt(rein, choices, detail='Description'):
     return chosen
 
 
-def build_document(title, fields, labels, defaults, guid=None):
-    """
-    Prompt for info and build a document with it.
-    """
-    data = []
-    display_labels = {}
-    for i in range(len(fields)):
-        entry = {}
-        entry['label'] = labels[i]
-        if i + 1 > len(defaults) or defaults[i] == '':
-            entry['value'] = click.prompt(labels[i])
-        else:
-            entry['value'] = defaults[i]
-        data.append(entry)
-    document = "Rein %s\n" % title
-    for entry in data:
-        document = document + entry['label'] + ": " + entry['value'] + "\n"
-    if guid:
-        document = document + "Job ID: " + guid + "\n"
-    document = document[:-1]
-    return document
-
-
 def assemble_document(title, fields):
     data = []
     for field in fields:

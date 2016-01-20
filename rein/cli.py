@@ -18,7 +18,7 @@ from lib.placement import Placement, create_placements, get_remote_document_hash
 from lib.validate import verify_sig
 from lib.bitcoinecdsa import sign, pubkey
 from lib.market import mediator_prompt, accept_prompt, job_prompt, bid_prompt, delivery_prompt,\
-        creatordispute_prompt, assemble_document, build_document, sign_and_store_document
+        creatordispute_prompt, assemble_document, sign_and_store_document
 from lib.script import build_2_of_3, build_mandatory_multisig
 import lib.config as config
 
