@@ -72,10 +72,10 @@ def create_account(rein):
     daddr = btc_addr_prompt("Delegate")
     dkey = btc_privkey_prompt("Delegate", daddr)
     will_mediate = click.confirm("Willing to mediate:", default=False)
-    mediation_fee = 1
+    mediator_fee = 1
     if will_mediate:
-        mediation_fee = click.prompt("Mediation fee (%)", default=1.0)
-    new_identity = User(name, contact, maddr, daddr, dkey, will_mediate, mediation_fee)
+        mediator_fee = click.prompt("Mediator fee (%)", default=1.0)
+    new_identity = User(name, contact, maddr, daddr, dkey, will_mediate, mediator_fee)
     rein.session.add(new_identity)
     rein.session.commit()
     data = {'name': name,
@@ -84,7 +84,7 @@ def create_account(rein):
             'daddr': daddr,
             'dkey': dkey,
             'will_mediate': will_mediate,
-            'mediation_fee': mediation_fee}
+            'mediator_fee': mediator_fee}
     if not os.path.isfile(rein.backup_filename):
         f = open(rein.backup_filename, 'w')
         try:
@@ -117,7 +117,7 @@ def import_account(rein):
                         data['daddr'],
                         data['dkey'],
                         data['will_mediate'],
-                        data['mediation_fee'])
+                        data['mediator_fee'])
     rein.session.add(new_identity)
     rein.session.commit()
     rein.user = new_identity
@@ -129,8 +129,8 @@ def enroll(rein):
     user = rein.user
     mediator_extras = ''
     if user.will_mediate:
-        mediator_extras = "\nMediator pubkey: %s\nMediation fee: %s%%" % \
-                          (pubkey(user.dkey), user.mediation_fee)
+        mediator_extras = "\nMediator public key: %s\nMediator fee: %s%%" % \
+                          (pubkey(user.dkey), user.mediator_fee)
     enrollment = "Rein User Enrollment\nUser: %s\nContact: %s\nMaster signing address: %s" \
                  "\nDelegate signing address: %s\nWilling to mediate: %s%s" % \
                  (user.name, user.contact, user.maddr, user.daddr, user.will_mediate, mediator_extras)

@@ -14,13 +14,13 @@ class User(Base):
     daddr = Column(String(64), nullable=False)
     dkey = Column(String(64), nullable=False)
     will_mediate = Column(Boolean, nullable=False)
-    mediation_fee = Column(Float, nullable=False)
+    mediator_fee = Column(Float, nullable=False)
 
-    def __init__(self, name, contact, maddr, daddr, dkey, will_mediate, mediation_fee):
+    def __init__(self, name, contact, maddr, daddr, dkey, will_mediate, mediator_fee):
         self.name = name
         self.contact = contact
         self.maddr = maddr
         self.daddr = daddr
         self.dkey = dkey
         self.will_mediate = will_mediate
-        self.mediation_fee = mediation_fee
+        self.mediator_fee = mediator_fee
