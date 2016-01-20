@@ -145,7 +145,7 @@ def build_document(title, fields, labels, defaults, guid=None):
     return document
 
 
-def assemble_document(title, fields, guid=None):
+def assemble_document(title, fields):
     data = []
     for field in fields:
         entry = {}
@@ -163,8 +163,6 @@ def assemble_document(title, fields, guid=None):
         else:
             entry['value'] = click.prompt(field['label'])
         data.append(entry)
-    if guid:
-        data.append({'label': 'Job ID', 'value': guid})
     document = "Rein %s\n" % title
     for entry in data:
         click.echo(entry['label'])
