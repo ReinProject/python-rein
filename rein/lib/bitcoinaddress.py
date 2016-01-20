@@ -1,4 +1,5 @@
 from hashlib import sha256
+import unittest
 
 digits58 = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
 
@@ -19,3 +20,10 @@ def decode_base58(bc, length):
 def check_bitcoin_address(bc):
     bcbytes = decode_base58(bc, 25)
     return bcbytes[-4:] == sha256(sha256(bcbytes[:-4]).digest()).digest()[:4]
+
+
+class BitcoinAddressTest(unittest.TestCase):
+    def test_check_bitcoin_address(self):
+        self.assertTrue(check_bitcoin_address('1CptxARjqcfkVwGFSjR82zmPT8YtRMubub'))
+        self.assertTrue(check_bitcoin_address('3746f7fjJ6fG1pQXDjA8xy9WAzf4968WWv'))
+        self.assertFalse(check_bitcoin_address('2746f7fjJ6fG1pQXDjA8xy9WAzf4968WWv'))
