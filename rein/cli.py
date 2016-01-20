@@ -41,6 +41,23 @@ interface to interact with Rein. Use this program to create an account, post a j
         $ rein request   - get free microhosting
         $ rein sync      - push your identity to microhosting servers
 
+\b
+    Workers
+        $ rein bid       - view and bid on jobs
+        $ rein deliver   - complete job by providing deliverables
+
+\b
+    Job creators
+        $ rein post      - post a job
+        $ rein offer     - accept a bid
+        $ rein accept    - accept deliverables
+
+\b
+    Disputes
+        $ rein workerdispute    - worker files dispute
+        $ rein creatordispute   - job creator files dispute
+        $ rein resolvedispute   - mediator posts decision
+
     For more info visit: http://reinproject.org
     """
     if debug:
@@ -109,6 +126,191 @@ def setup(multi):
 @cli.command()
 @click.option('--multi/--no-multi', default=False, help="prompt for identity to use")
 @click.option('--identity', type=click.Choice(['Alice', 'Bob', 'Charlie', 'Dan']), default=None, help="identity to use")
+def creatordispute(multi, identity):
+    """
+    Dispute a delivery.
+
+    If you are a job creator, file a dispute on one of your jobs, for example
+    because the job is not done on time, they would use this command to file
+    a dispute.
+    """
+    log = rein.get_log()
+    if multi:
+        rein.set_multiuser()
+
+    if rein.has_no_account():
+        click.echo("Please run setup.")
+        return
+
+    user = get_user(rein, identity)
+
+    key = pubkey(user.dkey)
+    url = "http://localhost:5000/"
+    click.echo("Querying %s for deliveries..." % url)
+    # get job ids for jobs for which we've made an offer
+    job_ids = []
+    offers = rein.session.query(Document).filter(Document.contents.ilike("%Rein Offer%Job creator's public key: "+key+"%")).all()
+    for o in offers:
+        m = re.search('Job ID: (\S+)', o.contents)
+        if m and m.group(1):
+            job_ids.append(m.group(1))
+    valid_results = []
+    fails = 0
+    for job_id in job_ids:
+        sel_url = "{0}query?owner={1}&job_ids={2}&query=delivery"
+        answer = requests.get(url=sel_url.format(url, user.maddr, job_id))
+        results = answer.json()
+        if 'delivery' in results.keys():
+            results = results['delivery']
+        else:
+            continue
+        valid_results += filter_valid_sigs(results, u'Primary escrow redeem script')
+
+    if len(valid_results) == 0:
+        click.echo('None found')
+
+    doc = creatordispute_prompt(rein, valid_results, "Deliverables")
+    if not doc:
+        return
+
+    log.info('got delivery for dispute')
+    document = build_document('Dispute Delivery',
+                              fields=['job_id', 'primary_redeem_script', 'mediator_redeem_script',
+                                      'detail' ,'primary_payment', 'mediator_payment'],
+                              labels=['Job ID',
+                                      'Primary escrow redeem script',
+                                      'Mediator escrow redeem script',
+                                      'Dispute detail',
+                                      'Signed primary escrow payment',
+                                      'Signed mediator escrow payment',
+                                      ],
+                              defaults=[doc['Job ID'],
+                                        doc['Primary escrow redeem script'],
+                                        doc['Mediator escrow redeem script']],
+                              )
+    res = sign_and_store_document(rein, 'creatordispute', document, user.daddr, user.dkey)
+    if res:
+        click.echo("Dispute signed by job creator. Run 'rein sync' to push to available servers.")
+    log.info('creatordispute signed') if res else log.error('creatordispute failed')
+
+
+@cli.command()
+@click.option('--multi/--no-multi', default=False, help="prompt for identity to use")
+@click.option('--identity', type=click.Choice(['Alice', 'Bob', 'Charlie', 'Dan']), default=None, help="identity to use")
+def workerdispute(multi, identity):
+    """
+    Dispute a job.
+
+    If you are a worker, file a dispute because the creator is
+    unresponsive or does not accept work that fulfills the job
+    specification, they would use this command to file a dispute.
+    """
+    log = rein.get_log()
+    if multi:
+        rein.set_multiuser()
+
+    if rein.has_no_account():
+        click.echo("Please run setup.")
+        return
+
+    user = get_user(rein, identity)
+
+    key = pubkey(user.dkey)
+    url = "http://localhost:5000/"
+    click.echo("Querying %s for offers to you..." % url)
+    valid_results = []
+    fails = 0
+    sel_url = "{0}query?owner={1}&worker={2}&query=in-process"
+    answer = requests.get(url=sel_url.format(url, user.maddr, key))
+    #click.echo(answer.text)
+    results = answer.json()
+    valid_results += filter_valid_sigs(results['in-process'], u'Primary escrow redeem script')
+
+    if len(valid_results) == 0:
+        click.echo('None found')
+
+    doc = creatordispute_prompt(rein, valid_results)
+    if not doc:
+        return
+
+    log.info('got in-process job for dispute')
+    document = build_document('Dispute Offer',
+                              fields=['job_id', 'primary_redeem_script', 'mediator_redeem_script',
+                                      'detail' ,'primary_payment', 'mediator_payment'],
+                              labels=['Job ID',
+                                      'Primary escrow redeem script',
+                                      'Mediator escrow redeem script',
+                                      'Dispute detail',
+                                      'Signed primary escrow payment',
+                                      'Signed mediator escrow payment'],
+                              defaults=[doc['Job ID'],
+                                        doc['Primary escrow redeem script'],
+                                        doc['Mediator escrow redeem script']],
+                              )
+    res = sign_and_store_document(rein, 'workerdispute', document, user.daddr, user.dkey)
+    if res:
+        click.echo("Dispute signed by worker. Run 'rein sync' to push to available servers.")
+    log.info('workerdispute signed') if res else log.error('workerdispute failed')
+
+
+@cli.command()
+@click.option('--multi/--no-multi', default=False, help="prompt for identity to use")
+@click.option('--identity', type=click.Choice(['Alice', 'Bob', 'Charlie', 'Dan']), default=None, help="identity to use")
+def post(multi, identity):
+    """
+    Post a job.
+    """
+    log = rein.get_log()
+    if multi:
+        rein.set_multiuser()
+
+    if rein.has_no_account():
+        click.echo("Please run setup.")
+        return
+
+    user = get_user(rein, identity)
+
+    key = pubkey(user.dkey)
+    urls = get_urls(rein)
+    eligible_mediators = []
+    for url in urls:
+        click.echo("Querying %s for mediators..." % url)
+        sel_url = "{0}query?owner={1}&query=mediators"
+        answer = requests.get(url=sel_url.format(url, user.maddr))
+        data = answer.json()
+        if len(data['mediators']) == 0:
+            click.echo('None found')
+        eligible_mediators += filter_valid_sigs(data['mediators'])
+
+    mediator = mediator_prompt(rein, eligible_mediators)
+    click.echo("Chosen mediator: " + str(mediator))
+
+    log.info('got user and key for post')
+    job_guid = ''.join(random.SystemRandom().choice(string.ascii_lowercase + string.digits) for _ in range(20))
+    fields = [
+                {'label': 'Job name'},
+                {'label': 'Job ID',                         'value': job_guid},
+                {'label': 'Category'},
+                {'label': 'Description'},
+                {'label': 'Mediator',                       'value': mediator['User']},
+                {'label': 'Mediator contact',               'value': mediator['Contact']},
+                {'label': 'Mediator public key',            'value': mediator['Mediator public key']},
+                {'label': 'Mediator master address',        'value': mediator['Master signing address']},
+                {'label': 'Job creator',                    'value': user.name},
+                {'label': 'Job creator contact',            'value': user.contact},
+                {'label': 'Job creator public key',         'value': key},
+                {'label': 'Job creator master address',     'value': user.maddr},
+             ]
+    document = assemble_document('Job', fields)
+    res = sign_and_store_document(rein, 'job_posting', document, user.daddr, user.dkey)
+    if res:
+        click.echo("Posting created. Run 'rein sync' to push to available servers.")
+    log.info('posting signed') if res else log.error('posting failed')
+
+
+@cli.command()
+@click.option('--multi/--no-multi', default=False, help="prompt for identity to use")
+@click.option('--identity', type=click.Choice(['Alice', 'Bob', 'Charlie', 'Dan']), default=None, help="identity to use")
 def bid(multi, identity):
     """
     Bid on a job.
@@ -143,22 +345,23 @@ def bid(multi, identity):
         return
 
     log.info('got job for bid')
-    primary_redeem_script, primary_addr = build_2_of_3([job['Job creator\'s public key'],
-                                                        job['Mediator\'s public key'],
+    primary_redeem_script, primary_addr = build_2_of_3([job['Job creator public key'],
+                                                        job['Mediator public key'],
                                                         key])
-    mediator_redeem_script, mediator_escrow_addr = build_mandatory_multisig(job['Mediator\'s public key'],
-                                                                            [job['Job creator\'s public key'],key])
+    mediator_redeem_script, mediator_escrow_addr = build_mandatory_multisig(job['Mediator public key'],
+                                                                            [job['Job creator public key'],key])
     fields = [
                 {'label': 'Job name',                       'value_from': job},
-                {'label': 'Job ID',                         'value_from': job},
-                {'label': 'Job creator\'s name',            'value_from': job},
-                {'label': 'Worker\'s name',                 'value': user.name},
+                {'label': 'Worker',                         'value': user.name},
                 {'label': 'Description'},
-                {'label': 'Bid amount (BTC)', 'validator': is_number},
+                {'label': 'Bid amount (BTC)',               'validator': is_number},
                 {'label': 'Primary escrow address',         'value': primary_addr},
                 {'label': 'Mediator escrow address',        'value': mediator_escrow_addr},
-                {'label': 'Job creator\'s public key',      'value_from': job},
-                {'label': 'Worker\'s public key',           'value': key},
+                {'label': 'Job ID',                         'value_from': job},
+                {'label': 'Job creator',                    'value_from': job},
+                {'label': 'Job creator public key',         'value_from': job},
+                {'label': 'Mediator public key',            'value_from': job},
+                {'label': 'Worker public key',              'value': key},
                 {'label': 'Primary escrow redeem script',   'value': primary_redeem_script},
                 {'label': 'Mediator escrow redeem script',  'value': mediator_redeem_script},
              ]
@@ -167,6 +370,65 @@ def bid(multi, identity):
     if res:
         click.echo("Bid created. Run 'rein sync' to push to available servers.")
     log.info('bid signed') if res else log.error('bid failed')
+
+
+@cli.command()
+@click.option('--multi/--no-multi', default=False, help="prompt for identity to use")
+@click.option('--identity', type=click.Choice(['Alice', 'Bob', 'Charlie', 'Dan']), default=None, help="identity to use")
+def offer(multi, identity):
+    """
+    Award a job.
+
+    A job creator would use this command to award the job to a specific bid. 
+    Once signed and pushed, escrow addresses should be funded and work can
+    begin.
+    """
+    log = rein.get_log()
+    if multi:
+        rein.set_multiuser()
+
+    if rein.has_no_account():
+        click.echo("Please run setup.")
+        return
+
+    user = get_user(rein, identity)
+
+    key = pubkey(user.dkey)
+    url = "http://localhost:5000/"
+    click.echo("Querying %s for bids on your jobs..." % url)
+    sel_url = "{0}query?owner={1}&delegate={2}&query=bids"
+    answer = requests.get(url=sel_url.format(url, user.maddr, user.daddr))
+    data = answer.json()
+    if len(data['bids']) == 0:
+        click.echo('None found')
+
+    bids = filter_valid_sigs(data['bids'], u'Primary escrow redeem script')
+
+    bid = bid_prompt(rein, bids)
+    if not bid:
+        click.echo('None chosen')
+        return
+
+    log.info('got bid to offer')
+    fields = [
+                {'label': 'Job name',                       'value_from': bid},
+                {'label': 'Worker',                         'value_from': bid},
+                {'label': 'Description',                    'value_from': bid},
+                {'label': 'Bid Amount (BTC)',               'value_from': bid},
+                {'label': 'Primary escrow address',         'value_from': bid},
+                {'label': 'Mediator escrow address',        'value_from': bid},
+                {'label': 'Job ID',                         'value_from': bid},
+                {'label': 'Job creator',                    'value_from': bid},
+                {'label': 'Job creator public key',         'value_from': bid},
+                {'label': 'Worker public key',              'value_from': bid},
+                {'label': 'Primary escrow redeem script',   'value_from': bid},
+                {'label': 'Mediator escrow redeem script',  'value_from': bid},
+             ]
+    document = assemble_document('Offer', fields)
+    res = sign_and_store_document(rein, 'offer', document, user.daddr, user.dkey)
+    if res:
+        click.echo("Offer created. Run 'rein sync' to push to available servers.")
+    log.info('offer signed') if res else log.error('offer failed')
 
 
 @cli.command()
@@ -206,16 +468,17 @@ def deliver(multi, identity):
         return
 
     log.info('got offer for delivery')
-    document = build_document('Delivery',
-                              fields=['job_id', 'primary_redeem_script', 'mediator_redeem_script', 'deliverables'],
-                              labels=['Job ID',
-                                      'Primary escrow redeem script',
-                                      'Mediator escrow redeem script',
-                                      'Deliverables'],
-                              defaults=[doc['Job ID'],
-                                        doc['Primary escrow redeem script'],
-                                        doc['Mediator escrow redeem script']]
-                              )
+    fields = [
+                {'label': 'Job name',                       'value_from': doc},
+                {'label': 'Job ID',                         'value_from': doc},
+                {'label': 'Deliverables'},
+                {'label': 'Bid Amount (BTC)',               'value_from': doc},
+                {'label': 'Primary escrow address',         'value_from': doc},
+                {'label': 'Mediator escrow address',        'value_from': doc},
+                {'label': 'Primary escrow redeem script',   'value_from': doc},
+                {'label': 'Mediator escrow redeem script',  'value_from': doc},
+             ]
+    document = assemble_document('Delivery', fields)
     if check_redeem_scripts(document):
         res = sign_and_store_document(rein, 'delivery', document, user.daddr, user.dkey)
         if res:
@@ -292,244 +555,6 @@ def accept(multi, identity):
     if res:
         click.echo("Accepted delivery. Run 'rein sync' to push to available servers.")
     log.info('accept signed') if res else log.error('accept failed')
-
-
-@cli.command()
-@click.option('--multi/--no-multi', default=False, help="prompt for identity to use")
-@click.option('--identity', type=click.Choice(['Alice', 'Bob', 'Charlie', 'Dan']), default=None, help="identity to use")
-def creatordispute(multi, identity):
-    """
-    Dispute a delivery.
-
-    If you are a job creator, file a dispute on one of your jobs, for example
-    because the job is not done on time, they would use this command to file
-    a dispute.
-    """
-    log = rein.get_log()
-    if multi:
-        rein.set_multiuser()
-
-    if rein.has_no_account():
-        click.echo("Please run setup.")
-        return
-
-    user = get_user(rein, identity)
-
-    key = pubkey(user.dkey)
-    url = "http://localhost:5000/"
-    click.echo("Querying %s for deliveries..." % url)
-    # get job ids for jobs for which we've made an offer
-    job_ids = []
-    offers = rein.session.query(Document).filter(Document.contents.ilike("%Rein Offer%Job creator's public key: "+key+"%")).all()
-    for o in offers:
-        m = re.search('Job ID: (\S+)', o.contents)
-        if m and m.group(1):
-            job_ids.append(m.group(1))
-    valid_results = []
-    fails = 0
-    for job_id in job_ids:
-        sel_url = "{0}query?owner={1}&job_ids={2}&query=delivery"
-        answer = requests.get(url=sel_url.format(url, user.maddr, job_id))
-        results = answer.json()
-        if 'delivery' in results.keys():
-            results = results['delivery']
-        else:
-            continue
-        valid_results += filter_valid_sigs(results, u'Primary escrow redeem script')
-
-    if len(valid_results) == 0:
-        click.echo('None found')
-
-    doc = creatordispute_prompt(rein, valid_results, "Deliverables")
-    if not doc:
-        return
-
-    log.info('got delivery for dispute')
-    document = build_document('Dispute Delivery',
-                              fields=['job_id', 'primary_redeem_script', 'mediator_redeem_script',
-                                      'detail' ,'primary_payment', 'mediator_payment'],
-                              labels=['Job ID',
-                                      'Primary escrow redeem script',
-                                      'Mediator escrow redeem script',
-                                      'Dispute detail',
-                                      'Signed primary escrow payment',
-                                      'Signed mediator escrow payment',
-                                      ],
-                              defaults=[doc['Job ID'],
-                                        doc['Primary escrow redeem script'],
-                                        doc['Mediator escrow redeem script']],
-                              )
-    res = sign_and_store_document(rein, 'creatordispute', document, user.daddr, user.dkey)
-    if res:
-        click.echo("Dispute signed by job creator. Run 'rein sync' to push to available servers.")
-    log.info('creatordispute signed') if res else log.error('creatordispute failed')
-
-@cli.command()
-@click.option('--multi/--no-multi', default=False, help="prompt for identity to use")
-@click.option('--identity', type=click.Choice(['Alice', 'Bob', 'Charlie', 'Dan']), default=None, help="identity to use")
-def workerdispute(multi, identity):
-    """
-    Dispute a job.
-
-    If you are a worker, file a dispute because the creator is
-    unresponsive or does not accept work that fulfills the job
-    specification, they would use this command to file a dispute.
-    """
-    log = rein.get_log()
-    if multi:
-        rein.set_multiuser()
-
-    if rein.has_no_account():
-        click.echo("Please run setup.")
-        return
-
-    user = get_user(rein, identity)
-
-    key = pubkey(user.dkey)
-    url = "http://localhost:5000/"
-    click.echo("Querying %s for offers to you..." % url)
-    valid_results = []
-    fails = 0
-    sel_url = "{0}query?owner={1}&worker={2}&query=in-process"
-    answer = requests.get(url=sel_url.format(url, user.maddr, key))
-    #click.echo(answer.text)
-    results = answer.json()
-    valid_results += filter_valid_sigs(results['in-process'], u'Primary escrow redeem script')
-
-    if len(valid_results) == 0:
-        click.echo('None found')
-
-    doc = creatordispute_prompt(rein, valid_results)
-    if not doc:
-        return
-
-    log.info('got in-process job for dispute')
-    document = build_document('Dispute Offer',
-                              fields=['job_id', 'primary_redeem_script', 'mediator_redeem_script',
-                                      'detail' ,'primary_payment', 'mediator_payment'],
-                              labels=['Job ID',
-                                      'Primary escrow redeem script',
-                                      'Mediator escrow redeem script',
-                                      'Dispute detail',
-                                      'Signed primary escrow payment',
-                                      'Signed mediator escrow payment'],
-                              defaults=[doc['Job ID'],
-                                        doc['Primary escrow redeem script'],
-                                        doc['Mediator escrow redeem script']],
-                              )
-    res = sign_and_store_document(rein, 'workerdispute', document, user.daddr, user.dkey)
-    if res:
-        click.echo("Dispute signed by worker. Run 'rein sync' to push to available servers.")
-    log.info('workerdispute signed') if res else log.error('workerdispute failed')
-
-
-@cli.command()
-@click.option('--multi/--no-multi', default=False, help="prompt for identity to use")
-@click.option('--identity', type=click.Choice(['Alice', 'Bob', 'Charlie', 'Dan']), default=None, help="identity to use")
-def offer(multi, identity):
-    """
-    Award a job.
-
-    A job creator would use this command to award the job to a specific bid. 
-    Once signed and pushed, escrow addresses should be funded and work can
-    begin.
-    """
-    log = rein.get_log()
-    if multi:
-        rein.set_multiuser()
-
-    if rein.has_no_account():
-        click.echo("Please run setup.")
-        return
-
-    user = get_user(rein, identity)
-
-    key = pubkey(user.dkey)
-    url = "http://localhost:5000/"
-    click.echo("Querying %s for bids on your jobs..." % url)
-    sel_url = "{0}query?owner={1}&delegate={2}&query=bids"
-    answer = requests.get(url=sel_url.format(url, user.maddr, user.daddr))
-    data = answer.json()
-    if len(data['bids']) == 0:
-        click.echo('None found')
-
-    bids = filter_valid_sigs(data['bids'], u'Primary escrow redeem script')
-
-    bid = bid_prompt(rein, bids)
-    if not bid:
-        click.echo('None chosen')
-        return
-
-    log.info('got bid to offer')
-    document = build_document('Offer',
-                              fields=['user', 'key',
-                                      'worker', 'worker_key',
-                                      'mediator', 'mediator_key',
-                                      'mediator_escrow_address', 'mediator_escrow_redeem',
-                                      'primary_escrow_address', 'primary_escrow_redeem',
-                                      'description', 'amount'],
-                              labels=['Job name', 'Job creator\'s name', 'Job creator\'s public key',
-                                      'Worker\'s name', 'Worker\'s public key',
-                                      'Mediator\'s name', 'Mediator\'s public key',
-                                      'Mediator escrow address', 'Mediator escrow redeem script',
-                                      'Primary escrow address', 'Primary escrow redeem script',
-                                      'Description', 'Bid amount (BTC)'],
-                              defaults=[bid['Job name'], user.name, key,
-                                        bid['Worker\'s name'], bid['Worker\'s public key'],
-                                        bid['Job creator\'s name'], bid['Job creator\'s public key']], guid=bid['Job ID'])
-    res = sign_and_store_document(rein, 'offer', document, user.daddr, user.dkey)
-    if res:
-        click.echo("Offer created. Run 'rein sync' to push to available servers.")
-    log.info('offer signed') if res else log.error('offer failed')
-
-
-@cli.command()
-@click.option('--multi/--no-multi', default=False, help="prompt for identity to use")
-@click.option('--identity', type=click.Choice(['Alice', 'Bob', 'Charlie', 'Dan']), default=None, help="identity to use")
-def post(multi, identity):
-    """
-    Post a job.
-    """
-    log = rein.get_log()
-    if multi:
-        rein.set_multiuser()
-
-    if rein.has_no_account():
-        click.echo("Please run setup.")
-        return
-
-    user = get_user(rein, identity)
-
-    key = pubkey(user.dkey)
-    urls = get_urls(rein)
-    eligible_mediators = []
-    for url in urls:
-        click.echo("Querying %s for mediators..." % url)
-        sel_url = "{0}query?owner={1}&query=mediators"
-        answer = requests.get(url=sel_url.format(url, user.maddr))
-        data = answer.json()
-        if len(data['mediators']) == 0:
-            click.echo('None found')
-        eligible_mediators += filter_valid_sigs(data['mediators'])
-
-    mediator = mediator_prompt(rein, eligible_mediators)
-    click.echo("Chosen mediator: " + str(mediator))
-
-    log.info('got user and key for post')
-    job_guid = ''.join(random.SystemRandom().choice(string.ascii_lowercase + string.digits) for _ in range(20))
-    document = build_document('Job',
-                              fields=['user', 'key', 'mediator', 'mediator_key', 'name', 'category', 'description'],
-                              labels=['Job creator\'s name', 'Job creator\'s public key', # TODO: add contact
-                                      'Mediator\'s name', 'Mediator\'s public key',
-                                      'Job name', 'Category', 'Description'],
-                              defaults=[user.name, key,
-                                        mediator['User'], mediator['Mediator pubkey']],
-                              guid=job_guid
-                              )
-    res = sign_and_store_document(rein, 'job_posting', document, user.daddr, user.dkey)
-    if res:
-        click.echo("Posting created. Run 'rein sync' to push to available servers.")
-    log.info('posting signed') if res else log.error('posting failed')
 
 
 @cli.command()
