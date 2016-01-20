@@ -18,7 +18,8 @@ from lib.placement import Placement, create_placements, get_remote_document_hash
 from lib.validate import verify_sig
 from lib.bitcoinecdsa import sign, pubkey
 from lib.market import mediator_prompt, accept_prompt, job_prompt, bid_prompt, delivery_prompt,\
-        creatordispute_prompt, build_document, sign_and_store_document
+        creatordispute_prompt, assemble_document, build_document, sign_and_store_document
+from lib.script import build_2_of_3, build_mandatory_multisig
 import lib.config as config
 
 import lib.models
@@ -36,9 +37,9 @@ interface to interact with Rein. Use this program to create an account, post a j
 
 \b
     Quick start:
-    $ rein setup     - create an identity
-    $ rein request   - get free microhosting
-    $ rein sync      - push your identity up to your microhosting servers
+        $ rein setup     - create an identity
+        $ rein request   - get free microhosting
+        $ rein sync      - push your identity to microhosting servers
 
     For more info visit: http://reinproject.org
     """
@@ -142,18 +143,26 @@ def bid(multi, identity):
         return
 
     log.info('got job for bid')
-    document = build_document('Bid',
-                              fields=['user', 'key', 'job_name', 'job_id', 'job_creator', 'job_creator_key', 'description', 'amount'],
-                              labels=['Worker\'s name',
-                                      'Worker\'s public key',
-                                      'Job name',
-                                      'Job ID',
-                                      'Job creator\'s name',
-                                      'Job creator\'s public key',
-                                      'Description',
-                                      'Bid amount (BTC)'],
-                              defaults=[user.name, key, job['Job name'], job['Job ID'], job['Job creator\'s name'], job['Job creator\'s public key']]
-                              )
+    primary_redeem_script, primary_addr = build_2_of_3([job['Job creator\'s public key'],
+                                                        job['Mediator\'s public key'],
+                                                        key])
+    mediator_redeem_script, mediator_escrow_addr = build_mandatory_multisig(job['Mediator\'s public key'],
+                                                                            [job['Job creator\'s public key'],key])
+    fields = [
+                {'label': 'Job name',                       'value_from': job},
+                {'label': 'Job ID',                         'value_from': job},
+                {'label': 'Job creator\'s name',            'value_from': job},
+                {'label': 'Worker\'s name',                 'value': user.name},
+                {'label': 'Description'},
+                {'label': 'Bid amount (BTC)', 'validator': is_number},
+                {'label': 'Primary escrow address',         'value': primary_addr},
+                {'label': 'Mediator escrow address',        'value': mediator_escrow_addr},
+                {'label': 'Job creator\'s public key',      'value_from': job},
+                {'label': 'Worker\'s public key',           'value': key},
+                {'label': 'Primary escrow redeem script',   'value': primary_redeem_script},
+                {'label': 'Mediator escrow redeem script',  'value': mediator_redeem_script},
+             ]
+    document = assemble_document('Bid', fields)
     res = sign_and_store_document(rein, 'bid', document, user.daddr, user.dkey)
     if res:
         click.echo("Bid created. Run 'rein sync' to push to available servers.")
@@ -207,9 +216,13 @@ def deliver(multi, identity):
                                         doc['Primary escrow redeem script'],
                                         doc['Mediator escrow redeem script']]
                               )
-    res = sign_and_store_document(rein, 'delivery', document, user.daddr, user.dkey)
-    if res:
-        click.echo("Delivery created. Run 'rein sync' to push to available servers.")
+    if check_redeem_scripts(document):
+        res = sign_and_store_document(rein, 'delivery', document, user.daddr, user.dkey)
+        if res:
+            click.echo("Delivery created. Run 'rein sync' to push to available servers.")
+    else:
+        click.echo("Incorrect redeem scripts. Check keys and their order in redeem script.")
+        res = False
     log.info('delivery signed') if res else log.error('delivery failed')
 
 
@@ -218,7 +231,7 @@ def deliver(multi, identity):
 @click.option('--identity', type=click.Choice(['Alice', 'Bob', 'Charlie', 'Dan']), default=None, help="identity to use")
 def accept(multi, identity):
     """
-    Accept a delivery, completing a job.
+    Accept a delivery.
 
     Review and accept deliveries for your jobs. Once a delivery is
     accpted, mediators are advised not to sign any tranasctions
@@ -286,7 +299,7 @@ def accept(multi, identity):
 @click.option('--identity', type=click.Choice(['Alice', 'Bob', 'Charlie', 'Dan']), default=None, help="identity to use")
 def creatordispute(multi, identity):
     """
-    Dispute a delivery, triggering mediation.
+    Dispute a delivery.
 
     If you are a job creator, file a dispute on one of your jobs, for example
     because the job is not done on time, they would use this command to file
@@ -356,7 +369,7 @@ def creatordispute(multi, identity):
 @click.option('--identity', type=click.Choice(['Alice', 'Bob', 'Charlie', 'Dan']), default=None, help="identity to use")
 def workerdispute(multi, identity):
     """
-    Dispute a job, triggering mediation.
+    Dispute a job.
 
     If you are a worker, file a dispute because the creator is
     unresponsive or does not accept work that fulfills the job
@@ -415,7 +428,7 @@ def workerdispute(multi, identity):
 @click.option('--identity', type=click.Choice(['Alice', 'Bob', 'Charlie', 'Dan']), default=None, help="identity to use")
 def offer(multi, identity):
     """
-    Offer - award a bid.
+    Award a job.
 
     A job creator would use this command to award the job to a specific bid. 
     Once signed and pushed, escrow addresses should be funded and work can
@@ -488,14 +501,16 @@ def post(multi, identity):
     user = get_user(rein, identity)
 
     key = pubkey(user.dkey)
-    url = "http://localhost:5000/"
-    click.echo("Querying %s for mediators..." % url)
-    sel_url = "{0}query?owner={1}&query=mediators"
-    answer = requests.get(url=sel_url.format(url, user.maddr))
-    data = answer.json()
-    if len(data['mediators']) == 0:
-        click.echo('None found')
-    eligible_mediators = filter_valid_sigs(data['mediators'])
+    urls = get_urls(rein)
+    eligible_mediators = []
+    for url in urls:
+        click.echo("Querying %s for mediators..." % url)
+        sel_url = "{0}query?owner={1}&query=mediators"
+        answer = requests.get(url=sel_url.format(url, user.maddr))
+        data = answer.json()
+        if len(data['mediators']) == 0:
+            click.echo('None found')
+        eligible_mediators += filter_valid_sigs(data['mediators'])
 
     mediator = mediator_prompt(rein, eligible_mediators)
     click.echo("Chosen mediator: " + str(mediator))
@@ -702,6 +717,14 @@ def upload():
         click.echo('%s - %s BTC' % (server, data['price']))
 
 
+def is_number(s):
+    try:
+        float(s)
+        return True
+    except ValueError:
+        return False
+
+
 def filter_valid_sigs(docs, expected_field=None):
     valid = []
     fails = 0
@@ -717,7 +740,7 @@ def filter_valid_sigs(docs, expected_field=None):
                 valid.append(data['info'])
             else:
                 fails += 1
-    log.info('spammy fails = %d' % fails)
+    rein.log.info('spammy fails = %d' % fails)
     return valid
 
 

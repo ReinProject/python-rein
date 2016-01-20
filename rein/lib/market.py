@@ -5,6 +5,7 @@ import os
 import click
 from ui import shorten, get_choice
 
+
 def mediator_prompt(rein, eligible_mediators):
     i = 0
     for m in eligible_mediators:
@@ -142,6 +143,34 @@ def build_document(title, fields, labels, defaults, guid=None):
         document = document + "Job ID: " + guid + "\n"
     document = document[:-1]
     return document
+
+
+def assemble_document(title, fields, guid=None):
+    data = []
+    for field in fields:
+        entry = {}
+        entry['label'] = field['label']
+        if 'validator' in field.keys():
+            valid = False
+            while not valid:
+                answer = click.prompt(field['label'])
+                valid = field['validator'](answer)
+            entry['value'] = answer
+        elif 'value' in field.keys():
+            entry['value'] = field['value']
+        elif 'value_from' in field.keys():
+            entry['value'] = field['value_from'][field['label']]
+        else:
+            entry['value'] = click.prompt(field['label'])
+        data.append(entry)
+    if guid:
+        data.append({'label': 'Job ID', 'value': guid})
+    document = "Rein %s\n" % title
+    for entry in data:
+        click.echo(entry['label'])
+        click.echo(entry['value'])
+        document = document + entry['label'] + ": " + entry['value'] + "\n"
+    return document[:-1]
 
 
 def sign_and_store_document(rein, doc_type, document, signature_address=None, signature_key=None):

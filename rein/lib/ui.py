@@ -15,7 +15,7 @@ def shorten(text, length=60):
         return text[0:length-1]
     elif len(text) > length - 3:
         return text[0:length-1] + '...'
-    else
+    else:
         return text
         
 
