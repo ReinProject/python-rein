@@ -409,18 +409,16 @@ def accept(multi, identity):
         return
 
     log.info('got delivery for accept')
-    document = build_document('Accept Delivery',
-                              fields=['job_id', 'primary_redeem_script', 'mediator_redeem_script',
-                                      'primary_payment', 'mediator_payment'],
-                              labels=['Job ID',
-                                      'Primary escrow redeem script',
-                                      'Mediator escrow redeem script',
-                                      'Signed primary escrow payment',
-                                      'Signed mediator escrow payment'],
-                              defaults=[doc['Job ID'],
-                                        doc['Primary escrow redeem script'],
-                                        doc['Mediator escrow redeem script']],
-                              )
+
+    fields = [
+                {'label': 'Job name',                       'value_from': doc},
+                {'label': 'Job ID',                         'value_from': doc},
+                {'label': 'Signed primary escrow payment'},
+                {'label': 'Signed mediator escrow payment'},
+                {'label': 'Primary escrow redeem script',   'value_from': doc},
+                {'label': 'Mediator escrow redeem script',  'value_from': doc},
+             ]
+    document = assemble_document('Accept Delivery', fields)
     res = sign_and_store_document(rein, 'accept', document, user.daddr, user.dkey)
     if res:
         click.echo("Accepted delivery. Run 'rein sync' to push to available servers.")
@@ -478,20 +476,14 @@ def creatordispute(multi, identity):
         return
 
     log.info('got delivery for dispute')
-    document = build_document('Dispute Delivery',
-                              fields=['job_id', 'primary_redeem_script', 'mediator_redeem_script',
-                                      'detail' ,'primary_payment', 'mediator_payment'],
-                              labels=['Job ID',
-                                      'Primary escrow redeem script',
-                                      'Mediator escrow redeem script',
-                                      'Dispute detail',
-                                      'Signed primary escrow payment',
-                                      'Signed mediator escrow payment',
-                                      ],
-                              defaults=[doc['Job ID'],
-                                        doc['Primary escrow redeem script'],
-                                        doc['Mediator escrow redeem script']],
-                              )
+    fields = [
+                {'label': 'Job name',                       'value_from': doc},
+                {'label': 'Job ID',                         'value_from': doc},
+                {'label': 'Dispute detail'},
+                {'label': 'Primary escrow redeem script',   'value_from': doc},
+                {'label': 'Mediator escrow redeem script',  'value_from': doc},
+             ]
+    document = assemble_document('Dispute Delivery', fields)
     res = sign_and_store_document(rein, 'creatordispute', document, user.daddr, user.dkey)
     if res:
         click.echo("Dispute signed by job creator. Run 'rein sync' to push to available servers.")
@@ -538,19 +530,14 @@ def workerdispute(multi, identity):
         return
 
     log.info('got in-process job for dispute')
-    document = build_document('Dispute Offer',
-                              fields=['job_id', 'primary_redeem_script', 'mediator_redeem_script',
-                                      'detail' ,'primary_payment', 'mediator_payment'],
-                              labels=['Job ID',
-                                      'Primary escrow redeem script',
-                                      'Mediator escrow redeem script',
-                                      'Dispute detail',
-                                      'Signed primary escrow payment',
-                                      'Signed mediator escrow payment'],
-                              defaults=[doc['Job ID'],
-                                        doc['Primary escrow redeem script'],
-                                        doc['Mediator escrow redeem script']],
-                              )
+    fields = [
+                {'label': 'Job name',                       'value_from': doc},
+                {'label': 'Job ID',                         'value_from': doc},
+                {'label': 'Dispute detail'},
+                {'label': 'Primary escrow redeem script',   'value_from': doc},
+                {'label': 'Mediator escrow redeem script',  'value_from': doc},
+             ]
+    document = assemble_document('Dispute Offer', fields)
     res = sign_and_store_document(rein, 'workerdispute', document, user.daddr, user.dkey)
     if res:
         click.echo("Dispute signed by worker. Run 'rein sync' to push to available servers.")
