@@ -7,14 +7,22 @@ from ui import shorten, get_choice
 
 
 def mediator_prompt(rein, eligible_mediators):
-    i = 0
+    unique = []
+    pubkeys = []
     for m in eligible_mediators:
-        click.echo('%s - %s %s' % (str(i), m['User'], m['Mediation fee']))
+        if m['Mediator public key'] not in pubkeys:
+            pubkeys.append(m['Mediator public key'])
+            unique.append(m)
+    i = 0
+    for m in unique:
+        click.echo('%s - %s - Fee: %s - Public key: %s' % (str(i), m['User'], m['Mediator fee'], m['Mediator public key']))
         i += 1
-    choice = -1
-    while choice >= len(eligible_mediators) or choice < 0:
-        choice = click.prompt('Choose a mediator', type=int)
-    return eligible_mediators[choice]
+    if len(unique) == 0:
+        return None
+    choice = get_choice(unique, 'mediator')
+    if choice == 'q':
+        return False
+    return unique[choice]
 
 
 def bid_prompt(rein, bids):

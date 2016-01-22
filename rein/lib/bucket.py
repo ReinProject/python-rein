@@ -43,6 +43,3 @@ def get_urls(rein):
     for b in buckets:
         urls.append(b.url)
     return urls
-
-def create_buckets(engine):
-    Base.metadata.create_all(engine)

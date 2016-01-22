@@ -12,7 +12,7 @@ from sqlalchemy import and_
 
 from lib.ui import create_account, import_account, enroll, identity_prompt
 from lib.user import User
-from lib.bucket import Bucket, get_bucket_count, get_urls, create_buckets
+from lib.bucket import Bucket, get_bucket_count, get_urls
 from lib.document import Document, get_user_documents
 from lib.placement import Placement, create_placements, get_remote_document_hash, get_placements
 from lib.validate import verify_sig
@@ -153,7 +153,7 @@ def post(multi, identity):
         eligible_mediators += filter_valid_sigs(data['mediators'])
 
     mediator = mediator_prompt(rein, eligible_mediators)
-    click.echo("Chosen mediator: " + str(mediator))
+    click.echo("Chosen mediator: " + str(mediator['User']))
 
     log.info('got user and key for post')
     job_guid = ''.join(random.SystemRandom().choice(string.ascii_lowercase + string.digits) for _ in range(20))
@@ -574,7 +574,6 @@ def request(multi, identity, url):
         url = url + '/'
     if not url.startswith('http://') and not url.startswith('https://'):
         url = 'http://' + url
-    create_buckets(rein.engine)
 
     if get_bucket_count(rein, url) > 4:
         click.echo("You already have enough (5) buckets from %s" % url)
@@ -602,7 +601,7 @@ def request(multi, identity, url):
         click.echo('The server returned an error: %s' % data['message'])
 
     for bucket in data['buckets']:
-        b = rein.session.query(Bucket).filter_by(url=url).filter_by(date_created=bucket['created']).first()
+        b = rein.session.query(Bucket).filter(and_(Bucket.url==url, Bucket.date_created==bucket['created'])).first()
         if b is None:
             b = Bucket(url, user.id, bucket['id'], bucket['bytes_free'],
                        datetime.strptime(bucket['created'], '%Y-%m-%d %H:%M:%S'))
@@ -744,12 +743,12 @@ def filter_valid_sigs(docs, expected_field=None):
         data = verify_sig(m)
         if expected_field:
             if data['valid'] and (expected_field in data['info'].keys()):
-                valid.append(data['info'])
+                valid.append(data)
             else:
                 fails += 1
         else:
             if data['valid']:
-                valid.append(data['info'])
+                valid.append(data)
             else:
                 fails += 1
     rein.log.info('spammy fails = %d' % fails)

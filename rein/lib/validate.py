@@ -25,7 +25,7 @@ def parse_sig(sig):
     assigned within the message, for example:
        parse_sig(sig)['Name/handle'] === "David Sterry"
     '''
-    matches = re.finditer("^(.+):\s(.+)\n", sig)
+    matches = re.finditer("(.+):\s(.+)\n", sig)
     ret = {}
     for match in matches:
         ret[match.group(1)] = match.group(2)
@@ -54,7 +54,8 @@ def verify_sig(sig):
         )
     else:
         valid = False
-    return {'valid': valid, 'info': sig_info}
+    sig_info['valid'] = valid    
+    return sig_info
 
 
 def validate_enrollment(enrollment_signature_text):
