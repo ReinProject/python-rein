@@ -183,3 +183,36 @@ def sign_and_store_document(rein, doc_type, document, signature_address=None, si
         rein.session.add(d)
         rein.session.commit()
     return validated
+
+def join_documents(rein, document):
+    """
+    Take one document and build the entire order based on it. The idea here is that one Job ID should
+    allow us to query each available server for each document type that is associated with it, then
+    filter out bogus shit by focusing on who's signed correct stuff. This kind of command can also
+    look for attempted changes in foundational info like participants public keys and redeem scripts.
+    Finally, if this works well, we can reduce how much data is required at each stage. Finally still,
+    we should be able to serialize a job from end to end so it can be easily reviewed by a mediator.
+    """
+    job_id = get_job_id(document)
+    urls = get_urls(rein)
+    documents = []
+    if job_id:
+        for url in urls:
+            documents += get_documents_by_job_id(rein, url, job_id)
+
+    for contents in documents:
+        doc_type = get_doc_type(contents)
+        if not doc_type:
+            rein.log.info('doc_type not detected')
+            continue
+        d = Document(rein, doc_type, contents, url)
+        order_id = Order.get_order_id(job_id)
+        if order_id:
+            d.set_order_id(order_id)
+        else:
+            o = Order(job_id)
+            rein.db.add(o)        
+    rein.db.commit()
+    # how do we test this? give it a document, it gets the job id, then does a query for all other docs 
+    # with that job id. if it can figure out the doc type, it sets the order id on it. this allows
+    # Order.get_documents() to provide all documents or to provide just the post or the bid.

@@ -20,10 +20,13 @@ Base.metadata.create_all(engine)
 from bucket import Base
 Base.metadata.create_all(engine)
 
-from document import Base
+from order import Base
 Base.metadata.create_all(engine)
 
 from placement import Base
+Base.metadata.create_all(engine)
+
+from document import Base
 Base.metadata.create_all(engine)
 
 log.info('database tables updated')
