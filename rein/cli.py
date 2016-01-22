@@ -708,7 +708,7 @@ def sync(multi, identity):
         answer = requests.get(url=sel_url.format(user.maddr, nonce[url]))
         log.info('nonce cleared for %s' % (url))
 
-    click.echo('%s docs checked, %s uploaded.' % (len(check), str(succeeded)))
+    click.echo('%s docs checked on %s servers, %s uploads done.' % (len(check), len(urls), str(succeeded)))
 
 
 @cli.command()

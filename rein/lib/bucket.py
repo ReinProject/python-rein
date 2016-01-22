@@ -41,5 +41,6 @@ def get_urls(rein):
     buckets = rein.session.query(Bucket).filter(Bucket.identity == rein.user.id).all()
     urls = []
     for b in buckets:
-        urls.append(b.url)
+        if b.url not in urls:
+            urls.append(b.url)
     return urls
