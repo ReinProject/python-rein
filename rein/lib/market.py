@@ -7,22 +7,17 @@ from ui import shorten, get_choice
 
 
 def mediator_prompt(rein, eligible_mediators):
-    unique = []
-    pubkeys = []
-    for m in eligible_mediators:
-        if m['Mediator public key'] not in pubkeys:
-            pubkeys.append(m['Mediator public key'])
-            unique.append(m)
+    mediators = unique(eligible_mediators, 'Mediator public key')
     i = 0
-    for m in unique:
+    for m in mediators:
         click.echo('%s - %s - Fee: %s - Public key: %s' % (str(i), m['User'], m['Mediator fee'], m['Mediator public key']))
         i += 1
-    if len(unique) == 0:
+    if len(mediators) == 0:
         return None
-    choice = get_choice(unique, 'mediator')
+    choice = get_choice(mediators, 'mediator')
     if choice == 'q':
         return False
-    return unique[choice]
+    return mediators[choice]
 
 
 def bid_prompt(rein, bids):
@@ -31,7 +26,7 @@ def bid_prompt(rein, bids):
     for b in bids:
         if 'Description' not in b:
             continue 
-        click.echo('%s - %s - %s - %s BitCoin' % (str(i), b["Worker's name"],
+        click.echo('%s - %s - %s - %s BitCoin' % (str(i), b["Worker"],
                                                   shorten(b['Description']), b['Bid amount (BTC)']))
         valid_bids.append(b)
         i += 1
@@ -42,14 +37,14 @@ def bid_prompt(rein, bids):
         return False
     bid = valid_bids[choice]
     click.echo('You have chosen %s\'s bid.\n\nFull description: %s\n\nPlease review carefully before accepting. (Ctrl-c to abort)' % 
-               (bid['Worker\'s name'], bid['Description']))
+               (bid['Worker'], bid['Description']))
     return bid
 
 
 def job_prompt(rein, jobs):
     i = 0
     for j in jobs:
-        click.echo('%s - %s - %s - %s' % (str(i), j["Job creator's name"],
+        click.echo('%s - %s - %s - %s' % (str(i), j["Job creator"],
                                           j['Job name'], shorten(j['Description'])))
         i += 1
     choice = get_choice(jobs, 'job')
@@ -58,16 +53,17 @@ def job_prompt(rein, jobs):
     job = jobs[choice]
     click.echo('You have chosen a Job posted by %s.\n\nFull description: %s\n\nPlease pay attention '
                'to each requirement and provide a time frame to complete the job. (Ctrl-c to abort)\n' % 
-               (job['Job creator\'s name'], job['Description']))
+               (job['Job creator'], job['Description']))
     return job
 
 
 def delivery_prompt(rein, choices, detail='Description'):
+    choices = unique(choices, 'Job ID')
     i = 0
     for c in choices:
         if 'Bid amount (BTC)' not in c:
             continue
-        click.echo('%s - %s - %s - %s' % (str(i), c['Job ID'], c['Bid amount (BTC)'], shorten(c[detail])))
+        click.echo('%s - %s - %s BTC - %s' % (str(i), c['Job name'], c['Bid amount (BTC)'], shorten(c[detail])))
         i += 1
     choice = get_choice(choices, 'job')
     if choice == 'q':
@@ -150,8 +146,6 @@ def assemble_document(title, fields):
         data.append(entry)
     document = "Rein %s\n" % title
     for entry in data:
-        click.echo(entry['label'])
-        click.echo(entry['value'])
         document = document + entry['label'] + ": " + entry['value'] + "\n"
     return document[:-1]
 
@@ -224,3 +218,15 @@ def join_documents(rein, document):
     # how do we test this? give it a document, it gets the job id, then does a query for all other docs 
     # with that job id. if it can figure out the doc type, it sets the order id on it. this allows
     # Order.get_documents() to provide all documents or to provide just the post or the bid.
+
+def unique(the_array, key):
+    """
+    Filter an array of dicts by key
+    """
+    unique = []
+    values = []
+    for element in the_array:
+        if element[key] not in values:
+            values.append(element[key])
+            unique.append(element)
+    return unique

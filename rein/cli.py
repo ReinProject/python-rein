@@ -19,7 +19,7 @@ from lib.validate import verify_sig
 from lib.bitcoinecdsa import sign, pubkey
 from lib.market import mediator_prompt, accept_prompt, job_prompt, bid_prompt, delivery_prompt,\
         creatordispute_prompt, assemble_document, sign_and_store_document
-from lib.script import build_2_of_3, build_mandatory_multisig
+from lib.script import build_2_of_3, build_mandatory_multisig, check_redeem_scripts
 import lib.config as config
 
 import lib.models
@@ -284,7 +284,7 @@ def offer(multi, identity):
                 {'label': 'Job name',                       'value_from': bid},
                 {'label': 'Worker',                         'value_from': bid},
                 {'label': 'Description',                    'value_from': bid},
-                {'label': 'Bid Amount (BTC)',               'value_from': bid},
+                {'label': 'Bid amount (BTC)',               'value_from': bid},
                 {'label': 'Primary escrow address',         'value_from': bid},
                 {'label': 'Mediator escrow address',        'value_from': bid},
                 {'label': 'Job ID',                         'value_from': bid},
@@ -295,6 +295,9 @@ def offer(multi, identity):
                 {'label': 'Mediator escrow redeem script',  'value_from': bid},
              ]
     document = assemble_document('Offer', fields)
+    if not click.confirm('Are you sure you want to award this bid?'):
+        return
+
     res = sign_and_store_document(rein, 'offer', document, user.daddr, user.dkey)
     if res:
         click.echo("Offer created. Run 'rein sync' to push to available servers.")
@@ -323,15 +326,16 @@ def deliver(multi, identity):
     user = get_user(rein, identity)
 
     key = pubkey(user.dkey)
-    url = "http://localhost:5000/"
-    click.echo("Querying %s for in-process jobs..." % url)
-    sel_url = "{0}query?owner={1}&query=in-process&worker={2}"
-    answer = requests.get(url=sel_url.format(url, user.maddr, key))
-    results = answer.json()['in-process']
-    if len(results) == 0:
-        click.echo('None found')
-
-    valid_results = filter_valid_sigs(results, u'Primary escrow redeem script')
+    urls = get_urls(rein)
+    valid_results = []
+    for url in urls:
+        click.echo("Querying %s for in-process jobs..." % url)
+        sel_url = "{0}query?owner={1}&query=in-process&worker={2}"
+        answer = requests.get(url=sel_url.format(url, user.maddr, key))
+        results = answer.json()['in-process']
+        if len(results) == 0:
+            click.echo('None found')
+        valid_results += filter_valid_sigs(results, u'Primary escrow redeem script')
 
     doc = delivery_prompt(rein, valid_results)
     if not doc:
@@ -342,11 +346,14 @@ def deliver(multi, identity):
                 {'label': 'Job name',                       'value_from': doc},
                 {'label': 'Job ID',                         'value_from': doc},
                 {'label': 'Deliverables'},
-                {'label': 'Bid Amount (BTC)',               'value_from': doc},
+                {'label': 'Bid amount (BTC)',               'value_from': doc},
                 {'label': 'Primary escrow address',         'value_from': doc},
                 {'label': 'Mediator escrow address',        'value_from': doc},
                 {'label': 'Primary escrow redeem script',   'value_from': doc},
                 {'label': 'Mediator escrow redeem script',  'value_from': doc},
+                {'label': 'Worker public key',              'value_from': doc},
+                {'label': 'Mediator public key',            'value_from': doc},
+                {'label': 'Job creator public key',         'value_from': doc},
              ]
     document = assemble_document('Delivery', fields)
     if check_redeem_scripts(document):
@@ -430,7 +437,7 @@ def accept(multi, identity):
 @click.option('--identity', type=click.Choice(['Alice', 'Bob', 'Charlie', 'Dan']), default=None, help="identity to use")
 def creatordispute(multi, identity):
     """
-    Dispute a delivery.
+    File a dispute (as a job creator).
 
     If you are a job creator, file a dispute on one of your jobs, for example
     because the job is not done on time, they would use this command to file
@@ -495,7 +502,7 @@ def creatordispute(multi, identity):
 @click.option('--identity', type=click.Choice(['Alice', 'Bob', 'Charlie', 'Dan']), default=None, help="identity to use")
 def workerdispute(multi, identity):
     """
-    Dispute a job.
+    File a dispute (as a worker).
 
     If you are a worker, file a dispute because the creator is
     unresponsive or does not accept work that fulfills the job
@@ -742,7 +749,7 @@ def filter_valid_sigs(docs, expected_field=None):
     for m in docs:
         data = verify_sig(m)
         if expected_field:
-            if data['valid'] and (expected_field in data['info'].keys()):
+            if data['valid'] and expected_field in data:
                 valid.append(data)
             else:
                 fails += 1

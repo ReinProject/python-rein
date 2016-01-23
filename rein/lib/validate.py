@@ -18,6 +18,14 @@ def strip_armor(sig, dash_space=False):
     return sig
 
 
+def parse_document(document):
+    matches = re.finditer("(.+):\s(.+)(\n|$)", document)
+    ret = {}
+    for match in matches:
+        ret[match.group(1)] = match.group(2)
+    return ret
+
+
 def parse_sig(sig):
     '''
     Takes an ASCII-armored signature and returns a dictionary of its info.

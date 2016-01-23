@@ -1,7 +1,9 @@
+import click
 import bitcoin
 from bitcoin.core import b2x, lx, x
 from bitcoin.core.script import CScript, OP_CHECKMULTISIG, OP_CHECKSIGVERIFY
 from bitcoin.wallet import CBitcoinAddress
+from validate import parse_document
 import unittest
 
 def parse_script(text):
@@ -36,12 +38,14 @@ def build_mandatory_multisig(mandatory_pubkey, other_pubkeys):
 
 def check_2_of_3(parsed, expected_public_keys):
     if parsed[0] != '2' or parsed[4] != '3' or parsed[5] != 'OP_CHECKMULTISIG':
+        click.echo("2 %s,  3 %s, or cms %s failed" % (parsed[0]. parsed[4], parsed[5]))
         return False
     for k in expected_public_keys:
         if k not in parsed:
             print(k + ' not found')
             return False
     if len(parsed) != 6:
+        click.echo("bad len %s" % len(parsed))
         return False
     return True
 
@@ -63,19 +67,20 @@ def check_mandatory_multisig(parsed, mandatory_public_key, other_public_keys):
     return True
 
 def check_redeem_scripts(document):
-    ret = parse_sig(document)
+    ret = parse_document(document)
     if u'Primary escrow redeem script' in ret.keys():
-        pubkeys = [ret['Job creator\'s public key'], ret['Worker\'s public key'], ret['Mediator\'s public key']]
-        if not check_2_of_3(ret[u'Primary escrow redeem script'], pubkeys):
+        pubkeys = [ret['Job creator public key'], ret['Worker public key'], ret['Mediator public key']]
+        if not check_2_of_3(parse_script(ret[u'Primary escrow redeem script']), pubkeys):
+            click.echo("2-of-3 check failed")
             return False
 
     if u'Mediator escrow redeem script' in ret.keys():
-        pubkeys = [ret['Job creator\'s public key'], ret['Worker\'s public key']]
-        if not check_mandatory_multisig(ret[u'Mediator escrow redeem script'],
-                                        ret['Mediator\'s public key'], pubkeys):
+        pubkeys = [ret['Job creator public key'], ret['Worker public key']]
+        if not check_mandatory_multisig(parse_script(ret[u'Mediator escrow redeem script']),
+                                        ret['Mediator public key'], pubkeys):
+            click.echo("2-of-3 check failed")
             return False
     return True
-
 
 class BitcoinScriptTest(unittest.TestCase):
     def test_2_of_3(self):
