@@ -18,7 +18,7 @@ from lib.placement import Placement, create_placements, get_remote_document_hash
 from lib.validate import verify_sig
 from lib.bitcoinecdsa import sign, pubkey
 from lib.market import mediator_prompt, accept_prompt, job_prompt, bid_prompt, delivery_prompt,\
-        creatordispute_prompt, assemble_document, sign_and_store_document
+        creatordispute_prompt, assemble_document, sign_and_store_document, unique
 from lib.script import build_2_of_3, build_mandatory_multisig, check_redeem_scripts
 import lib.config as config
 
@@ -388,30 +388,33 @@ def accept(multi, identity):
     user = get_user(rein, identity)
 
     key = pubkey(user.dkey)
-    url = "http://localhost:5000/"
-    click.echo("Querying %s for deliveries..." % url)
-    # get job ids for jobs for which we've made an offer
+    urls = get_urls(rein)
     job_ids = []
-    offers = rein.session.query(Document).filter(Document.contents.ilike("%Rein Offer%Job creator's public key: "+key+"%")).all()
+    offers = rein.session.query(Document).filter(Document.contents.ilike("%Rein Offer%Job creator public key: "+key+"%")).all()
     for o in offers:
         m = re.search('Job ID: (\S+)', o.contents)
         if m and m.group(1):
             job_ids.append(m.group(1))
+
     valid_results = []
-    for job_id in job_ids:
-        sel_url = "{0}query?owner={1}&job_ids={2}&query=delivery"
-        answer = requests.get(url=sel_url.format(url, user.maddr, job_id))
-        results = answer.json()
-        if 'delivery' in results.keys():
-            results = results['delivery']
-        else:
-            continue
-        valid_results += filter_valid_sigs(results, u'Primary escrow redeem script')
+    for url in urls:
+        click.echo("Querying %s for deliveries..." % url)
+        for job_id in job_ids:
+            sel_url = "{0}query?owner={1}&job_ids={2}&query=delivery"
+            answer = requests.get(url=sel_url.format(url, user.maddr, job_id))
+            results = answer.json()
+            if 'delivery' in results:
+                results = results['delivery']
+            else:
+                continue
+            valid_results += filter_valid_sigs(results, u'Primary escrow redeem script')
+
+    unique_results = unique(valid_results, 'Job ID')
 
     if len(valid_results) == 0:
         click.echo('None found')
 
-    doc = accept_prompt(rein, valid_results, "Deliverables")
+    doc = accept_prompt(rein, unique_results, "Deliverables")
     if not doc:
         return
 
@@ -420,17 +423,20 @@ def accept(multi, identity):
     fields = [
                 {'label': 'Job name',                       'value_from': doc},
                 {'label': 'Job ID',                         'value_from': doc},
-                {'label': 'Signed primary escrow payment'},
-                {'label': 'Signed mediator escrow payment'},
+                {'label': 'Signed primary payment'},
+                {'label': 'Signed mediator payment'},
                 {'label': 'Primary escrow redeem script',   'value_from': doc},
                 {'label': 'Mediator escrow redeem script',  'value_from': doc},
              ]
     document = assemble_document('Accept Delivery', fields)
-    res = sign_and_store_document(rein, 'accept', document, user.daddr, user.dkey)
-    if res:
-        click.echo("Accepted delivery. Run 'rein sync' to push to available servers.")
-    log.info('accept signed') if res else log.error('accept failed')
-
+    click.echo('\n'+document+'\n')
+    if click.confirm("Are you sure?"):
+        res = sign_and_store_document(rein, 'accept', document, user.daddr, user.dkey)
+        if res:
+            click.echo("Accepted delivery. Run 'rein sync' to push to available servers.")
+        log.info('accept signed') if res else log.error('accept failed')
+    else:
+        click.echo("Accept aborted.") 
 
 @cli.command()
 @click.option('--multi/--no-multi', default=False, help="prompt for identity to use")

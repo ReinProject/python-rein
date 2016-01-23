@@ -14,7 +14,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 from bitcoin.wallet import CBitcoinSecret, P2PKHBitcoinAddress
 from bitcoin.signmessage import BitcoinMessage, VerifyMessage, SignMessage
-from bitcoin.core import b2x
+from bitcoin.core import b2x, x
 
 
 def sign(key, message):
@@ -32,6 +32,10 @@ def pubkey(key):
     key = CBitcoinSecret(key)
     return b2x(key.pub)
 
+
+def pubkey_to_address(pubkey):
+    return str(P2PKHBitcoinAddress.from_pubkey(x(pubkey)))
+    
 
 def privkey_to_address(privkey):
     try:

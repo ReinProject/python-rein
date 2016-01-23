@@ -1,6 +1,6 @@
 from document import Document
 from validate import validate_enrollment
-from bitcoinecdsa import sign, verify
+from bitcoinecdsa import sign, verify, pubkey_to_address
 import os
 import click
 from ui import shorten, get_choice
@@ -80,15 +80,27 @@ def accept_prompt(rein, choices, detail='Description'):
     for c in choices:
         if 'Primary escrow redeem script' not in c:
             continue
-        click.echo('%s - %s - %s' % (str(i), c['Job ID'], shorten(c[detail])))
+        click.echo('%s - %s - %s - %s' % (str(i), c['Job name'], c['Job ID'], shorten(c[detail])))
         i += 1
     choice = get_choice(choices, 'delivery')
     if choice == 'q':
         return None
     chosen = choices[choice]
-    click.echo('You have chosen to accept the following deliverables. \n\n%s: %s\n\nPlease review carefully before accepting. '
-               'Once you upload your signed statement, the mediator should no longer provide a refund. (Ctrl-c to abort)\n' % 
-               (detail, chosen[detail]))
+    click.echo('You have chosen to accept the following deliverables. \n\n%s: %s\nAccepted Bid amount (BTC): %s\n'
+               'Primary escrow redeem script: %s\n'
+               'Worker address: %s\n\n'
+               'Mediator escrow redeem script: %s\n'
+               'Mediator address: %s\n'
+               '\nPlease review carefully before accepting. Once you upload your signed statement, the mediator should no '
+               'longer provide a refund. (Ctrl-c to abort)\n' % 
+               (detail,
+                chosen[detail], chosen['Bid amount (BTC)'],
+                chosen['Primary escrow redeem script'],
+                pubkey_to_address(chosen['Worker public key']),
+                chosen['Mediator escrow redeem script'],
+                pubkey_to_address(chosen['Mediator public key'])
+               )
+              )
     return chosen
 
 
