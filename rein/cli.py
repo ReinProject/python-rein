@@ -654,6 +654,8 @@ def sync(multi, identity):
     urls = get_urls(rein)
     for url in urls:
         nonce[url] = get_new_nonce(rein, url)
+        if nonce[url] is None:
+            continue
         check = get_user_documents(rein) 
         if len(check) == 0:
             click.echo("Nothing to do.")
@@ -691,6 +693,8 @@ def sync(multi, identity):
         if len(doc.contents) > 8192:
             log.error("Document oversized %s" % doc.doc_hash)
             click.echo('Document is too big. 8192 bytes should be enough for anyone.')
+        elif nonce[url] is None:
+            continue
         else:
             message = plc.remote_key + doc.contents + user.daddr + nonce[url]
             message = message.decode('utf8')
@@ -717,6 +721,8 @@ def sync(multi, identity):
                 succeeded += 1
 
     for url in urls:
+        if nonce[url] is None:
+            continue
         sel_url = url + 'nonce?address={0}&clear={1}'
         answer = requests.get(url=sel_url.format(user.maddr, nonce[url]))
         log.info('nonce cleared for %s' % (url))
@@ -780,7 +786,11 @@ def get_user(rein, identity):
 
 def get_new_nonce(rein, url):
     sel_url = url + 'nonce?address={0}'
-    answer = requests.get(url=sel_url.format(rein.user.maddr))
+    try:
+        answer = requests.get(url=sel_url.format(rein.user.maddr))
+    except requests.exceptions.ConnectionError:
+        click.echo('Could not reach %s.' % url)
+        return None
     data = answer.json()
     rein.log.info('server returned nonce %s' % data['nonce'])
     return data['nonce']

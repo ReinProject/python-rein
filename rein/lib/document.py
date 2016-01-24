@@ -2,7 +2,7 @@ import hashlib
 import requests
 import click
 import re
-from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy import Column, Integer, String, ForeignKey, and_
 from sqlalchemy.ext.declarative import declarative_base
 from validate import filter_valid_sigs, parse_document
 from order import Order
@@ -42,13 +42,18 @@ class Document(Base):
 
 
 def get_user_documents(rein):
-    return rein.session.query(Document).filter(Document.identity == rein.user.id).all()
+    return rein.session.query(Document).filter(and_(Document.identity == rein.user.id,
+                                                    Document.source_url == 'local')).all()
 
 
 def get_documents_by_job_id(rein, url, job_id):
     click.echo("Querying %s for jobs with job_id %s ..." % (url, job_id))
     sel_url = "{0}query?owner={1}&query=by_job_id&job_ids={2}"
-    answer = requests.get(url=sel_url.format(url, rein.user.maddr, job_id))
+    try:
+        answer = requests.get(url=sel_url.format(url, rein.user.maddr, job_id))
+    except requests.exceptions.ConnectionError:
+        click.echo('Could not reach %s.' % url)
+        return None
     data = answer.json()
     if len(data['by_job_id']) == 0:
         click.echo('None found')

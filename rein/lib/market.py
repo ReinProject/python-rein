@@ -217,7 +217,9 @@ def assemble_order(rein, document):
     documents = []
     if job_id:
         for url in urls:
-            documents += get_documents_by_job_id(rein, url, job_id)
+            res = get_documents_by_job_id(rein, url, job_id)
+            if res:
+                documents += res
         order_id = Order.get_order_id(rein, job_id)
         if not order_id:
             o = Order(job_id)
