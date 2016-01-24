@@ -13,12 +13,12 @@ from sqlalchemy import and_
 from lib.ui import create_account, import_account, enroll, identity_prompt
 from lib.user import User
 from lib.bucket import Bucket, get_bucket_count, get_urls
-from lib.document import Document, get_user_documents
+from lib.document import Document, get_user_documents, get_job_id
 from lib.placement import Placement, create_placements, get_remote_document_hash, get_placements
-from lib.validate import verify_sig
+from lib.validate import verify_sig, filter_and_parse_valid_sigs
 from lib.bitcoinecdsa import sign, pubkey
 from lib.market import mediator_prompt, accept_prompt, job_prompt, bid_prompt, delivery_prompt,\
-        creatordispute_prompt, assemble_document, sign_and_store_document, unique
+        creatordispute_prompt, assemble_document, sign_and_store_document, unique, assemble_order 
 from lib.script import build_2_of_3, build_mandatory_multisig, check_redeem_scripts
 import lib.config as config
 
@@ -150,7 +150,7 @@ def post(multi, identity):
         data = answer.json()
         if len(data['mediators']) == 0:
             click.echo('None found')
-        eligible_mediators += filter_valid_sigs(data['mediators'])
+        eligible_mediators += filter_and_parse_valid_sigs(data['mediators'])
 
     mediator = mediator_prompt(rein, eligible_mediators)
     click.echo("Chosen mediator: " + str(mediator['User']))
@@ -208,7 +208,7 @@ def bid(multi, identity):
     if len(data['jobs']) == 0:
         click.echo('None found')
 
-    jobs = filter_valid_sigs(data['jobs'])
+    jobs = filter_and_parse_valid_sigs(data['jobs'])
 
     job = job_prompt(rein, jobs)
     if not job:
@@ -272,7 +272,7 @@ def offer(multi, identity):
     if len(data['bids']) == 0:
         click.echo('None found')
 
-    bids = filter_valid_sigs(data['bids'], u'Primary escrow redeem script')
+    bids = filter_and_parse_valid_sigs(data['bids'], u'Primary escrow redeem script')
 
     bid = bid_prompt(rein, bids)
     if not bid:
@@ -335,7 +335,7 @@ def deliver(multi, identity):
         results = answer.json()['in-process']
         if len(results) == 0:
             click.echo('None found')
-        valid_results += filter_valid_sigs(results, u'Primary escrow redeem script')
+        valid_results += filter_and_parse_valid_sigs(results, u'Primary escrow redeem script')
 
     doc = delivery_prompt(rein, valid_results)
     if not doc:
@@ -407,7 +407,7 @@ def accept(multi, identity):
                 results = results['delivery']
             else:
                 continue
-            valid_results += filter_valid_sigs(results, u'Primary escrow redeem script')
+            valid_results += filter_and_parse_valid_sigs(results, u'Primary escrow redeem script')
 
     unique_results = unique(valid_results, 'Job ID')
 
@@ -479,7 +479,7 @@ def creatordispute(multi, identity):
             results = results['delivery']
         else:
             continue
-        valid_results += filter_valid_sigs(results, u'Primary escrow redeem script')
+        valid_results += filter_and_parse_valid_sigs(results, u'Primary escrow redeem script')
 
     if len(valid_results) == 0:
         click.echo('None found')
@@ -533,7 +533,7 @@ def workerdispute(multi, identity):
     answer = requests.get(url=sel_url.format(url, user.maddr, key))
     #click.echo(answer.text)
     results = answer.json()
-    valid_results += filter_valid_sigs(results['in-process'], u'Primary escrow redeem script')
+    valid_results += filter_and_parse_valid_sigs(results['in-process'], u'Primary escrow redeem script')
 
     if len(valid_results) == 0:
         click.echo('None found')
@@ -725,20 +725,39 @@ def sync(multi, identity):
 
 
 @cli.command()
-def upload():
+@click.option('--multi/--no-multi', default=False, help="prompt for identity to use")
+@click.option('--identity', type=click.Choice(['Alice', 'Bob', 'Charlie', 'Dan']), default=None, help="identity to use")
+def status(multi, identity):
     """
-    Do initial share to many servers.
+    Show user info and active jobs.
     """
-    servers = ['http://bitcoinexchangerate.org/causeway']
-    for server in servers:
-        url = '%s%s' % (server, '/info.json')
-        text = check_output('curl', url)
-        try:
-            data = json.loads(text)
-        except:
-            raise RuntimeError('Problem contacting server %s' % server)
+    log = rein.get_log()
+    if multi:
+        rein.set_multiuser()
 
-        click.echo('%s - %s BTC' % (server, data['price']))
+    if rein.has_no_account():
+        click.echo("Please run setup.")
+        return
+
+    user = get_user(rein, identity)
+    key = pubkey(user.dkey)
+    click.echo("User: %s" % user.name)
+    click.echo("Master bitcoin address: %s" % user.maddr)
+    click.echo("Delegate bitcoin address: %s" % user.daddr)
+    click.echo("Delegate public key: %s" % key)
+    click.echo("Willing to mediate: %s" % user.will_mediate)
+    if user.will_mediate: 
+        click.echo("Mediator fee: %s %%" % user.mediator_fee)
+
+    documents = get_user_documents(rein)
+    click.echo("Total document count: %s" % len(documents))   
+    processed_job_ids = []
+    for document in documents:
+        job_id = get_job_id(document.contents)
+        if job_id not in processed_job_ids:
+            if document.source_url == 'local' and document.doc_type != 'enrollment':
+                assemble_order(rein, document)
+            processed_job_ids.append(job_id)
 
 
 def is_number(s):
@@ -747,25 +766,6 @@ def is_number(s):
         return True
     except ValueError:
         return False
-
-
-def filter_valid_sigs(docs, expected_field=None):
-    valid = []
-    fails = 0
-    for m in docs:
-        data = verify_sig(m)
-        if expected_field:
-            if data['valid'] and expected_field in data:
-                valid.append(data)
-            else:
-                fails += 1
-        else:
-            if data['valid']:
-                valid.append(data)
-            else:
-                fails += 1
-    rein.log.info('spammy fails = %d' % fails)
-    return valid
 
 
 def get_user(rein, identity):

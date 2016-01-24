@@ -2,7 +2,7 @@
 import re
 import bitcoinecdsa
 import unittest
-
+import click
 
 def strip_armor(sig, dash_space=False):
     '''Removes ASCII-armor from a signed message by default exlcudes 'dash-space' headers'''
@@ -19,8 +19,11 @@ def strip_armor(sig, dash_space=False):
 
 
 def parse_document(document):
-    matches = re.finditer("(.+):\s(.+)(\n|$)", document)
     ret = {}
+    m = re.search('(Rein .*)\n', document)
+    if m:
+        ret['Title'] = m.group(1)
+    matches = re.finditer("(.+):\s(.+)(\n|$)", document)
     for match in matches:
         ret[match.group(1)] = match.group(2)
     return ret
@@ -33,8 +36,11 @@ def parse_sig(sig):
     assigned within the message, for example:
        parse_sig(sig)['Name/handle'] === "David Sterry"
     '''
-    matches = re.finditer("(.+):\s(.+)\n", sig)
     ret = {}
+    m = re.search('\n(Rein .*)\n', sig)
+    if m:
+        ret['Title'] = m.group(1)
+    matches = re.finditer("(.+):\s(.+)\n", sig)
     for match in matches:
         ret[match.group(1)] = match.group(2)
     m = re.search(
@@ -48,6 +54,44 @@ def parse_sig(sig):
     else:
         return False
     return ret
+
+
+def filter_valid_sigs(rein, docs, expected_field=None):
+    valid = []
+    fails = 0
+    for m in docs:
+        data = verify_sig(m)
+        if expected_field:
+            if data['valid'] and expected_field in data:
+                valid.append(m)
+            else:
+                fails += 1
+        else:
+            if data['valid']:
+                valid.append(m)
+            else:
+                fails += 1
+    rein.log.info('fvs spammy fails = %d' % fails)
+    return valid
+
+
+def filter_and_parse_valid_sigs(rein, docs, expected_field=None):
+    valid = []
+    fails = 0
+    for m in docs:
+        data = verify_sig(m)
+        if expected_field:
+            if data['valid'] and expected_field in data:
+                valid.append(data)
+            else:
+                fails += 1
+        else:
+            if data['valid']:
+                valid.append(data)
+            else:
+                fails += 1
+    rein.log.info('fapvs spammy fails = %d' % fails)
+    return valid
 
 
 def verify_sig(sig):

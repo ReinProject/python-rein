@@ -17,8 +17,8 @@ class Order(Base):
     job_creator_maddr = Column(String(64), nullable=True)
     mediator_maddr = Column(String(64), nullable=True)
     worker_maddr = Column(String(64), nullable=True)
-    job_creator = Column(Integer, nullable=False)
-    open_for_bid = Column(Boolean, nullable=False)
+    job_creator = Column(Integer, nullable=True)
+    open_for_bid = Column(Boolean, nullable=True)
 
     def __init__(self, job_id):
         self.job_id = job_id
@@ -41,3 +41,10 @@ class Order(Base):
                                                             Document.doc_type == doc_type)).all()
         else:
             return rein.session.query(Document).filter(Document.order_id == order_id).all()
+
+    @classmethod
+    def get_order_id(self, rein, job_id):
+        order = rein.session.query(Order).filter(Order.job_id == job_id).first()
+        if order:
+            return order.id
+        return None

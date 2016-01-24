@@ -1,6 +1,8 @@
-from document import Document
-from validate import validate_enrollment
+from document import Document, get_documents_by_job_id, get_document_type, calc_hash
+from validate import validate_enrollment, parse_document
+from bucket import get_urls
 from bitcoinecdsa import sign, verify, pubkey_to_address
+from order import Order
 import os
 import click
 from ui import shorten, get_choice
@@ -198,35 +200,46 @@ def sign_and_store_document(rein, doc_type, document, signature_address=None, si
         rein.session.commit()
     return validated
 
-def join_documents(rein, document):
+def assemble_order(rein, document):
     """
     Take one document and build the entire order based on it. The idea here is that one Job ID should
     allow us to query each available server for each document type that is associated with it, then
     filter out bogus shit by focusing on who's signed correct stuff. This kind of command can also
     look for attempted changes in foundational info like participants public keys and redeem scripts.
-    Finally, if this works well, we can reduce how much data is required at each stage. Finally still,
-    we should be able to serialize a job from end to end so it can be easily reviewed by a mediator.
+    If this works well, we can reduce how much data is required at each stage. Finally, we should
+    be able to serialize a job from end to end so it can be easily reviewed by a mediator.
     """
-    job_id = get_job_id(document)
+    parsed = parse_document(document.contents)
+    if 'Job ID' not in parsed:
+        return 0
+    job_id = parsed['Job ID']
     urls = get_urls(rein)
     documents = []
     if job_id:
         for url in urls:
             documents += get_documents_by_job_id(rein, url, job_id)
+        order_id = Order.get_order_id(rein, job_id)
+        if not order_id:
+            o = Order(job_id)
+            rein.session.add(o)        
+            rein.session.commit()
 
-    for contents in documents:
-        doc_type = get_doc_type(contents)
+    for document in documents:
+        doc_type = get_document_type(document)
         if not doc_type:
             rein.log.info('doc_type not detected')
             continue
-        d = Document(rein, doc_type, contents, url)
-        order_id = Order.get_order_id(job_id)
-        if order_id:
+        doc_hash = calc_hash(document)
+        d = rein.session.query(Document).filter(Document.doc_hash == doc_hash).first()
+        if d:
             d.set_order_id(order_id)
         else:
-            o = Order(job_id)
-            rein.db.add(o)        
-    rein.db.commit()
+            new_document = Document(rein, doc_type, document, order_id, 'external', source_key=None, sig_verified=True)
+            rein.session.add(new_document)
+
+        rein.session.commit()
+
+    return len(documents)
     # how do we test this? give it a document, it gets the job id, then does a query for all other docs 
     # with that job id. if it can figure out the doc type, it sets the order id on it. this allows
     # Order.get_documents() to provide all documents or to provide just the post or the bid.
