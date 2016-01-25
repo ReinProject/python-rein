@@ -19,6 +19,7 @@ from lib.validate import verify_sig, filter_and_parse_valid_sigs
 from lib.bitcoinecdsa import sign, pubkey
 from lib.market import mediator_prompt, accept_prompt, job_prompt, bid_prompt, delivery_prompt,\
         creatordispute_prompt, assemble_document, sign_and_store_document, unique, assemble_order 
+from lib.order import Order
 from lib.script import build_2_of_3, build_mandatory_multisig, check_redeem_scripts
 import lib.config as config
 
@@ -747,16 +748,8 @@ def status(multi, identity):
 
     user = get_user(rein, identity)
     key = pubkey(user.dkey)
-    click.echo("User: %s" % user.name)
-    click.echo("Master bitcoin address: %s" % user.maddr)
-    click.echo("Delegate bitcoin address: %s" % user.daddr)
-    click.echo("Delegate public key: %s" % key)
-    click.echo("Willing to mediate: %s" % user.will_mediate)
-    if user.will_mediate: 
-        click.echo("Mediator fee: %s %%" % user.mediator_fee)
 
     documents = get_user_documents(rein)
-    click.echo("Total document count: %s" % len(documents))   
     processed_job_ids = []
     for document in documents:
         job_id = get_job_id(document.contents)
@@ -765,6 +758,20 @@ def status(multi, identity):
                 assemble_order(rein, document)
             processed_job_ids.append(job_id)
 
+    click.echo('---')
+    click.echo("User: %s" % user.name)
+    click.echo("Master bitcoin address: %s" % user.maddr)
+    click.echo("Delegate bitcoin address: %s" % user.daddr)
+    click.echo("Delegate public key: %s" % key)
+    click.echo("Willing to mediate: %s" % user.will_mediate)
+    if user.will_mediate: 
+        click.echo("Mediator fee: %s %%" % user.mediator_fee)
+    click.echo("Total document count: %s" % len(documents))   
+    click.echo('---')
+    click.echo('id  job_id                 next step')
+    orders = Order.get_user_orders(rein, Document)
+    for order in orders:
+        click.echo("%s   %s   %s" % (order.id, order.job_id, order.get_state(rein, Document)))
 
 def is_number(s):
     try:
