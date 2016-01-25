@@ -47,12 +47,12 @@ def get_user_documents(rein):
 
 
 def get_documents_by_job_id(rein, url, job_id):
-    click.echo("Querying %s for job_id %s ..." % (url, job_id))
+    # click.echo("Querying %s for job_id %s ..." % (url, job_id))
     sel_url = "{0}query?owner={1}&query=by_job_id&job_ids={2}"
     try:
         answer = requests.get(url=sel_url.format(url, rein.user.maddr, job_id))
     except requests.exceptions.ConnectionError:
-        click.echo('Could not reach %s.' % url)
+        rein.log.warning('Could not reach %s.' % url)
         return None
     data = answer.json()
     if len(data['by_job_id']) == 0:

@@ -758,7 +758,6 @@ def status(multi, identity):
                 assemble_order(rein, document)
             processed_job_ids.append(job_id)
 
-    click.echo('---')
     click.echo("User: %s" % user.name)
     click.echo("Master bitcoin address: %s" % user.maddr)
     click.echo("Delegate bitcoin address: %s" % user.daddr)
@@ -767,8 +766,9 @@ def status(multi, identity):
     if user.will_mediate: 
         click.echo("Mediator fee: %s %%" % user.mediator_fee)
     click.echo("Total document count: %s" % len(documents))   
-    click.echo('---')
-    click.echo('id  job_id                 next step')
+    click.echo('')
+    click.echo('ID  Job ID                 Next step')
+    click.echo('------------------------------------')
     orders = Order.get_user_orders(rein, Document)
     for order in orders:
         click.echo("%s   %s   %s" % (order.id, order.job_id, order.get_state(rein, Document)))
