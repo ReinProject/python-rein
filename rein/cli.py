@@ -15,7 +15,7 @@ from lib.user import User
 from lib.bucket import Bucket, get_bucket_count, get_urls
 from lib.document import Document, get_user_documents, get_job_id
 from lib.placement import Placement, create_placements, get_remote_document_hash, get_placements
-from lib.validate import verify_sig, filter_and_parse_valid_sigs
+from lib.validate import filter_and_parse_valid_sigs
 from lib.bitcoinecdsa import sign, pubkey
 from lib.market import mediator_prompt, accept_prompt, job_prompt, bid_prompt, delivery_prompt,\
         creatordispute_prompt, assemble_document, sign_and_store_document, unique, assemble_order 
@@ -147,11 +147,16 @@ def post(multi, identity):
     for url in urls:
         click.echo("Querying %s for mediators..." % url)
         sel_url = "{0}query?owner={1}&query=mediators"
-        answer = requests.get(url=sel_url.format(url, user.maddr))
+        try:
+            answer = requests.get(url=sel_url.format(url, user.maddr))
+        except:
+            click.echo('Error connecting to server.')
+            log.error('server connect error')
+            continue
         data = answer.json()
         if len(data['mediators']) == 0:
             click.echo('None found')
-        eligible_mediators += filter_and_parse_valid_sigs(data['mediators'])
+        eligible_mediators += filter_and_parse_valid_sigs(rein, data['mediators'])
 
     mediator = mediator_prompt(rein, eligible_mediators)
     click.echo("Chosen mediator: " + str(mediator['User']))
@@ -201,15 +206,23 @@ def bid(multi, identity):
     user = get_user(rein, identity)
 
     key = pubkey(user.dkey)
-    url = "http://localhost:5000/"
-    click.echo("Querying %s for jobs..." % url)
-    sel_url = "{0}query?owner={1}&query=jobs"
-    answer = requests.get(url=sel_url.format(url, user.maddr))
-    data = answer.json()
+
+    urls = get_urls(rein)
+    jobs = []
+    for url in urls:    
+        click.echo("Querying %s for jobs..." % url)
+        sel_url = "{0}query?owner={1}&query=jobs"
+        try:
+            answer = requests.get(url=sel_url.format(url, user.maddr))
+        except:
+            click.echo('Error connecting to server.')
+            log.error('server connect error')
+            continue
+        data = answer.json()
+        jobs += filter_and_parse_valid_sigs(rein, data['jobs'])
+
     if len(data['jobs']) == 0:
         click.echo('None found')
-
-    jobs = filter_and_parse_valid_sigs(data['jobs'])
 
     job = job_prompt(rein, jobs)
     if not job:
@@ -265,15 +278,22 @@ def offer(multi, identity):
     user = get_user(rein, identity)
 
     key = pubkey(user.dkey)
-    url = "http://localhost:5000/"
-    click.echo("Querying %s for bids on your jobs..." % url)
-    sel_url = "{0}query?owner={1}&delegate={2}&query=bids"
-    answer = requests.get(url=sel_url.format(url, user.maddr, user.daddr))
-    data = answer.json()
+    bids = []
+    urls = get_urls(rein)
+    for url in urls:
+        click.echo("Querying %s for bids on your jobs..." % url)
+        sel_url = "{0}query?owner={1}&delegate={2}&query=bids"
+        try:
+            answer = requests.get(url=sel_url.format(url, user.maddr, user.daddr))
+        except:
+            click.echo('Error connecting to server.')
+            log.error('server connect error')
+            continue
+        data = answer.json()
+        bids += filter_and_parse_valid_sigs(rein, data['bids'], u'Primary escrow redeem script')
+
     if len(data['bids']) == 0:
         click.echo('None found')
-
-    bids = filter_and_parse_valid_sigs(data['bids'], u'Primary escrow redeem script')
 
     bid = bid_prompt(rein, bids)
     if not bid:
@@ -332,11 +352,17 @@ def deliver(multi, identity):
     for url in urls:
         click.echo("Querying %s for in-process jobs..." % url)
         sel_url = "{0}query?owner={1}&query=in-process&worker={2}"
-        answer = requests.get(url=sel_url.format(url, user.maddr, key))
+        try:
+            answer = requests.get(url=sel_url.format(url, user.maddr, key))
+        except:
+            click.echo('Error connecting to server.')
+            log.error('server connect error')
+            continue
         results = answer.json()['in-process']
-        if len(results) == 0:
-            click.echo('None found')
-        valid_results += filter_and_parse_valid_sigs(results, u'Primary escrow redeem script')
+        valid_results += filter_and_parse_valid_sigs(rein, results, u'Primary escrow redeem script')
+
+    if len(valid_results) == 0:
+        click.echo('None found')
 
     doc = delivery_prompt(rein, valid_results)
     if not doc:
@@ -402,13 +428,18 @@ def accept(multi, identity):
         click.echo("Querying %s for deliveries..." % url)
         for job_id in job_ids:
             sel_url = "{0}query?owner={1}&job_ids={2}&query=delivery"
-            answer = requests.get(url=sel_url.format(url, user.maddr, job_id))
+            try:
+                answer = requests.get(url=sel_url.format(url, user.maddr, job_id))
+            except:
+                click.echo('Error connecting to server.')
+                log.error('server connect error')
+                continue
             results = answer.json()
             if 'delivery' in results:
                 results = results['delivery']
             else:
                 continue
-            valid_results += filter_and_parse_valid_sigs(results, u'Primary escrow redeem script')
+            valid_results += filter_and_parse_valid_sigs(rein, results, u'Primary escrow redeem script')
 
     unique_results = unique(valid_results, 'Job ID')
 
@@ -474,13 +505,18 @@ def creatordispute(multi, identity):
     fails = 0
     for job_id in job_ids:
         sel_url = "{0}query?owner={1}&job_ids={2}&query=delivery"
-        answer = requests.get(url=sel_url.format(url, user.maddr, job_id))
+        try:
+            answer = requests.get(url=sel_url.format(url, user.maddr, job_id))
+        except:
+            click.echo('Error connecting to server.')
+            log.error('server connect error')
+            continue
         results = answer.json()
         if 'delivery' in results.keys():
             results = results['delivery']
         else:
             continue
-        valid_results += filter_and_parse_valid_sigs(results, u'Primary escrow redeem script')
+        valid_results += filter_and_parse_valid_sigs(rein, results, u'Primary escrow redeem script')
 
     if len(valid_results) == 0:
         click.echo('None found')
@@ -526,15 +562,19 @@ def workerdispute(multi, identity):
     user = get_user(rein, identity)
 
     key = pubkey(user.dkey)
-    url = "http://localhost:5000/"
-    click.echo("Querying %s for offers to you..." % url)
     valid_results = []
-    fails = 0
-    sel_url = "{0}query?owner={1}&worker={2}&query=in-process"
-    answer = requests.get(url=sel_url.format(url, user.maddr, key))
-    #click.echo(answer.text)
-    results = answer.json()
-    valid_results += filter_and_parse_valid_sigs(results['in-process'], u'Primary escrow redeem script')
+    urls = get_urls(rein)
+    for url in urls:
+        click.echo("Querying %s for offers to you..." % url)
+        sel_url = "{0}query?owner={1}&worker={2}&query=in-process"
+        try:
+            answer = requests.get(url=sel_url.format(url, user.maddr, key))
+        except:
+            click.echo('Error connecting to server.')
+            log.error('server connect error')
+            continue
+        results = answer.json()
+        valid_results += filter_and_parse_valid_sigs(rein, results['in-process'], u'Primary escrow redeem script')
 
     if len(valid_results) == 0:
         click.echo('None found')

@@ -106,7 +106,10 @@ def verify_sig(sig):
         )
     else:
         valid = False
-    sig_info['valid'] = valid    
+    if sig_info:
+        sig_info['valid'] = valid
+    else:
+        sig_info = {'valid': False}
     return sig_info
 
 
@@ -122,7 +125,7 @@ def validate_review(reviewer_text):
     a = verify_sig(reviewer_text)
     return [
         a['valid'],
-        a['info']['signature_address'],
+        a['signature_address'],
         strip_armor(reviewer_text).replace('- ----', '-----')
     ]
 
@@ -144,7 +147,7 @@ def validate_audit(auditor_text):
         ret += line + '\n'
     return [
         a['valid'],
-        a['info'],
+        a['signature_address'],
         ret
     ]
 
@@ -208,6 +211,6 @@ IMcU7MvLl7T+hY0mmMw6mblLstnXd9Ly36z7uYMqv7ZZEuZQOvuXN2GjYU0Nq4So9GKQRkQwIis7EiN6
     print(validate_audit(sig3))
 
     # Passing the output through all of the functions
-    print(validate_enrollment(validate_review(validate_audit(sig3)[2])[2])['info'])
-    print(validate_enrollment(validate_review(sig2)[2])['info'])
-    print(validate_enrollment(sig1)['info'])
+    print(validate_enrollment(validate_review(validate_audit(sig3)[2])[2])['valid'])
+    print(validate_enrollment(validate_review(sig2)[2])['valid'])
+    print(validate_enrollment(sig1)['valid'])
