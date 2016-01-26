@@ -151,7 +151,7 @@ def post(multi, identity):
             answer = requests.get(url=sel_url.format(url, user.maddr))
         except:
             click.echo('Error connecting to server.')
-            log.error('server connect error')
+            log.error('server connect error ' + url)
             continue
         data = answer.json()
         if len(data['mediators']) == 0:
@@ -216,7 +216,7 @@ def bid(multi, identity):
             answer = requests.get(url=sel_url.format(url, user.maddr))
         except:
             click.echo('Error connecting to server.')
-            log.error('server connect error')
+            log.error('server connect error ' + url)
             continue
         data = answer.json()
         jobs += filter_and_parse_valid_sigs(rein, data['jobs'])
@@ -287,7 +287,7 @@ def offer(multi, identity):
             answer = requests.get(url=sel_url.format(url, user.maddr, user.daddr))
         except:
             click.echo('Error connecting to server.')
-            log.error('server connect error')
+            log.error('server connect error ' + url)
             continue
         data = answer.json()
         bids += filter_and_parse_valid_sigs(rein, data['bids'], u'Primary escrow redeem script')
@@ -356,7 +356,7 @@ def deliver(multi, identity):
             answer = requests.get(url=sel_url.format(url, user.maddr, key))
         except:
             click.echo('Error connecting to server.')
-            log.error('server connect error')
+            log.error('server connect error ' + url)
             continue
         results = answer.json()['in-process']
         valid_results += filter_and_parse_valid_sigs(rein, results, u'Primary escrow redeem script')
@@ -432,7 +432,7 @@ def accept(multi, identity):
                 answer = requests.get(url=sel_url.format(url, user.maddr, job_id))
             except:
                 click.echo('Error connecting to server.')
-                log.error('server connect error')
+                log.error('server connect error ' + url)
                 continue
             results = answer.json()
             if 'delivery' in results:
@@ -509,7 +509,7 @@ def creatordispute(multi, identity):
             answer = requests.get(url=sel_url.format(url, user.maddr, job_id))
         except:
             click.echo('Error connecting to server.')
-            log.error('server connect error')
+            log.error('server connect error ' + url)
             continue
         results = answer.json()
         if 'delivery' in results.keys():
@@ -571,7 +571,7 @@ def workerdispute(multi, identity):
             answer = requests.get(url=sel_url.format(url, user.maddr, key))
         except:
             click.echo('Error connecting to server.')
-            log.error('server connect error')
+            log.error('server connect error ' + url)
             continue
         results = answer.json()
         valid_results += filter_and_parse_valid_sigs(rein, results['in-process'], u'Primary escrow redeem script')
@@ -639,7 +639,7 @@ def request(multi, identity, url):
         answer = requests.get(url=sel_url.format(url, user.maddr, user.daddr, user.contact))
     except:
         click.echo('Error connecting to server.')
-        log.error('server connect error')
+        log.error('server connect error ' + url)
         return
 
     if answer.status_code != 200:
