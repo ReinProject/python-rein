@@ -425,7 +425,7 @@ def accept(multi, identity):
 
     valid_results = []
     for url in urls:
-        click.echo("Querying %s for deliveries..." % url)
+        click.echo("Querying %s..." % url)
         for job_id in job_ids:
             sel_url = "{0}query?owner={1}&job_ids={2}&query=delivery"
             try:
@@ -492,32 +492,34 @@ def creatordispute(multi, identity):
     user = get_user(rein, identity)
 
     key = pubkey(user.dkey)
-    url = "http://localhost:5000/"
-    click.echo("Querying %s for deliveries..." % url)
     # get job ids for jobs for which we've made an offer
     job_ids = []
-    offers = rein.session.query(Document).filter(Document.contents.ilike("%Rein Offer%Job creator's public key: "+key+"%")).all()
+    offers = rein.session.query(Document).filter(Document.contents.ilike("%Rein Offer%Job creator public key: "+key+"%")).all()
     for o in offers:
         m = re.search('Job ID: (\S+)', o.contents)
         if m and m.group(1):
             job_ids.append(m.group(1))
+    urls = get_urls(rein)
     valid_results = []
     fails = 0
-    for job_id in job_ids:
-        sel_url = "{0}query?owner={1}&job_ids={2}&query=delivery"
-        try:
-            answer = requests.get(url=sel_url.format(url, user.maddr, job_id))
-        except:
-            click.echo('Error connecting to server.')
-            log.error('server connect error ' + url)
-            continue
-        results = answer.json()
-        if 'delivery' in results.keys():
-            results = results['delivery']
-        else:
-            continue
-        valid_results += filter_and_parse_valid_sigs(rein, results, u'Primary escrow redeem script')
-
+    for url in urls:
+        click.echo("Querying %s..." % url)
+        for job_id in job_ids:
+            sel_url = "{0}query?owner={1}&job_ids={2}&query=dispute"
+            try:
+                answer = requests.get(url=sel_url.format(url, user.maddr, job_id))
+            except:
+                click.echo('Error connecting to server.')
+                log.error('server connect error ' + url)
+                continue
+            results = answer.json()
+            if 'dispute' in results.keys():
+                results = results['dispute']
+            else:
+                continue
+            valid_results += filter_and_parse_valid_sigs(rein, results)
+    
+    valid_results = unique(valid_results, 'Job ID')
     if len(valid_results) == 0:
         click.echo('None found')
 

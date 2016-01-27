@@ -111,15 +111,22 @@ def creatordispute_prompt(rein, choices, detail='Description'):
     for c in choices:
         if 'Primary escrow redeem script' not in c:
             continue
-        click.echo('%s - %s - %s' % (str(i), c['Job ID'], shorten(c[detail])))
+        if detail in c:
+            click.echo('%s - %s - %s' % (str(i), c['Job ID'], shorten(c[detail])))
+        else:
+            click.echo('%s - %s - %s' % (str(i), c['Job ID'], shorten(c['Description'])))
         i += 1
     choice = get_choice(choices, 'delivery')
     if choice == 'q':
         return None
     chosen = choices[choice]
+    if detail in chosen:
+        contents = chosen[detail]
+    else:
+        contents = chosen['Description']
     click.echo('You have chosen to dispute the following deliverables. \n\n%s: %s\n\nPlease provide as much detail as possible. '
                'For the primary payment, you should build and sign one that refunds you at %s. (Ctrl-c to abort)\n' % 
-               (detail, chosen[detail], rein.user.daddr))
+               (detail, contents, rein.user.daddr))
     return chosen
 
 
