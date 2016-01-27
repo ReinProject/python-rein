@@ -68,10 +68,32 @@ def create_account(rein):
     Base.metadata.create_all(rein.engine)
     name = click.prompt("Enter name or handle", type=str)
     contact = click.prompt("Email or BitMessage address", type=str)
-    maddr = btc_addr_prompt("Master")
-    daddr = btc_addr_prompt("Delegate")
-    dkey = btc_privkey_prompt("Delegate", daddr)
-    will_mediate = click.confirm("Willing to mediate:", default=False)
+    click.echo('\nIn Rein, all of your activity is linked to your Master Bitcoin\n'
+               'address. This includes everything from setting your contact info\n'
+               'and creating a job, to getting paid.\n\n'
+               'You should keep the private key that corresponds to this address\n'
+               'offline the vast majority of the time. It will only be used to\n'
+               'create or update your main user record.\n')
+    maddr = btc_addr_prompt('Master')
+
+    click.echo('\nInstead of the Master address, python-rein uses another address that has\n'
+               'been authorized for day-to-day activities. This delegate\n'
+               'address\' private key will be stored locally and used by\n'
+               'python-rein to authenticate documents and access on your behalf.\n\n'
+               'If this computer or the delegate private key are lost or stolen,\n'
+               'you will use your Master private key to revoke the delegate\n'
+               'address and grant authority to a new address.\n')
+    daddr = btc_addr_prompt('Delegate')
+    click.echo('In order for python-rein to authenticate on your behalf, it\n'
+               'will store the delegate\'s private key in the local database.\n')
+    dkey = btc_privkey_prompt('Delegate', daddr)
+    click.echo('\nRein requires three parties to every service transaction. The\n'
+               'job creator, mediator and worker. Mediators are called upon to\n'
+               'resolve disputes and may use their delegate key to do so.\n\n'
+               'In exchange, mediators may charge a fee. Funds to pay the\n'
+               'mediator\'s fee are placed in an address that ensures those\n'
+               'funds will go only to the mediator.\n')
+    will_mediate = click.confirm('Are you willing to mediate?', default=False)
     mediator_fee = 1
     if will_mediate:
         mediator_fee = click.prompt("Mediator fee (%)", default=1.0)
