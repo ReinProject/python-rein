@@ -18,7 +18,8 @@ from lib.placement import Placement, create_placements, get_remote_document_hash
 from lib.validate import filter_and_parse_valid_sigs
 from lib.bitcoinecdsa import sign, pubkey
 from lib.market import mediator_prompt, accept_prompt, job_prompt, bid_prompt, delivery_prompt,\
-        creatordispute_prompt, assemble_document, sign_and_store_document, unique, assemble_order 
+        creatordispute_prompt, resolve_prompt, assemble_document, sign_and_store_document, unique,\
+        assemble_order 
 from lib.order import Order
 from lib.script import build_2_of_3, build_mandatory_multisig, check_redeem_scripts
 import lib.config as config
@@ -57,7 +58,7 @@ interface to interact with Rein. Use this program to create an account, post a j
     Disputes
         $ rein workerdispute    - worker files dispute
         $ rein creatordispute   - job creator files dispute
-        $ rein resolvedispute   - mediator posts decision
+        $ rein resolve          - mediator posts decision
 
     For more info visit: http://reinproject.org
     """
@@ -470,6 +471,7 @@ def accept(multi, identity):
     else:
         click.echo("Accept aborted.") 
 
+
 @cli.command()
 @click.option('--multi/--no-multi', default=False, help="prompt for identity to use")
 @click.option('--identity', type=click.Choice(['Alice', 'Bob', 'Charlie', 'Dan']), default=None, help="identity to use")
@@ -598,6 +600,90 @@ def workerdispute(multi, identity):
     if res:
         click.echo("Dispute signed by worker. Run 'rein sync' to push to available servers.")
     log.info('workerdispute signed') if res else log.error('workerdispute failed')
+
+
+@cli.command()
+@click.option('--multi/--no-multi', default=False, help="prompt for identity to use")
+@click.option('--identity', type=click.Choice(['Alice', 'Bob', 'Charlie', 'Dan']), default=None, help="identity to use")
+def resolve(multi, identity):
+    """
+    Resolve a dispute.
+
+    For mediators who are party to a disputed transaction, this
+    command enables you to review those transactions and post
+    the decision and signed payments.
+    """
+    log = rein.get_log()
+    if multi:
+        rein.set_multiuser()
+
+    if rein.has_no_account():
+        click.echo("Please run setup.")
+        return
+
+    user = get_user(rein, identity)
+
+    key = pubkey(user.dkey)
+    urls = get_urls(rein)
+    valid_results = []
+    for url in urls:
+        click.echo("Querying %s for jobs we're mediating..." % url)
+        sel_url = "{0}query?owner={1}&query=review&mediator={2}"
+        try:
+            answer = requests.get(url=sel_url.format(url, user.maddr, key))
+        except:
+            click.echo('Error connecting to server.')
+            log.error('server connect error ' + url)
+            continue
+        results = answer.json()['review']
+        valid_results += filter_and_parse_valid_sigs(rein, results)
+
+    valid_results = unique(valid_results, 'Job ID')
+
+    job_ids = []
+    for result in valid_results:
+        if 'Job ID' in result and result['Job ID'] not in job_ids:
+            job_ids.append(result['Job ID'])
+
+    job_ids_string = ','.join(job_ids)
+    valid_results = []
+    for url in urls:
+        click.echo("Querying %s for %s ..." % (url, job_ids_string))
+        sel_url = "{0}query?owner={1}&job_ids={2}&query=by_job_id"
+        try:
+            answer = requests.get(url=sel_url.format(url, user.maddr, job_ids_string))
+        except:
+            click.echo('Error connecting to server.')
+            log.error('server connect error ' + url)
+            continue
+        results = answer.json()
+        if 'by_job_id' in results.keys():
+            results = results['by_job_id']
+        else:
+            continue
+        valid_results += filter_and_parse_valid_sigs(rein, results, 'Dispute detail')
+
+    valid_results = unique(valid_results, 'Job ID')
+    if len(valid_results) == 0:
+        click.echo('None found')
+
+    doc = resolve_prompt(rein, valid_results)
+    if not doc:
+        return
+
+    log.info('got disputes for resolve')
+    fields = [
+                {'label': 'Job name',                       'value_from': doc},
+                {'label': 'Job ID',                         'value_from': doc},
+                {'label': 'Resolution '},
+                {'label': 'Signed primary payment'},
+                {'label': 'Signed mediator payment'},
+             ]
+    document = assemble_document('Dispute Resolution', fields)
+    res = sign_and_store_document(rein, 'resolve', document, user.daddr, user.dkey)
+    if res:
+        click.echo("Dispute resolution signed by mediator. Run 'rein sync' to push to available servers.")
+    log.info('resolve signed') if res else log.error('resolve failed')
 
 
 @cli.command()
@@ -809,11 +895,12 @@ def status(multi, identity):
         click.echo("Mediator fee: %s %%" % user.mediator_fee)
     click.echo("Total document count: %s" % len(documents))   
     click.echo('')
-    click.echo('ID  Job ID                 Next step')
+    click.echo('ID  Job ID                 Status')
     click.echo('------------------------------------')
     orders = Order.get_user_orders(rein, Document)
     for order in orders:
-        click.echo("%s   %s   %s" % (order.id, order.job_id, order.get_state(rein, Document)))
+        past_tense = order.get_past_tense(order.get_state(rein, Document))
+        click.echo("%s   %s   %s" % (order.id, order.job_id, past_tense))
 
 def is_number(s):
     try:

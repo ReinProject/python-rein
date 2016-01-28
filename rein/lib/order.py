@@ -12,12 +12,22 @@ FLOW = {
         'bid':            {'pre': ['job_posting'],                  'next': ['offer']},
         'offer':          {'pre': ['bid'],                          'next': ['delivery', 'creatordispute', 'workerdispute']},
         'delivery':       {'pre': ['offer'],                        'next': ['accept', 'creatordispute', 'workerdispute']},
-        'creatordispute': {'pre': ['offer', 'delivery'],            'next': ['resolution', 'workerdispute']},
-        'workerdispute':  {'pre': ['offer', 'delivery', 'accept'],  'next': ['resolution', 'creatordispute']},
+        'creatordispute': {'pre': ['offer', 'delivery'],            'next': ['resolve', 'workerdispute']},
+        'workerdispute':  {'pre': ['offer', 'delivery', 'accept'],  'next': ['resolve', 'creatordispute']},
         'accept':         {'pre': ['delivery'],                     'next': ['workerdispute', 'complete']},
-        'resolution':     {'pre': ['creatordispute', 'workerdispute'], 'next': ['complete']},
+        'resolve':        {'pre': ['creatordispute', 'workerdispute'], 'next': ['complete']},
        }
 
+PAST_TENSE = {
+        'job_posting': 'posted',
+        'bid': 'bid(s) submitted',
+        'offer': 'job awarded',
+        'delivery': 'deliverables submitted',
+        'creatordispute': 'disputed by job creator',
+        'workerdispute': 'disputed by worker',
+        'accept': 'complete, work accepted',
+        'resolve': 'complete, dispute resolved'
+        }
 # bid() hide job_posting if there is an offer
 # deliver() hide offer if there is an accept
 # offer() hide job_posting if there is an offer
@@ -77,6 +87,10 @@ class Order(Base):
                     moved = True
             if not moved:
                 return current
+
+    @classmethod
+    def get_past_tense(self, state):
+        return PAST_TENSE[state]
 
     @classmethod
     def get_user_orders(self, rein, Document):
