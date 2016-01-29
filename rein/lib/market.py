@@ -38,8 +38,8 @@ def bid_prompt(rein, bids):
     if choice == 'q':
         return False
     bid = valid_bids[choice]
-    click.echo('You have chosen %s\'s bid.\n\nFull description: %s\n\nPlease review carefully before accepting. (Ctrl-c to abort)' % 
-               (bid['Worker'], bid['Description']))
+    click.echo('You have chosen %s\'s bid.\n\nFull description: %s\nBid amount (BTC): %s\n\nPlease review carefully before accepting. (Ctrl-c to abort)' % 
+               (bid['Worker'], bid['Description'], bid['Bid amount (BTC)']))
     return bid
 
 
@@ -71,8 +71,9 @@ def delivery_prompt(rein, choices, detail='Description'):
     if choice == 'q':
         return None
     chosen = choices[choice]
-    click.echo('You have chosen to post deliverables for the following job. \n\nDescription: %s\n\nPlease review carefully before posting. '
-               'In a dispute mediators are advised to consider it above other evidence. (Ctrl-c to abort)\n' % 
+    click.echo('You have chosen to post deliverables for the following job. \n\nDescription: %s\n\nPlease review '
+               'carefully before posting deliverables. These will be public and reviewed by mediators in the case '
+               'of a dispute. (Ctrl-c to abort)\n' % 
                (chosen['Description'],))
     return chosen
 
@@ -82,12 +83,19 @@ def accept_prompt(rein, choices, detail='Description'):
     for c in choices:
         if 'Primary escrow redeem script' not in c:
             continue
-        click.echo('%s - %s - %s - %s' % (str(i), c['Job name'], c['Job ID'], shorten(c[detail])))
+        if detail in c:
+            click.echo('%s - %s - %s - %s' % (str(i), c['Job name'], c['Job ID'], shorten(c[detail])))
+        else:
+            click.echo('%s - %s - %s - %s' % (str(i), c['Job name'], c['Job ID'], shorten(c['Description'])))
         i += 1
     choice = get_choice(choices, 'delivery')
     if choice == 'q':
         return None
     chosen = choices[choice]
+    if detail in chosen:
+        contents = chosen[detail]
+    else:
+        contents = chosen['Description']
     click.echo('You have chosen to accept the following deliverables. \n\n%s: %s\nAccepted Bid amount (BTC): %s\n'
                'Primary escrow redeem script: %s\n'
                'Worker address: %s\n\n'
@@ -96,7 +104,7 @@ def accept_prompt(rein, choices, detail='Description'):
                '\nPlease review carefully before accepting. Once you upload your signed statement, the mediator should no '
                'longer provide a refund. (Ctrl-c to abort)\n' % 
                (detail,
-                chosen[detail], chosen['Bid amount (BTC)'],
+                contents, chosen['Bid amount (BTC)'],
                 chosen['Primary escrow redeem script'],
                 pubkey_to_address(chosen['Worker public key']),
                 chosen['Mediator escrow redeem script'],
@@ -106,7 +114,7 @@ def accept_prompt(rein, choices, detail='Description'):
     return chosen
 
 
-def creatordispute_prompt(rein, choices, detail='Description'):
+def dispute_prompt(rein, choices, detail='Description'):
     i = 0
     for c in choices:
         if 'Primary escrow redeem script' not in c:
@@ -127,23 +135,6 @@ def creatordispute_prompt(rein, choices, detail='Description'):
     click.echo('You have chosen to dispute the following deliverables. \n\n%s: %s\n\nPlease provide as much detail as possible. '
                'For the primary payment, you should build and sign one that refunds you at %s. (Ctrl-c to abort)\n' % 
                (detail, contents, rein.user.daddr))
-    return chosen
-
-
-def workerdispute_prompt(rein, choices, detail='Description'):
-    i = 0
-    for c in choices:
-        if 'Primary escrow redeem script' not in c:
-            continue
-        click.echo('%s - %s - %s - %s' % (str(i), c['Job name'], c['Job ID'], shorten(c[detail])))
-        i += 1
-    choice = get_choice(choices, 'job')
-    if choice == 'q':
-        return None
-    chosen = choices[choice]
-    click.echo('You have chosen to dispute the following deliverables. \n\n%s: %s\n\nPlease provide as much detail as possible. '
-               'For the primary payment, you should build and sign one that pays you at %s. (Ctrl-c to abort)\n' % 
-               (detail, chosen[detail], rein.user.daddr))
     return chosen
 
 

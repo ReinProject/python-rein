@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean
+from sqlalchemy import Column, Integer, String, Boolean, and_
 from sqlalchemy.ext.declarative import declarative_base
 try:
     from document import Document
@@ -8,32 +8,28 @@ except:
 Base = declarative_base()
 
 FLOW = {
-        'job_posting':    {'pre': [],                               'next': ['bid']},
-        'bid':            {'pre': ['job_posting'],                  'next': ['offer']},
-        'offer':          {'pre': ['bid'],                          'next': ['delivery', 'creatordispute', 'workerdispute']},
-        'delivery':       {'pre': ['offer'],                        'next': ['accept', 'creatordispute', 'workerdispute']},
-        'creatordispute': {'pre': ['offer', 'delivery'],            'next': ['resolve', 'workerdispute']},
-        'workerdispute':  {'pre': ['offer', 'delivery', 'accept'],  'next': ['resolve', 'creatordispute']},
-        'accept':         {'pre': ['delivery'],                     'next': ['workerdispute', 'complete']},
-        'resolve':        {'pre': ['creatordispute', 'workerdispute'], 'next': ['complete']},
+        'job_posting':    {'pre': [],                                   'next': ['bid']},
+        'bid':            {'pre': ['job_posting'],                      'next': ['offer']},
+        'offer':          {'pre': ['bid'],                              'next': ['delivery', 'creatordispute',
+                                                                                 'workerdispute']},
+        'delivery':       {'pre': ['offer'],                            'next': ['accept', 'creatordispute',
+                                                                                 'workerdispute']},
+        'creatordispute': {'pre': ['offer', 'delivery'],                'next': ['resolve', 'workerdispute']},
+        'workerdispute':  {'pre': ['offer', 'delivery', 'accept'],      'next': ['resolve', 'creatordispute']},
+        'accept':         {'pre': ['delivery'],                         'next': ['workerdispute', 'complete']},
+        'resolve':        {'pre': ['creatordispute', 'workerdispute'],  'next': ['complete']},
        }
 
 PAST_TENSE = {
-        'job_posting': 'posted',
-        'bid': 'bid(s) submitted',
-        'offer': 'job awarded',
-        'delivery': 'deliverables submitted',
-        'creatordispute': 'disputed by job creator',
-        'workerdispute': 'disputed by worker',
-        'accept': 'complete, work accepted',
-        'resolve': 'complete, dispute resolved'
+        'job_posting':      'posted',
+        'bid':              'bid(s) submitted',
+        'offer':            'job awarded',
+        'delivery':         'deliverables submitted',
+        'creatordispute':   'disputed by job creator',
+        'workerdispute':    'disputed by worker',
+        'accept':           'complete, work accepted',
+        'resolve':          'complete, dispute resolved'
         }
-# bid() hide job_posting if there is an offer
-# deliver() hide offer if there is an accept
-# offer() hide job_posting if there is an offer
-# workerdispute() hide offer if there is an accept or resolution
-# creatordispute() hide offer if there is a resolution
-# resolution() hide *dispute if there is a resolution
 
 class Order(Base):
     __tablename__ = 'order'
@@ -50,19 +46,12 @@ class Order(Base):
     def __init__(self, job_id):
         self.job_id = job_id
 
-    # what should an order be able to do? it should be able to hand you 
-    # ids for valid documents for each step in the process. so there
-    # should only be one posting. the job id should be the sha hash of the
-    # signed document which should be impossible to collide. add a nonce i guess
-    # and make the hash of the document be a certain size.
-
-    # we do this download of a bunch of new docs from the server
     def attach_documents(self, job_id):
         documents = self.get_documents()
         for doc in documents:
             doc.set_order_id(self.id)
 
-    def get_documents(self, doc_type=None):
+    def get_documents(self, rein, Document, doc_type=None):
         if doc_type:
             return rein.session.query(Document).filter(and_(Document.order_id == self.id,
                                                             Document.doc_type == doc_type)).all()
@@ -70,14 +59,11 @@ class Order(Base):
             return rein.session.query(Document).filter(Document.order_id == self.id).all()
 
     def get_state(self, rein, Document):
+        """
+        Walks from the job_posting through possible order flows to arrive at the last
+        step represented in the documents.
+        """
         documents = rein.session.query(Document).filter(Document.order_id == self.id).all()
-        # find job_posting
-        # walk from job_posting to find something from state[document.doc_type]['next']
-        # when nothing from state[document.doc_type]['next'] can be found then
-        # we may have found it, let's try that out.
-        # for document in documents:
-        #    if document.doc_type == 'job_posting':
-        #        start = document
         current = 'job_posting'
         while 1:
             moved = False
@@ -87,6 +73,11 @@ class Order(Base):
                     moved = True
             if not moved:
                 return current
+
+    @classmethod
+    def get_by_job_id(self, rein, job_id):
+        order = rein.session.query(Order).filter(Order.job_id == job_id).first()
+        return order
 
     @classmethod
     def get_past_tense(self, state):
