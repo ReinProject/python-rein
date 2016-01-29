@@ -65,7 +65,10 @@ def delivery_prompt(rein, choices, detail='Description'):
     for c in choices:
         if 'Bid amount (BTC)' not in c:
             continue
-        click.echo('%s - %s - %s BTC - %s' % (str(i), c['Job name'], c['Bid amount (BTC)'], shorten(c[detail])))
+        if detail in c:
+            click.echo('%s - %s - %s BTC - %s' % (str(i), c['Job name'], c['Bid amount (BTC)'], shorten(c[detail])))
+        else:
+            click.echo('%s - %s - %s BTC - %s' % (str(i), c['Job name'], c['Bid amount (BTC)'], shorten(c['Description'])))
         i += 1
     choice = get_choice(choices, 'job')
     if choice == 'q':

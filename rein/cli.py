@@ -401,41 +401,11 @@ def deliver(multi, identity):
 
     offers = filter_and_parse_valid_sigs(rein, contents)
 
-    #valid_results = []
-    #for url in urls:
-    #    click.echo("Querying %s for in-process jobs..." % url)
-    #    sel_url = "{0}query?owner={1}&query=in-process&worker={2}"
-    #    try:
-    #        answer = requests.get(url=sel_url.format(url, user.maddr, key))
-    #    except:
-    #        click.echo('Error connecting to server.')
-    #        log.error('server connect error ' + url)
-    #        continue
-    #    results = answer.json()['in-process']
-    #    valid_results += filter_and_parse_valid_sigs(rein, results, u'Primary escrow redeem script')
-
-    #unique_results = unique(valid_results, 'Description')
-    #click.echo(len(unique_results))
-    #offers = []
-    #for offer in valid_results:
-    #    order = Order.get_by_job_id(rein, offer['Job ID'])
-    #    if not order:
-    #        click.echo('made new order')
-    #        order = Order(offer['Job ID'])
-    #        rein.session.add(order)
-    #        rein.session.commit()
-    #    state = order.get_state(rein, Document)
-    #    click.echo((state, offer['Job ID']))
-    #    if state in ['offer', 'bid']:
-    #        offers.append(offer)
-
     if len(offers) == 0:
         click.echo('None found')
-
-    doc = delivery_prompt(rein, offers)
+    doc = delivery_prompt(rein, offers, 'Deliverables')
     if not doc:
         return
-    click.echo(doc)
 
     log.info('got offer for delivery')
     fields = [
@@ -486,40 +456,33 @@ def accept(multi, identity):
     key = pubkey(user.dkey)
     urls = get_urls(rein)
 
-    valid_results = []
-    for url in urls:
-        click.echo("Querying %s..." % url)
-        sel_url = "{0}query?owner={1}&job_creator={2}&query=deliveries"
-        try:
-            answer = requests.get(url=sel_url.format(url, user.maddr, key))
-        except:
-            click.echo('Error connecting to server.')
-            log.error('server connect error ' + url)
-            continue
-        results = answer.json()
-        if 'deliveries' in results:
-            results = results['deliveries']
-        else:
-            continue
-        valid_results += filter_and_parse_valid_sigs(rein, results)
+    documents = get_user_documents(rein)
+    processed_job_ids = []
+    for document in documents:
+        job_id = get_job_id(document.contents)
+        if job_id not in processed_job_ids:
+            if document.source_url == 'local' and document.doc_type != 'enrollment':
+                assemble_order(rein, document)
+            processed_job_ids.append(job_id)
 
-    unique_results = unique(valid_results, 'Job ID')
-
-    deliveries = []
-    for job in unique_results:
-        order = Order.get_by_job_id(rein, job['Job ID'])
-        if not order:
-            order = Order(job['Job ID'])
-            rein.session.add(order)
-            rein.session.commit()
+    documents = []
+    orders = Order.get_user_orders(rein, Document)
+    for order in orders:
         state = order.get_state(rein, Document)
-        if state in ['delivery']:
-            deliveries.append(job)
+        if state in ['offer', 'delivery']:
+            # get parsed offer for this order and put it in an array
+            documents += order.get_documents(rein, Document, state)
+
+    contents = []
+    for document in documents:
+        contents.append(document.contents)
+
+    valid_results = filter_and_parse_valid_sigs(rein, contents)
 
     if len(valid_results) == 0:
         click.echo('None found')
 
-    doc = accept_prompt(rein, deliveries, "Deliverables")
+    doc = accept_prompt(rein, valid_results, "Deliverables")
     if not doc:
         return
 
