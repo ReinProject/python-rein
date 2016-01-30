@@ -236,8 +236,9 @@ def bid(multi, identity):
         if state in ['job_posting', 'bid']:
             jobs.append(job)
     
-    if len(data['jobs']) == 0:
+    if len(jobs) == 0:
         click.echo('None found')
+        return
 
     job = job_prompt(rein, jobs)
     if not job:
@@ -479,10 +480,16 @@ def accept(multi, identity):
 
     valid_results = filter_and_parse_valid_sigs(rein, contents)
 
-    if len(valid_results) == 0:
-        click.echo('None found')
+    our_orders = []
+    for res in valid_results:
+        if res['Job creator public key'] == key:
+            our_orders.append(res)
 
-    doc = accept_prompt(rein, valid_results, "Deliverables")
+    if len(our_orders) == 0:
+        click.echo('None found')
+        return
+
+    doc = accept_prompt(rein, our_orders, "Deliverables")
     if not doc:
         return
 
