@@ -8,11 +8,11 @@ dependencies = ['click', 'requests', 'python-bitcoinlib', 'sqlalchemy', 'unittes
 setup(
     name='rein',
     version='0.1.0',
-    url='https://github.com/weex/python-rein',
+    url='https://github.com/ReinProject/python-rein',
     license='BSD',
     author='David Sterry',
     author_email='davids@exchb.com',
-    description='A decentralized professional services marketplace.',
+    description='A decentralized professional services market.',
     long_description=__doc__,
     packages=find_packages(exclude=['tests']),
     include_package_data=True,
