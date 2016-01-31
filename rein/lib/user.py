@@ -28,6 +28,6 @@ class User(Base):
         self.enrolled = False
 
     @classmethod
-    def set_enrolled(rein, user):
+    def set_enrolled(self, rein, user):
         user.enrolled = True
         rein.session.commit()

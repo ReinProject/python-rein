@@ -38,10 +38,13 @@ rein sync
 rein deliver --multi --identity
 
 # Bob accepts the delivery
-rein accept-delivery
+rein accept
 
 # Bob disputes on the graphics job
-rein dispute
+rein creatordispute
+
+# Charlie disputes on the graphics job
+rein workerdispute --multi
 
 # Alice decides for Bob
-rein resolve-dispute --multi --identity
+rein resolve --multi --identity
