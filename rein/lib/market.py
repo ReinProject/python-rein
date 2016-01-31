@@ -74,9 +74,9 @@ def delivery_prompt(rein, choices, detail='Description'):
     if choice == 'q':
         return None
     chosen = choices[choice]
-    click.echo('You have chosen to post deliverables for the following job. \n\nDescription: %s\n\nPlease review '
-               'carefully before posting deliverables. These will be public and reviewed by mediators in the case '
-               'of a dispute. (Ctrl-c to abort)\n' % 
+    click.echo('You have chosen to post deliverables. The following is from your winning bid.'
+               '\n\nDescription: %s\n\nPlease review carefully before posting deliverables. '
+               'This will be public and reviewed by mediators if disputed. (Ctrl-c to abort)\n' % 
                (chosen['Description'],))
     return chosen
 
