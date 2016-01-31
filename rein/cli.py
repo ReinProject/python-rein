@@ -43,6 +43,7 @@ interface to interact with Rein. Use this program to create an account, post a j
         $ rein setup     - create an identity
         $ rein request   - get free microhosting
         $ rein sync      - push your identity to microhosting servers
+        $ rein status    - get user and job info
 
 \b
     Workers
@@ -402,9 +403,16 @@ def deliver(multi, identity):
 
     offers = filter_and_parse_valid_sigs(rein, contents)
 
-    if len(offers) == 0:
+    not_our_orders = []
+    for res in offers:
+        if res['Job creator public key'] != key:
+            not_our_orders.append(res)
+
+    if len(not_our_orders) == 0:
         click.echo('None found')
-    doc = delivery_prompt(rein, offers, 'Deliverables')
+        return
+
+    doc = delivery_prompt(rein, not_our_orders, 'Deliverables')
     if not doc:
         return
 
