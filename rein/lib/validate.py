@@ -115,7 +115,7 @@ def verify_sig(sig):
 
 def validate_enrollment(enrollment_signature_text):
     a = verify_sig(enrollment_signature_text)
-    if a['valid']:
+    if a['valid'] and a['signature_address'] == a['Master signing address']:
         return a
     else:
         return False
