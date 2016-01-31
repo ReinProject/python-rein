@@ -11,7 +11,7 @@ from subprocess import check_output
 
 from sqlalchemy import and_
 
-from lib.ui import create_account, import_account, enroll, identity_prompt
+from lib.ui import create_account, import_account, enroll, identity_prompt, hilight
 from lib.user import User
 from lib.bucket import Bucket, get_bucket_count, get_urls
 from lib.document import Document, get_user_documents, get_job_id
@@ -84,10 +84,10 @@ def setup(multi):
         rein.set_multiuser()
     log.info('entering setup')
     if multi or rein.has_no_account():
-        click.echo("\nWelcome to Rein.\n"
+        click.echo("\n" + hilight("Welcome to Rein.", True, True) + "\n\n"
                    "Do you want to import a backup or create a new account?\n\n"
                    "1 - Create new account\n2 - Import backup\n")
-        choice = click.prompt("Choice", type=int, default=1)
+        choice = click.prompt(hilight("Choice", True, True), type=int, default=1)
         if choice == 1:
             create_account(rein)
             log.info('account created')
@@ -104,15 +104,15 @@ def setup(multi):
                    "become your identity in Rein and a delegate address will be used for day-to-day "
                    "transactions.\n\n" % rein.enroll_filename)
         res = enroll(rein)
-        if res['valid']:
+        if isinstance(res, dict) and  res['valid']:
             click.echo("Enrollment complete. Run 'rein request' to request free microhosting to sync to.")
             log.info('enrollment complete')
         else:
             click.echo("Signature verification failed. Please try again.")
             log.error('enrollment failed')
     elif rein.session.query(Document).filter(Document.doc_type == 'enrollment').count() < \
-            rein.session.query(User).count():
-        click.echo('Continuing previously unfinished setup.')
+            rein.session.query(User).filter(User.enrolled == True).count():
+        click.echo('Continuing previously unfinished setup.\n')
         get_user(rein, False)
         res = enroll(rein)
         if res['valid']:
@@ -963,11 +963,12 @@ def is_number(s):
 
 def get_user(rein, identity):
     if rein.multi and identity:
-        rein.user = rein.session.query(User).filter(User.name == identity).first()
+        rein.user = rein.session.query(User).filter(User.name == identity,
+                                                    User.enrolled == True).first()
     elif rein.multi:
         rein.user = identity_prompt(rein)
     else:
-        rein.user = rein.session.query(User).first()
+        rein.user = rein.session.query(User).filter(User.enrolled == True).first()
     return rein.user
 
 

@@ -15,6 +15,7 @@ class User(Base):
     dkey = Column(String(64), nullable=False)
     will_mediate = Column(Boolean, nullable=False)
     mediator_fee = Column(Float, nullable=False)
+    enrolled = Column(Boolean, nullable=False)
 
     def __init__(self, name, contact, maddr, daddr, dkey, will_mediate, mediator_fee):
         self.name = name
@@ -24,3 +25,9 @@ class User(Base):
         self.dkey = dkey
         self.will_mediate = will_mediate
         self.mediator_fee = mediator_fee
+        self.enrolled = False
+
+    @classmethod
+    def set_enrolled(rein, user):
+        user.enrolled = True
+        rein.session.commit()

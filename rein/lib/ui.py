@@ -19,6 +19,19 @@ def shorten(text, length=60):
         return text
         
 
+def hilight(string, status, bold):
+    attr = []
+    if status:
+        # green
+        attr.append('32')
+    else:
+        # red
+        attr.append('31')
+    if bold:
+        attr.append('1')
+    return '\x1b[%sm%s\x1b[0m' % (';'.join(attr), string)
+
+
 def get_choice(choices, name):
     choice = -1
     while(choice >= len(choices) or choice < 0) and choice != 'q':
@@ -31,7 +44,7 @@ def get_choice(choices, name):
 
 
 def btc_addr_prompt(name):
-    title = name.capitalize() + " Bitcoin address"
+    title = hilight(name.capitalize() + " Bitcoin address", True, True)
     addr = click.prompt(title, type=str)
     while not check_bitcoin_address(addr):
         addr = click.prompt("Invalid.\n" + title, type=str)
@@ -39,7 +52,7 @@ def btc_addr_prompt(name):
 
 
 def btc_privkey_prompt(name, addr=None):
-    title = name.capitalize() + " Bitcoin private key: "
+    title = hilight(name.capitalize() + " Bitcoin private key: ", True, True)
     privkey = getpass.getpass(title)
     if addr:
         while privkey_to_address(privkey) != addr:
@@ -51,52 +64,50 @@ def btc_privkey_prompt(name, addr=None):
 
 
 def identity_prompt(rein):
-    names = ['Alice', 'Bob', 'Charlie', 'Dan']
-    user_count = rein.session.query(User).count()
+    users = rein.session.query(User).filter(User.enrolled == True).all()
+    user_count = len(users) 
     index = 0
     i = 0
-    for name in names[0:user_count]:
-        click.echo('%s - %s' % (str(index + 1), name))
+    for user in users:
+        click.echo('%s - %s' % (str(index + 1), user.name))
         index += 1
     while i > user_count or i < 1:
         i = click.prompt('Please choose an identity', type=int)
-    rein.user = rein.session.query(User).filter(User.name == names[i - 1]).first()
+    rein.user = rein.session.query(User).filter(User.name == users[i - 1].name).first()
     return rein.user
 
 
 def create_account(rein):
     Base.metadata.create_all(rein.engine)
-    name = click.prompt("Enter name or handle", type=str)
-    contact = click.prompt("Email or BitMessage address", type=str)
-    click.echo('\nIn Rein, all of your activity is linked to your Master Bitcoin\n'
-               'address. This includes everything from setting your contact info\n'
-               'and creating a job, to getting paid.\n\n'
+    name = click.prompt(hilight("\nEnter name or handle", True, True), type=str)
+    contact = click.prompt(hilight("Email or BitMessage address", True, True), type=str)
+    click.echo('\nIn Rein, all activity - including setting contact info, creating\n'
+               'a job, or getting paid - is linked to a master Bitcoin address.\n\n'
                'You should keep the private key that corresponds to this address\n'
-               'offline the vast majority of the time. It will only be used to\n'
-               'create or update your main user record.\n')
+               'offline unless you need to update your main user record.\n')
     maddr = btc_addr_prompt('Master')
 
-    click.echo('\nInstead of the Master address, python-rein uses another address that has\n'
-               'been authorized for day-to-day activities. This delegate\n'
-               'address\' private key will be stored locally and used by\n'
-               'python-rein to authenticate documents and access on your behalf.\n\n'
-               'If this computer or the delegate private key are lost or stolen,\n'
-               'you will use your Master private key to revoke the delegate\n'
-               'address and grant authority to a new address.\n')
+    click.echo('\nInstead of the Master address, python-rein uses another address\n'
+               'that you authorize for day-to-day activities. The private key for\n'
+               'this address will be stored locally to sign documents and auth to\n'
+               'microhosting servers.\n\n'
+               'If this computer or its local database are lost or stolen, you\n'
+               'will use the private key for your master address to revoke and\n'
+               'and replace the delegate address.\n')
     daddr = btc_addr_prompt('Delegate')
-    click.echo('In order for python-rein to authenticate on your behalf, it\n'
+    click.echo('\nIn order for python-rein to authenticate on your behalf, it\n'
                'will store the delegate\'s private key in the local database.\n')
     dkey = btc_privkey_prompt('Delegate', daddr)
-    click.echo('\nRein requires three parties to every service transaction. The\n'
-               'job creator, mediator and worker. Mediators are called upon to\n'
-               'resolve disputes and may use their delegate key to do so.\n\n'
-               'In exchange, mediators may charge a fee. Funds to pay the\n'
-               'mediator\'s fee are placed in an address that ensures those\n'
-               'funds will go only to the mediator.\n')
-    will_mediate = click.confirm('Are you willing to mediate?', default=False)
+    click.echo('\nRein requires three parties to every transaction: a job creator,\n'
+               'mediator and worker. Mediators are called upon to resolve disputes\n'
+               'and may use their delegate key to do so.\n\n'
+               'In exchange, mediators may charge a fee, the funds for which  are\n'
+               'sent to an address that ensures those funds will go only to the\n'
+               'mediator.\n')
+    will_mediate = click.confirm(hilight('Are you willing to mediate?', True, True), default=False)
     mediator_fee = 1
     if will_mediate:
-        mediator_fee = click.prompt("Mediator fee (%)", default=1.0)
+        mediator_fee = click.prompt(hilight("Mediator fee (%)", True, True), default=1.0)
     new_identity = User(name, contact, maddr, daddr, dkey, will_mediate, mediator_fee)
     rein.session.add(new_identity)
     rein.session.commit()
@@ -159,10 +170,10 @@ def enroll(rein):
     f = open(rein.enroll_filename, 'w')
     f.write(enrollment)
     f.close()
-    click.echo("\n%s\n" % enrollment)
+    click.echo("%s\n" % enrollment)
     done = False
     while not done:
-        filename = click.prompt("File containing signed statement", type=str, default=rein.sig_enroll_filename)
+        filename = click.prompt(hilight("File containing signed statement", True, True), type=str, default=rein.sig_enroll_filename)
         if os.path.isfile(filename):
             done = True
     f = open(filename, 'r')
