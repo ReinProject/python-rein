@@ -2,7 +2,7 @@
 
 Rein is a new experiment in decentralized markets. Thus far, decentralized markets have built their own p2p networks or stored data in the Blockchain. The Rein model mirrors that of internet at large, with paid microhosting. Since the storage and bandwidth requirements are low, a high amount of redundancy and censorship-resistance may be acheived at low cost (on par with the cost of a gourmet coffee for a year of redundant hosting on several servers).
 
-This is very much a minimum viable product. Servers don't charge for their services, or sync with each other, and while the client attempts to validate what it seems, this validation is not complete nor has the software seen a security review. As such, you are advised to limit use of Rein to small jobs where loss of funds or time spent would not present a significant burden.
+This is very much a minimum viable product. Servers don't charge for their services, or sync with each other, and while the client attempts to validate what it sees, this validation is not complete nor has the software seen a security review. As such, you are advised to limit use of Rein to small jobs where loss of funds or time spent would not present a significant burden.
 
 Python-rein is a command-line interface to the Rein decentralized professional services market.
 
