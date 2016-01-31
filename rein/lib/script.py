@@ -31,7 +31,7 @@ def build_2_of_3(pubkeys):
     return (b2x(txin_redeemScript), str(txin_p2sh_address))
 
 def build_mandatory_multisig(mandatory_pubkey, other_pubkeys):
-    txin_redeemScript = CScript([x(mandatory_pubkey), OP_CHECKSIGVERIFY, 2, x(other_pubkeys[0]), x(other_pubkeys[1]), 2, OP_CHECKMULTISIG])
+    txin_redeemScript = CScript([x(mandatory_pubkey), OP_CHECKSIGVERIFY, 1, x(other_pubkeys[0]), x(other_pubkeys[1]), 2, OP_CHECKMULTISIG])
     txin_scriptPubKey = txin_redeemScript.to_p2sh_scriptPubKey()
     txin_p2sh_address = CBitcoinAddress.from_scriptPubKey(txin_scriptPubKey)
     return (b2x(txin_redeemScript), str(txin_p2sh_address))
@@ -54,7 +54,7 @@ def check_mandatory_multisig(parsed, mandatory_public_key, other_public_keys):
     if parsed[0] != mandatory_public_key:
         return False
     if (parsed[1] != 'OP_CHECKSIGVERIFY'
-      or parsed[2] != '2'
+      or parsed[2] != '1'
       or parsed[5] != '2'
       or parsed[6] != 'OP_CHECKMULTISIG'):
         return False
@@ -96,18 +96,18 @@ class BitcoinScriptTest(unittest.TestCase):
 
     def test_mandatory_multisig(self):
         # mandatory multisig for mediator
-        m = parse_script('21029fcafbe2dced6fe79865b265ea90387c5411658ca11449999d5020a9f67bb005ad5221026bc363139ebc1cad8e6eee402507d2b4874f5450585f1e6a1cd30a63ecdfc9dc2102f719f009fb8eb20ccdbfda7d38f378ed2f103ac0a6768df830740c6835c4651952ae')
-        # ['029fcafbe2dced6fe79865b265ea90387c5411658ca11449999d5020a9f67bb005', 'OP_CHECKSIGVERIFY', '2', '026bc363139ebc1cad8e6eee402507d2b4874f5450585f1e6a1cd30a63ecdfc9dc', '02f719f009fb8eb20ccdbfda7d38f378ed2f103ac0a6768df830740c6835c46519', '2', 'OP_CHECKMULTISIG']
-        self.assertTrue(check_mandatory_multisig(m, '029fcafbe2dced6fe79865b265ea90387c5411658ca11449999d5020a9f67bb005',
-                                                   ['02f719f009fb8eb20ccdbfda7d38f378ed2f103ac0a6768df830740c6835c46519',
+
+        m = parse_script('2102f719f009fb8eb20ccdbfda7d38f378ed2f103ac0a6768df830740c6835c46519ad5121029fcafbe2dced6fe79865b265ea90387c5411658ca11449999d5020a9f67bb00521026bc363139ebc1cad8e6eee402507d2b4874f5450585f1e6a1cd30a63ecdfc9dc52ae')
+        self.assertTrue(check_mandatory_multisig(m, '02f719f009fb8eb20ccdbfda7d38f378ed2f103ac0a6768df830740c6835c46519',
+                                                   ['029fcafbe2dced6fe79865b265ea90387c5411658ca11449999d5020a9f67bb005',
                                                     '026bc363139ebc1cad8e6eee402507d2b4874f5450585f1e6a1cd30a63ecdfc9dc']))
         # switch non-mandatory key order
-        self.assertTrue(check_mandatory_multisig(m, '029fcafbe2dced6fe79865b265ea90387c5411658ca11449999d5020a9f67bb005',
-                                                   ['026bc363139ebc1cad8e6eee402507d2b4874f5450585f1e6a1cd30a63ecdfc9dc',
-                                                    '02f719f009fb8eb20ccdbfda7d38f378ed2f103ac0a6768df830740c6835c46519']))
+        self.assertTrue(check_mandatory_multisig(m, '02f719f009fb8eb20ccdbfda7d38f378ed2f103ac0a6768df830740c6835c46519',
+                                                   ['029fcafbe2dced6fe79865b265ea90387c5411658ca11449999d5020a9f67bb005',
+                                                    '026bc363139ebc1cad8e6eee402507d2b4874f5450585f1e6a1cd30a63ecdfc9dc']))
         # mix up mandatory and non-mandatory keys
-        self.assertFalse(check_mandatory_multisig(m, '02f719f009fb8eb20ccdbfda7d38f378ed2f103ac0a6768df830740c6835c46519',
-                                                    ['029fcafbe2dced6fe79865b265ea90387c5411658ca11449999d5020a9f67bb005',
+        self.assertFalse(check_mandatory_multisig(m, '029fcafbe2dced6fe79865b265ea90387c5411658ca11449999d5020a9f67bb005',
+                                                    ['02f719f009fb8eb20ccdbfda7d38f378ed2f103ac0a6768df830740c6835c46519',
                                                      '026bc363139ebc1cad8e6eee402507d2b4874f5450585f1e6a1cd30a63ecdfc9dc']))
 
     def test_build_redeem_scripts(self):
@@ -119,4 +119,4 @@ class BitcoinScriptTest(unittest.TestCase):
         self.assertEquals(build_mandatory_multisig('02f719f009fb8eb20ccdbfda7d38f378ed2f103ac0a6768df830740c6835c46519',
                                                   ['029fcafbe2dced6fe79865b265ea90387c5411658ca11449999d5020a9f67bb005',
                                                    '026bc363139ebc1cad8e6eee402507d2b4874f5450585f1e6a1cd30a63ecdfc9dc'])[0],
-                          '2102f719f009fb8eb20ccdbfda7d38f378ed2f103ac0a6768df830740c6835c46519ad5221029fcafbe2dced6fe79865b265ea90387c5411658ca11449999d5020a9f67bb00521026bc363139ebc1cad8e6eee402507d2b4874f5450585f1e6a1cd30a63ecdfc9dc52ae')
+                          '2102f719f009fb8eb20ccdbfda7d38f378ed2f103ac0a6768df830740c6835c46519ad5121029fcafbe2dced6fe79865b265ea90387c5411658ca11449999d5020a9f67bb00521026bc363139ebc1cad8e6eee402507d2b4874f5450585f1e6a1cd30a63ecdfc9dc52ae')
