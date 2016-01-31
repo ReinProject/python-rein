@@ -43,7 +43,7 @@ interface to interact with Rein. Use this program to create an account, post a j
         $ rein setup     - create an identity
         $ rein request   - get free microhosting
         $ rein sync      - push your identity to microhosting servers
-        $ rein status    - get user and job info
+        $ rein status    - get user status, or dump of job's documents
 
 \b
     Workers
@@ -921,7 +921,8 @@ def sync(multi, identity):
 @cli.command()
 @click.option('--multi/--no-multi', default=False, help="prompt for identity to use")
 @click.option('--identity', type=click.Choice(['Alice', 'Bob', 'Charlie', 'Dan']), default=None, help="identity to use")
-def status(multi, identity):
+@click.option('--jobid', default=None, help="ID of job, dumps documents to screen")
+def status(multi, identity, jobid):
     """
     Show user info and active jobs.
     """
@@ -945,21 +946,27 @@ def status(multi, identity):
                 assemble_order(rein, document)
             processed_job_ids.append(job_id)
 
-    click.echo("User: %s" % user.name)
-    click.echo("Master bitcoin address: %s" % user.maddr)
-    click.echo("Delegate bitcoin address: %s" % user.daddr)
-    click.echo("Delegate public key: %s" % key)
-    click.echo("Willing to mediate: %s" % user.will_mediate)
-    if user.will_mediate: 
-        click.echo("Mediator fee: %s %%" % user.mediator_fee)
-    click.echo("Total document count: %s" % len(documents))   
-    click.echo('')
-    click.echo('ID  Job ID                 Status')
-    click.echo('-----------------------------------------------------')
-    orders = Order.get_user_orders(rein, Document)
-    for order in orders:
-        past_tense = order.get_past_tense(order.get_state(rein, Document))
-        click.echo("%s   %s   %s" % (order.id, order.job_id, past_tense))
+    if jobid is None:
+        click.echo("User: %s" % user.name)
+        click.echo("Master bitcoin address: %s" % user.maddr)
+        click.echo("Delegate bitcoin address: %s" % user.daddr)
+        click.echo("Delegate public key: %s" % key)
+        click.echo("Willing to mediate: %s" % user.will_mediate)
+        if user.will_mediate: 
+            click.echo("Mediator fee: %s %%" % user.mediator_fee)
+        click.echo("Total document count: %s" % len(documents))   
+        click.echo('')
+        click.echo('ID  Job ID                 Status')
+        click.echo('-----------------------------------------------------')
+        orders = Order.get_user_orders(rein, Document)
+        for order in orders:
+            past_tense = order.get_past_tense(order.get_state(rein, Document))
+            click.echo("%s   %s   %s" % (order.id, order.job_id, past_tense))
+    else:
+        order = Order.get_by_job_id(rein, jobid)
+        documents = order.get_documents(rein, Document)
+        for document in documents:
+            click.echo("\n" + document.contents)
 
 def is_number(s):
     try:
