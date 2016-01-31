@@ -46,7 +46,7 @@ def get_choice(choices, name):
 def btc_addr_prompt(name):
     title = hilight(name.capitalize() + " Bitcoin address", True, True)
     addr = click.prompt(title, type=str)
-    while not check_bitcoin_address(addr):
+    while not check_bitcoin_address(addr.strip()):
         addr = click.prompt("Invalid.\n" + title, type=str)
     return addr
 
@@ -55,12 +55,12 @@ def btc_privkey_prompt(name, addr=None):
     title = hilight(name.capitalize() + " Bitcoin private key: ", True, True)
     privkey = getpass.getpass(title)
     if addr:
-        while privkey_to_address(privkey) != addr:
+        while privkey_to_address(privkey.strip()) != addr:
             privkey = getpass.getpass("Not valid or corresponding to target address.\n" + title)
     else:
-        while not privkey_to_address(privkey):
+        while not privkey_to_address(privkey.strip()):
             privkey = getpass.getpass("Invalid private key.\n" + title)
-    return privkey
+    return privkey.strip()
 
 
 def identity_prompt(rein):
@@ -180,6 +180,7 @@ def enroll(rein):
     signed = f.read()
     res = validate_enrollment(signed)
     if res:
+        User.set_enrolled(rein, user)
         # insert signed document into documents table as type 'enrollment'
         document = Document(rein, 'enrollment', signed, sig_verified=True)
         rein.session.add(document)
