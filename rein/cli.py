@@ -858,6 +858,7 @@ def status(multi, identity, jobid):
         for document in documents:
             click.echo("\n" + document.contents)
 
+
 def init(multi, identity):
     log = rein.get_log()
     if multi:
@@ -869,6 +870,7 @@ def init(multi, identity):
     key = pubkey(user.dkey)
     urls = get_urls(rein)
     return (log, user, key, urls)
+
 
 def is_number(s):
     try:
