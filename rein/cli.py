@@ -134,18 +134,8 @@ def post(multi, identity):
     """
     Post a job.
     """
-    log = rein.get_log()
-    if multi:
-        rein.set_multiuser()
+    (log, user, key, urls) = init(multi, identity)
 
-    if rein.has_no_account():
-        click.echo("Please run setup.")
-        return
-
-    user = get_user(rein, identity)
-
-    key = pubkey(user.dkey)
-    urls = get_urls(rein)
     eligible_mediators = []
     for url in urls:
         click.echo("Querying %s for mediators..." % url)
@@ -198,19 +188,8 @@ def bid(multi, identity):
     about, and create a bid. Your bid should include the amount of Bitcoin you need
     to complete the job and when you expect to have it complete.
     """
-    log = rein.get_log()
-    if multi:
-        rein.set_multiuser()
+    (log, user, key, urls) = init(multi, identity)
 
-    if rein.has_no_account():
-        click.echo("Please run setup.")
-        return
-
-    user = get_user(rein, identity)
-
-    key = pubkey(user.dkey)
-
-    urls = get_urls(rein)
     jobs = []
     for url in urls:    
         click.echo("Querying %s for jobs..." % url)
@@ -284,19 +263,9 @@ def offer(multi, identity):
     Once signed and pushed, escrow addresses should be funded and work can
     begin.
     """
-    log = rein.get_log()
-    if multi:
-        rein.set_multiuser()
+    (log, user, key, urls) = init(multi, identity)
 
-    if rein.has_no_account():
-        click.echo("Please run setup.")
-        return
-
-    user = get_user(rein, identity)
-
-    key = pubkey(user.dkey)
     bids = []
-    urls = get_urls(rein)
     for url in urls:
         click.echo("Querying %s for bids on your jobs..." % url)
         sel_url = "{0}query?owner={1}&delegate={2}&query=bids"
@@ -367,18 +336,7 @@ def deliver(multi, identity):
     event of a dispute, mediators are advised to review the deliverables
     while deciding how to distribute funds.
     """
-    log = rein.get_log()
-    if multi:
-        rein.set_multiuser()
-
-    if rein.has_no_account():
-        click.echo("Please run setup.")
-        return
-
-    user = get_user(rein, identity)
-
-    key = pubkey(user.dkey)
-    urls = get_urls(rein)
+    (log, user, key, urls) = init(multi, identity)
 
     documents = get_user_documents(rein)
     processed_job_ids = []
@@ -452,18 +410,7 @@ def accept(multi, identity):
     accpted, mediators are advised not to sign any tranasctions
     refunding the job creator.
     """
-    log = rein.get_log()
-    if multi:
-        rein.set_multiuser()
-
-    if rein.has_no_account():
-        click.echo("Please run setup.")
-        return
-
-    user = get_user(rein, identity)
-
-    key = pubkey(user.dkey)
-    urls = get_urls(rein)
+    (log, user, key, urls) = init(multi, identity)
 
     documents = get_user_documents(rein)
     processed_job_ids = []
@@ -533,17 +480,7 @@ def creatordispute(multi, identity):
     because the job is not done on time, they would use this command to file
     a dispute.
     """
-    log = rein.get_log()
-    if multi:
-        rein.set_multiuser()
-
-    if rein.has_no_account():
-        click.echo("Please run setup.")
-        return
-
-    user = get_user(rein, identity)
-    key = pubkey(user.dkey)
-    urls = get_urls(rein)
+    (log, user, key, urls) = init(multi, identity)
 
     documents = get_user_documents(rein)
     processed_job_ids = []
@@ -601,20 +538,9 @@ def workerdispute(multi, identity):
     unresponsive or does not accept work that fulfills the job
     specification, they would use this command to file a dispute.
     """
-    log = rein.get_log()
-    if multi:
-        rein.set_multiuser()
+    (log, user, key, urls) = init(multi, identity)
 
-    if rein.has_no_account():
-        click.echo("Please run setup.")
-        return
-
-    user = get_user(rein, identity)
-
-    key = pubkey(user.dkey)
     valid_results = []
-    urls = get_urls(rein)
-
 
     documents = get_user_documents(rein)
     processed_job_ids = []
@@ -672,18 +598,8 @@ def resolve(multi, identity):
     command enables you to review those transactions and post
     the decision and signed payments.
     """
-    log = rein.get_log()
-    if multi:
-        rein.set_multiuser()
+    (log, user, key, urls) = init(multi, identity)
 
-    if rein.has_no_account():
-        click.echo("Please run setup.")
-        return
-
-    user = get_user(rein, identity)
-
-    key = pubkey(user.dkey)
-    urls = get_urls(rein)
     valid_results = []
     for url in urls:
         click.echo("Querying %s for jobs we're mediating..." % url)
@@ -758,15 +674,7 @@ def request(multi, identity, url):
     a paid network of reliable microhosting servers to store and serve
     all data required for Rein to operate.
     """
-    log = rein.get_log()
-    if multi:
-        rein.set_multiuser()
-
-    user = get_user(rein, identity)
-
-    if rein.has_no_account():
-        click.echo("Please run setup.")
-        return
+    (log, user, key, urls) = init(multi, identity)
 
     click.echo("User: " + user.name)
     log.info('got user for request')
@@ -823,15 +731,7 @@ def sync(multi, identity):
     a network of paid servers. This command pushes the documents you have
     created to the servers from which you have purchased hosting. 
     """
-    log = rein.get_log()
-    if multi:
-        rein.set_multiuser()
-
-    user = get_user(rein, identity)
-
-    if rein.has_no_account():
-        click.echo("Please run setup.")
-        return
+    (log, user, key, urls) = init(multi, identity)
 
     click.echo("User: " + user.name)
 
@@ -839,7 +739,6 @@ def sync(multi, identity):
 
     upload = []
     nonce = {}
-    urls = get_urls(rein)
     for url in urls:
         nonce[url] = get_new_nonce(rein, url)
         if nonce[url] is None:
@@ -926,16 +825,7 @@ def status(multi, identity, jobid):
     """
     Show user info and active jobs.
     """
-    log = rein.get_log()
-    if multi:
-        rein.set_multiuser()
-
-    if rein.has_no_account():
-        click.echo("Please run setup.")
-        return
-
-    user = get_user(rein, identity)
-    key = pubkey(user.dkey)
+    (log, user, key, urls) = init(multi, identity)
 
     documents = get_user_documents(rein)
     processed_job_ids = []
@@ -967,6 +857,18 @@ def status(multi, identity, jobid):
         documents = order.get_documents(rein, Document)
         for document in documents:
             click.echo("\n" + document.contents)
+
+def init(multi, identity):
+    log = rein.get_log()
+    if multi:
+        rein.set_multiuser()
+    if rein.has_no_account():
+        click.echo("Please run setup.")
+        return
+    user = get_user(rein, identity)
+    key = pubkey(user.dkey)
+    urls = get_urls(rein)
+    return (log, user, key, urls)
 
 def is_number(s):
     try:
