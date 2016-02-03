@@ -16,7 +16,7 @@ from lib.user import User
 from lib.bucket import Bucket, get_bucket_count, get_urls
 from lib.document import Document, get_user_documents, get_job_id
 from lib.placement import Placement, create_placements, get_remote_document_hash, get_placements
-from lib.validate import filter_and_parse_valid_sigs
+from lib.validate import filter_and_parse_valid_sigs, parse_document 
 from lib.bitcoinecdsa import sign, pubkey
 from lib.market import mediator_prompt, accept_prompt, job_prompt, bid_prompt, delivery_prompt,\
         dispute_prompt, resolve_prompt, assemble_document, sign_and_store_document, unique,\
@@ -130,11 +130,17 @@ def setup(multi):
 @cli.command()
 @click.option('--multi/--no-multi', default=False, help="prompt for identity to use")
 @click.option('--identity', type=click.Choice(['Alice', 'Bob', 'Charlie', 'Dan']), default=None, help="identity to use")
-def post(multi, identity):
+@click.option('--defaults', default=None , help='pre-filled form values')
+def post(multi, identity, defaults):
     """
     Post a job.
     """
     (log, user, key, urls) = init(multi, identity)
+    form = {}
+    if defaults:
+        form = parse_document(open(defaults).read())
+        if 'Title' in form and form['Title'] != 'Rein Job':
+            return click.echo("Input file type: " + form['Title'])
 
     eligible_mediators = []
     for url in urls:
@@ -151,16 +157,25 @@ def post(multi, identity):
             click.echo('None found')
         eligible_mediators += filter_and_parse_valid_sigs(rein, data['mediators'])
 
-    mediator = mediator_prompt(rein, eligible_mediators)
+    click.echo(form)
+    if 'Mediator public key' in form.keys():
+        mediator = None
+        for candidate in eligible_mediators:
+            click.echo(candidate)
+            if candidate['Mediator public key'] == form['Mediator public key']:
+                mediator = candidate
+                break
+    else:
+        mediator = mediator_prompt(rein, eligible_mediators)
     click.echo("Chosen mediator: " + str(mediator['User']))
 
     log.info('got user and key for post')
     job_guid = ''.join(random.SystemRandom().choice(string.ascii_lowercase + string.digits) for _ in range(20))
     fields = [
-                {'label': 'Job name'},
+                {'label': 'Job name',                       'not_null': form['Job name']},
                 {'label': 'Job ID',                         'value': job_guid},
-                {'label': 'Category'},
-                {'label': 'Description'},
+                {'label': 'Category',                       'not_null': form['Category']},
+                {'label': 'Description',                    'not_null': form['Description']},
                 {'label': 'Mediator',                       'value': mediator['User']},
                 {'label': 'Mediator contact',               'value': mediator['Contact']},
                 {'label': 'Mediator public key',            'value': mediator['Mediator public key']},

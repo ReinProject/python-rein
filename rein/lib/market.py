@@ -159,6 +159,9 @@ def resolve_prompt(rein, choices, detail='Dispute detail'):
 
 
 def assemble_document(title, fields):
+    """
+    Prompts to fill in any gaps in form values, then builds document with all fields.
+    """
     data = []
     for field in fields:
         entry = {}
@@ -173,6 +176,8 @@ def assemble_document(title, fields):
             entry['value'] = field['value']
         elif 'value_from' in field.keys():
             entry['value'] = field['value_from'][field['label']]
+        elif 'not_null' in field.keys() and field['not_null']:
+            entry['value'] = field['not_null']
         else:
             entry['value'] = click.prompt(field['label'])
         data.append(entry)
