@@ -128,10 +128,11 @@ def setup(multi):
 
 
 @cli.command()
-@click.option('--multi/--no-multi', default=False, help="prompt for identity to use")
-@click.option('--identity', type=click.Choice(['Alice', 'Bob', 'Charlie', 'Dan']), default=None, help="identity to use")
-@click.option('--defaults', default=None , help='pre-filled form values')
-def post(multi, identity, defaults):
+@click.option('--multi/--no-multi', '-m', default=False, help="prompt for identity to use")
+@click.option('--identity', '-i', type=click.Choice(['Alice', 'Bob', 'Charlie', 'Dan']), default=None, help="identity to use")
+@click.option('--defaults', '-d', default=None, help='pre-filled form values')
+@click.option('--dry-run/--no-dry-run', '-n', default=False, help='generate but do not store document')
+def post(multi, identity, defaults, dry_run):
     """
     Post a job.
     """
@@ -141,6 +142,8 @@ def post(multi, identity, defaults):
         form = parse_document(open(defaults).read())
         if 'Title' in form and form['Title'] != 'Rein Job':
             return click.echo("Input file type: " + form['Title'])
+
+    store = False if dry_run else True
 
     eligible_mediators = []
     for url in urls:
@@ -157,14 +160,14 @@ def post(multi, identity, defaults):
             click.echo('None found')
         eligible_mediators += filter_and_parse_valid_sigs(rein, data['mediators'])
 
-    click.echo(form)
     if 'Mediator public key' in form.keys():
         mediator = None
         for candidate in eligible_mediators:
-            click.echo(candidate)
             if candidate['Mediator public key'] == form['Mediator public key']:
                 mediator = candidate
                 break
+        if mediator is None:
+            click.echo('Mediator public key not found on available servers.')
     else:
         mediator = mediator_prompt(rein, eligible_mediators)
     click.echo("Chosen mediator: " + str(mediator['User']))
@@ -186,9 +189,9 @@ def post(multi, identity, defaults):
                 {'label': 'Job creator master address',     'value': user.maddr},
              ]
     document = assemble_document('Job', fields)
-    res = sign_and_store_document(rein, 'job_posting', document, user.daddr, user.dkey)
-    if res:
-        click.echo("Posting created. Run 'rein sync' to push to available servers.")
+    res = sign_and_store_document(rein, 'job_posting', document, user.daddr, user.dkey, store)
+    if res and store:
+            click.echo("Posting created. Run 'rein sync' to push to available servers.")
     log.info('posting signed') if res else log.error('posting failed')
 
 

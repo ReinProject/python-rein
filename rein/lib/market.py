@@ -187,7 +187,7 @@ def assemble_document(title, fields):
     return document[:-1]
 
 
-def sign_and_store_document(rein, doc_type, document, signature_address=None, signature_key=None):
+def sign_and_store_document(rein, doc_type, document, signature_address=None, signature_key=None, store=True):
     """
     Save document if no signature key provided. Otherwise sign document, then validate and store it.
     """
@@ -218,9 +218,10 @@ def sign_and_store_document(rein, doc_type, document, signature_address=None, si
         d = "-----END BITCOIN SIGNED MESSAGE-----"
         signed = "%s\n%s\n%s\n%s\n%s\n%s" % (b, document, c, signature_address, signature, d)
         click.echo('\n' + signed + '\n')
-        d = Document(rein, doc_type, signed, sig_verified=True)
-        rein.session.add(d)
-        rein.session.commit()
+        if store:
+            d = Document(rein, doc_type, signed, sig_verified=True)
+            rein.session.add(d)
+            rein.session.commit()
     return validated
 
 def assemble_order(rein, document):
