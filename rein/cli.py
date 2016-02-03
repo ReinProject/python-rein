@@ -20,7 +20,7 @@ from lib.validate import filter_and_parse_valid_sigs
 from lib.bitcoinecdsa import sign, pubkey
 from lib.market import mediator_prompt, accept_prompt, job_prompt, bid_prompt, delivery_prompt,\
         dispute_prompt, resolve_prompt, assemble_document, sign_and_store_document, unique,\
-        assemble_order 
+        assemble_order
 from lib.order import Order
 from lib.script import build_2_of_3, build_mandatory_multisig, check_redeem_scripts
 import lib.config as config
@@ -338,14 +338,7 @@ def deliver(multi, identity):
     """
     (log, user, key, urls) = init(multi, identity)
 
-    documents = get_user_documents(rein)
-    processed_job_ids = []
-    for document in documents:
-        job_id = get_job_id(document.contents)
-        if job_id not in processed_job_ids:
-            if document.source_url == 'local' and document.doc_type != 'enrollment':
-                assemble_order(rein, document)
-            processed_job_ids.append(job_id)
+    Order.update_orders(rein, Document, get_user_documents)
 
     documents = []
     orders = Order.get_user_orders(rein, Document)
@@ -412,14 +405,7 @@ def accept(multi, identity):
     """
     (log, user, key, urls) = init(multi, identity)
 
-    documents = get_user_documents(rein)
-    processed_job_ids = []
-    for document in documents:
-        job_id = get_job_id(document.contents)
-        if job_id not in processed_job_ids:
-            if document.source_url == 'local' and document.doc_type != 'enrollment':
-                assemble_order(rein, document)
-            processed_job_ids.append(job_id)
+    Order.update_orders(rein, Document, get_user_documents)
 
     documents = []
     orders = Order.get_user_orders(rein, Document)
@@ -482,14 +468,7 @@ def creatordispute(multi, identity):
     """
     (log, user, key, urls) = init(multi, identity)
 
-    documents = get_user_documents(rein)
-    processed_job_ids = []
-    for document in documents:
-        job_id = get_job_id(document.contents)
-        if job_id not in processed_job_ids:
-            if document.source_url == 'local' and document.doc_type != 'enrollment':
-                assemble_order(rein, document)
-            processed_job_ids.append(job_id)
+    Order.update_orders(rein, Document, get_user_documents)
 
     documents = []
     orders = Order.get_user_orders(rein, Document)
@@ -542,14 +521,7 @@ def workerdispute(multi, identity):
 
     valid_results = []
 
-    documents = get_user_documents(rein)
-    processed_job_ids = []
-    for document in documents:
-        job_id = get_job_id(document.contents)
-        if job_id not in processed_job_ids:
-            if document.source_url == 'local' and document.doc_type != 'enrollment':
-                assemble_order(rein, document)
-            processed_job_ids.append(job_id)
+    Order.update_orders(rein, Document, get_user_documents)
 
     documents = []
     orders = Order.get_user_orders(rein, Document)
@@ -827,14 +799,8 @@ def status(multi, identity, jobid):
     """
     (log, user, key, urls) = init(multi, identity)
 
+    Order.update_orders(rein, Document, get_user_documents)
     documents = get_user_documents(rein)
-    processed_job_ids = []
-    for document in documents:
-        job_id = get_job_id(document.contents)
-        if job_id not in processed_job_ids:
-            if document.source_url == 'local' and document.doc_type != 'enrollment':
-                assemble_order(rein, document)
-            processed_job_ids.append(job_id)
 
     if jobid is None:
         click.echo("User: %s" % user.name)
