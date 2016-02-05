@@ -25,7 +25,6 @@ from lib.market import mediator_prompt, accept_prompt, job_prompt, bid_prompt, d
 from lib.order import Order
 from lib.script import build_2_of_3, build_mandatory_multisig, check_redeem_scripts
 import lib.config as config
-
 import lib.models
 
 rein = config.Config()

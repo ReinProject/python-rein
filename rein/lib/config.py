@@ -15,12 +15,8 @@ class Config():
         self.user = None
         self.multi = False
 
-        if not os.path.isdir(self.config_dir):
-            os.mkdir(self.config_dir)
-
         self.setup_logging()
         self.log.info('starting python-rein')
-
         self.setup_db()
         self.log.info('database connected')
 

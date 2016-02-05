@@ -8,6 +8,8 @@ log = logging.getLogger('python-rein')
 
 config_dir = os.path.join(os.path.expanduser('~'), '.rein')
 db_filename = 'local.db'
+if not os.path.isdir(config_dir):
+    os.mkdir(config_dir)
 
 engine = create_engine("sqlite:///%s" % os.path.join(config_dir, db_filename))
 Base.metadata.bind = engine
