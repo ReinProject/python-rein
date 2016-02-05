@@ -12,11 +12,16 @@ def test_post():
     assert result.exit_code == 0
     assert verify_sig(result.output)
 
+
 def test_bid():
+    sig_check(cli.bid, ['--multi','--identity','Charlie','-d', 'tests/fixtures/bid.form', '-n'])
+
+
+def sig_check(function, args):
     runner = CliRunner()
-    result = runner.invoke(cli.bid, ['--multi','--identity','Charlie','-d', 'tests/fixtures/bid.form', '-n'])
+    result = runner.invoke(function, args)
     print(result.output)
-    verified = verify_sig(result.output)
+    verified = verify_sig(result.output.strip())
     print(verified)
     assert not result.exception
     assert result.exit_code == 0

@@ -148,7 +148,7 @@ def post(multi, identity, defaults, dry_run):
 
     eligible_mediators = []
     for url in urls:
-        click.echo("Querying %s for mediators..." % url)
+        log.info("Querying %s for mediators..." % url)
         sel_url = "{0}query?owner={1}&query=mediators"
         try:
             answer = requests.get(url=sel_url.format(url, user.maddr))
@@ -214,7 +214,7 @@ def bid(multi, identity, defaults, dry_run):
 
     jobs = []
     for url in urls:    
-        click.echo("Querying %s for jobs..." % url)
+        log.info("Querying %s for jobs..." % url)
         sel_url = "{0}query?owner={1}&query=jobs"
         try:
             answer = requests.get(url=sel_url.format(url, user.maddr))
@@ -300,7 +300,7 @@ def offer(multi, identity, defaults, dry_run):
 
     bids = []
     for url in urls:
-        click.echo("Querying %s for bids on your jobs..." % url)
+        log.info("Querying %s for bids on your jobs..." % url)
         sel_url = "{0}query?owner={1}&delegate={2}&query=bids"
         try:
             answer = requests.get(url=sel_url.format(url, user.maddr, user.daddr))
@@ -662,7 +662,7 @@ def resolve(multi, identity, defaults, dry_run):
 
     valid_results = []
     for url in urls:
-        click.echo("Querying %s for jobs we're mediating..." % url)
+        log.info("Querying %s for jobs we're mediating..." % url)
         sel_url = "{0}query?owner={1}&query=review&mediator={2}"
         try:
             answer = requests.get(url=sel_url.format(url, user.maddr, key))
@@ -683,7 +683,7 @@ def resolve(multi, identity, defaults, dry_run):
     job_ids_string = ','.join(job_ids)
     valid_results = []
     for url in urls:
-        click.echo("Querying %s for %s ..." % (url, job_ids_string))
+        log.info("Querying %s for %s ..." % (url, job_ids_string))
         sel_url = "{0}query?owner={1}&job_ids={2}&query=by_job_id"
         try:
             answer = requests.get(url=sel_url.format(url, user.maddr, job_ids_string))

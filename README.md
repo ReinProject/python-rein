@@ -68,4 +68,15 @@ If you want detailed information about pending jobs use _rein status_. If run wi
 
 # Testing
 
-To help test, download and run [a server](https://github.com/ReinProject/causeway) locally. Run 'rein setup'. You can use the address/key pairs on [this sheet](https://docs.google.com/spreadsheets/d/1IRDvu-24LCDOTM1B3lwW9cfQM-zSCK1eds5Sb4QhpWY/edit#gid=691104568) for convenience. Then run 'rein request localhost:2016' and 'rein sync' to try to store the enrollment message you signed on your Causeway server.
+To help test, download and run [a server](https://github.com/ReinProject/causeway) locally. Run 'rein setup'. You can use the address/key pairs on [this sheet](https://docs.google.com/spreadsheets/d/1IRDvu-24LCDOTM1B3lwW9cfQM-zSCK1eds5Sb4QhpWY/edit#gid=691104568) for convenience to setup Alice, Bob, and Charlie with the right keys/identities. 
+
+Then run using nose:
+
+    $ nosetests
+    ..
+    ----------------------------------------------------------------------
+    Ran 2 tests in 0.837s
+
+    OK
+
+Tox fails right now but does run flake so will be helpful for cleanup.
