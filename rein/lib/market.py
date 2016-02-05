@@ -177,7 +177,7 @@ def assemble_document(title, fields):
         elif 'value_from' in field.keys():
             entry['value'] = field['value_from'][field['label']]
         elif 'not_null' in field.keys() and field['not_null']:
-            entry['value'] = field['not_null']
+            entry['value'] = field['not_null'][field['label']]
         else:
             entry['value'] = click.prompt(field['label'])
         data.append(entry)

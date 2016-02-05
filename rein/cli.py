@@ -29,6 +29,7 @@ import lib.models
 
 rein = config.Config()
 
+# TODO: break out store from sign_and_store because dry-run.
 
 @click.group()
 @click.option('--debug/--no-debug', default=False)
@@ -130,7 +131,7 @@ def setup(multi):
 @cli.command()
 @click.option('--multi/--no-multi', '-m', default=False, help="prompt for identity to use")
 @click.option('--identity', '-i', type=click.Choice(['Alice', 'Bob', 'Charlie', 'Dan']), default=None, help="identity to use")
-@click.option('--defaults', '-d', default=None, help='pre-filled form values')
+@click.option('--defaults', '-d', default=None, help='file with form values')
 @click.option('--dry-run/--no-dry-run', '-n', default=False, help='generate but do not store document')
 def post(multi, identity, defaults, dry_run):
     """
@@ -161,13 +162,7 @@ def post(multi, identity, defaults, dry_run):
         eligible_mediators += filter_and_parse_valid_sigs(rein, data['mediators'])
 
     if 'Mediator public key' in form.keys():
-        mediator = None
-        for candidate in eligible_mediators:
-            if candidate['Mediator public key'] == form['Mediator public key']:
-                mediator = candidate
-                break
-        if mediator is None:
-            click.echo('Mediator public key not found on available servers.')
+        mediator = select_by_form(eligible_mediators, 'Mediator public key', form)
     else:
         mediator = mediator_prompt(rein, eligible_mediators)
     click.echo("Chosen mediator: " + str(mediator['User']))
@@ -175,10 +170,10 @@ def post(multi, identity, defaults, dry_run):
     log.info('got user and key for post')
     job_guid = ''.join(random.SystemRandom().choice(string.ascii_lowercase + string.digits) for _ in range(20))
     fields = [
-                {'label': 'Job name',                       'not_null': form['Job name']},
+                {'label': 'Job name',                       'not_null': form},
                 {'label': 'Job ID',                         'value': job_guid},
-                {'label': 'Category',                       'not_null': form['Category']},
-                {'label': 'Description',                    'not_null': form['Description']},
+                {'label': 'Category',                       'not_null': form},
+                {'label': 'Description',                    'not_null': form},
                 {'label': 'Mediator',                       'value': mediator['User']},
                 {'label': 'Mediator contact',               'value': mediator['Contact']},
                 {'label': 'Mediator public key',            'value': mediator['Mediator public key']},
@@ -198,7 +193,9 @@ def post(multi, identity, defaults, dry_run):
 @cli.command()
 @click.option('--multi/--no-multi', default=False, help="prompt for identity to use")
 @click.option('--identity', type=click.Choice(['Alice', 'Bob', 'Charlie', 'Dan']), default=None, help="identity to use")
-def bid(multi, identity):
+@click.option('--defaults', '-d', default=None, help='file with form values')
+@click.option('--dry-run/--no-dry-run', '-n', default=False, help='generate but do not store document')
+def bid(multi, identity, defaults, dry_run):
     """
     Bid on a job.
 
@@ -206,7 +203,14 @@ def bid(multi, identity):
     about, and create a bid. Your bid should include the amount of Bitcoin you need
     to complete the job and when you expect to have it complete.
     """
+    
     (log, user, key, urls) = init(multi, identity)
+    form = {}
+    if defaults:
+        form = parse_document(open(defaults).read())
+        if 'Title' in form and form['Title'] != 'Rein Bid':
+            return click.echo("Input file type: " + form['Title'])
+    store = False if dry_run else True
 
     jobs = []
     for url in urls:    
@@ -238,7 +242,10 @@ def bid(multi, identity):
         click.echo('None found')
         return
 
-    job = job_prompt(rein, jobs)
+    if 'Job ID' in form.keys():
+        job = select_by_form(jobs, 'Job ID', form)
+    else:
+        job = job_prompt(rein, jobs)
     if not job:
         return
 
@@ -251,8 +258,8 @@ def bid(multi, identity):
     fields = [
                 {'label': 'Job name',                       'value_from': job},
                 {'label': 'Worker',                         'value': user.name},
-                {'label': 'Description'},
-                {'label': 'Bid amount (BTC)',               'validator': is_number},
+                {'label': 'Description',                    'not_null': form},
+                {'label': 'Bid amount (BTC)',               'not_null': form},
                 {'label': 'Primary escrow address',         'value': primary_addr},
                 {'label': 'Mediator escrow address',        'value': mediator_escrow_addr},
                 {'label': 'Job ID',                         'value_from': job},
@@ -264,8 +271,8 @@ def bid(multi, identity):
                 {'label': 'Mediator escrow redeem script',  'value': mediator_redeem_script},
              ]
     document = assemble_document('Bid', fields)
-    res = sign_and_store_document(rein, 'bid', document, user.daddr, user.dkey)
-    if res:
+    res = sign_and_store_document(rein, 'bid', document, user.daddr, user.dkey, store)
+    if res and store:
         click.echo("Bid created. Run 'rein sync' to push to available servers.")
     log.info('bid signed') if res else log.error('bid failed')
 
@@ -273,7 +280,9 @@ def bid(multi, identity):
 @cli.command()
 @click.option('--multi/--no-multi', default=False, help="prompt for identity to use")
 @click.option('--identity', type=click.Choice(['Alice', 'Bob', 'Charlie', 'Dan']), default=None, help="identity to use")
-def offer(multi, identity):
+@click.option('--defaults', '-d', default=None, help='file with form values')
+@click.option('--dry-run/--no-dry-run', '-n', default=False, help='generate but do not store document')
+def offer(multi, identity, defaults, dry_run):
     """
     Award a job.
 
@@ -282,6 +291,12 @@ def offer(multi, identity):
     begin.
     """
     (log, user, key, urls) = init(multi, identity)
+    form = {}
+    if defaults:
+        form = parse_document(open(defaults).read())
+        if 'Title' in form and form['Title'] != 'Rein Offer':
+            return click.echo("Input file type: " + form['Title'])
+    store = False if dry_run else True
 
     bids = []
     for url in urls:
@@ -312,7 +327,10 @@ def offer(multi, identity):
     if len(data['bids']) == 0:
         click.echo('None found')
 
-    bid = bid_prompt(rein, bids)
+    if 'Job ID' in form.keys():
+        bid = select_by_form(bids, 'Job ID', form)
+    else:
+        bid = bid_prompt(rein, bids)
     if not bid:
         click.echo('None chosen')
         return
@@ -337,8 +355,8 @@ def offer(multi, identity):
     if not click.confirm('Are you sure you want to award this bid?'):
         return
 
-    res = sign_and_store_document(rein, 'offer', document, user.daddr, user.dkey)
-    if res:
+    res = sign_and_store_document(rein, 'offer', document, user.daddr, user.dkey, store)
+    if res and store:
         click.echo("Offer created. Run 'rein sync' to push to available servers.")
     log.info('offer signed') if res else log.error('offer failed')
 
@@ -346,7 +364,9 @@ def offer(multi, identity):
 @cli.command()
 @click.option('--multi/--no-multi', default=False, help="prompt for identity to use")
 @click.option('--identity', type=click.Choice(['Alice', 'Bob', 'Charlie', 'Dan']), default=None, help="identity to use")
-def deliver(multi, identity):
+@click.option('--defaults', '-d', default=None, help='file with form values')
+@click.option('--dry-run/--no-dry-run', '-n', default=False, help='generate but do not store document')
+def deliver(multi, identity, defaults, dry_run):
     """
     Deliver on a job.
 
@@ -355,6 +375,12 @@ def deliver(multi, identity):
     while deciding how to distribute funds.
     """
     (log, user, key, urls) = init(multi, identity)
+    form = {}
+    if defaults:
+        form = parse_document(open(defaults).read())
+        if 'Title' in form and form['Title'] != 'Rein Deliver':
+            return click.echo("Input file type: " + form['Title'])
+    store = False if dry_run else True
 
     Order.update_orders(rein, Document, get_user_documents)
 
@@ -381,7 +407,10 @@ def deliver(multi, identity):
         click.echo('None found')
         return
 
-    doc = delivery_prompt(rein, not_our_orders, 'Deliverables')
+    if 'Job ID' in form.keys():
+        doc = select_by_form(not_our_orders, 'Job ID', form)
+    else:
+        doc = delivery_prompt(rein, not_our_orders, 'Deliverables')
     if not doc:
         return
 
@@ -389,7 +418,7 @@ def deliver(multi, identity):
     fields = [
                 {'label': 'Job name',                       'value_from': doc},
                 {'label': 'Job ID',                         'value_from': doc},
-                {'label': 'Deliverables'},
+                {'label': 'Deliverables',                   'not_null': form},
                 {'label': 'Bid amount (BTC)',               'value_from': doc},
                 {'label': 'Primary escrow address',         'value_from': doc},
                 {'label': 'Mediator escrow address',        'value_from': doc},
@@ -401,8 +430,8 @@ def deliver(multi, identity):
              ]
     document = assemble_document('Delivery', fields)
     if check_redeem_scripts(document):
-        res = sign_and_store_document(rein, 'delivery', document, user.daddr, user.dkey)
-        if res:
+        res = sign_and_store_document(rein, 'delivery', document, user.daddr, user.dkey, store)
+        if res and store:
             click.echo("Delivery created. Run 'rein sync' to push to available servers.")
     else:
         click.echo("Incorrect redeem scripts. Check keys and their order in redeem script.")
@@ -413,7 +442,9 @@ def deliver(multi, identity):
 @cli.command()
 @click.option('--multi/--no-multi', default=False, help="prompt for identity to use")
 @click.option('--identity', type=click.Choice(['Alice', 'Bob', 'Charlie', 'Dan']), default=None, help="identity to use")
-def accept(multi, identity):
+@click.option('--defaults', '-d', default=None, help='file with form values')
+@click.option('--dry-run/--no-dry-run', '-n', default=False, help='generate but do not store document')
+def accept(multi, identity, defaults, dry_run):
     """
     Accept a delivery.
 
@@ -422,6 +453,12 @@ def accept(multi, identity):
     refunding the job creator.
     """
     (log, user, key, urls) = init(multi, identity)
+    form = {}
+    if defaults:
+        form = parse_document(open(defaults).read())
+        if 'Title' in form and form['Title'] != 'Rein Accept Delivery':
+            return click.echo("Input file type: " + form['Title'])
+    store = False if dry_run else True
 
     Order.update_orders(rein, Document, get_user_documents)
 
@@ -448,7 +485,10 @@ def accept(multi, identity):
         click.echo('None found')
         return
 
-    doc = accept_prompt(rein, our_orders, "Deliverables")
+    if 'Job ID' in form.keys():
+        doc = select_by_form(our_orders, 'Job ID', form)
+    else:
+        doc = accept_prompt(rein, our_orders, "Deliverables")
     if not doc:
         return
 
@@ -457,16 +497,16 @@ def accept(multi, identity):
     fields = [
                 {'label': 'Job name',                       'value_from': doc},
                 {'label': 'Job ID',                         'value_from': doc},
-                {'label': 'Signed primary payment'},
-                {'label': 'Signed mediator payment'},
+                {'label': 'Signed primary payment',         'not_null': form},
+                {'label': 'Signed mediator payment',        'not_null': form},
                 {'label': 'Primary escrow redeem script',   'value_from': doc},
                 {'label': 'Mediator escrow redeem script',  'value_from': doc},
              ]
     document = assemble_document('Accept Delivery', fields)
     click.echo('\n'+document+'\n')
     if click.confirm("Are you sure?"):
-        res = sign_and_store_document(rein, 'accept', document, user.daddr, user.dkey)
-        if res:
+        res = sign_and_store_document(rein, 'accept', document, user.daddr, user.dkey, store)
+        if res and store:
             click.echo("Accepted delivery. Run 'rein sync' to push to available servers.")
         log.info('accept signed') if res else log.error('accept failed')
     else:
@@ -476,7 +516,9 @@ def accept(multi, identity):
 @cli.command()
 @click.option('--multi/--no-multi', default=False, help="prompt for identity to use")
 @click.option('--identity', type=click.Choice(['Alice', 'Bob', 'Charlie', 'Dan']), default=None, help="identity to use")
-def creatordispute(multi, identity):
+@click.option('--defaults', '-d', default=None, help='file with form values')
+@click.option('--dry-run/--no-dry-run', '-n', default=False, help='generate but do not store document')
+def creatordispute(multi, identity, defaults, dry_run):
     """
     File a dispute (as a job creator).
 
@@ -485,6 +527,12 @@ def creatordispute(multi, identity):
     a dispute.
     """
     (log, user, key, urls) = init(multi, identity)
+    form = {}
+    if defaults:
+        form = parse_document(open(defaults).read())
+        if 'Title' in form and form['Title'] != 'Rein Dispute Delivery':
+            return click.echo("Input file type: " + form['Title'])
+    store = False if dry_run else True
 
     Order.update_orders(rein, Document, get_user_documents)
 
@@ -505,7 +553,10 @@ def creatordispute(multi, identity):
     if len(valid_results) == 0:
         click.echo('None found')
 
-    doc = dispute_prompt(rein, valid_results, "Deliverables")
+    if 'Job ID' in form.keys():
+        doc = select_by_form(valid_results, 'Job ID', form)
+    else:
+        doc = dispute_prompt(rein, valid_results, "Deliverables")
     if not doc:
         return
 
@@ -513,13 +564,13 @@ def creatordispute(multi, identity):
     fields = [
                 {'label': 'Job name',                       'value_from': doc},
                 {'label': 'Job ID',                         'value_from': doc},
-                {'label': 'Dispute detail'},
+                {'label': 'Dispute detail',                 'not_null': form},
                 {'label': 'Primary escrow redeem script',   'value_from': doc},
                 {'label': 'Mediator escrow redeem script',  'value_from': doc},
              ]
     document = assemble_document('Dispute Delivery', fields)
-    res = sign_and_store_document(rein, 'creatordispute', document, user.daddr, user.dkey)
-    if res:
+    res = sign_and_store_document(rein, 'creatordispute', document, user.daddr, user.dkey, store)
+    if res and store:
         click.echo("Dispute signed by job creator. Run 'rein sync' to push to available servers.")
     log.info('creatordispute signed') if res else log.error('creatordispute failed')
 
@@ -527,7 +578,9 @@ def creatordispute(multi, identity):
 @cli.command()
 @click.option('--multi/--no-multi', default=False, help="prompt for identity to use")
 @click.option('--identity', type=click.Choice(['Alice', 'Bob', 'Charlie', 'Dan']), default=None, help="identity to use")
-def workerdispute(multi, identity):
+@click.option('--defaults', '-d', default=None, help='file with form values')
+@click.option('--dry-run/--no-dry-run', '-n', default=False, help='generate but do not store document')
+def workerdispute(multi, identity, defaults, dry_run):
     """
     File a dispute (as a worker).
 
@@ -536,6 +589,12 @@ def workerdispute(multi, identity):
     specification, they would use this command to file a dispute.
     """
     (log, user, key, urls) = init(multi, identity)
+    form = {}
+    if defaults:
+        form = parse_document(open(defaults).read())
+        if 'Title' in form and form['Title'] != 'Rein Dispute Offer':
+            return click.echo("Input file type: " + form['Title'])
+    store = False if dry_run else True
 
     valid_results = []
 
@@ -558,7 +617,10 @@ def workerdispute(multi, identity):
     if len(valid_results) == 0:
         click.echo('None found')
 
-    doc = dispute_prompt(rein, valid_results, 'Deliverables')
+    if 'Job ID' in form.keys():
+        doc = select_by_form(valid_results, 'Job ID', form)
+    else:
+        doc = dispute_prompt(rein, valid_results, 'Deliverables')
     if not doc:
         return
 
@@ -566,13 +628,13 @@ def workerdispute(multi, identity):
     fields = [
                 {'label': 'Job name',                       'value_from': doc},
                 {'label': 'Job ID',                         'value_from': doc},
-                {'label': 'Dispute detail'},
+                {'label': 'Dispute detail',                 'not_null': form},
                 {'label': 'Primary escrow redeem script',   'value_from': doc},
                 {'label': 'Mediator escrow redeem script',  'value_from': doc},
              ]
     document = assemble_document('Dispute Offer', fields)
-    res = sign_and_store_document(rein, 'workerdispute', document, user.daddr, user.dkey)
-    if res:
+    res = sign_and_store_document(rein, 'workerdispute', document, user.daddr, user.dkey, store)
+    if res and store:
         click.echo("Dispute signed by worker. Run 'rein sync' to push to available servers.")
     log.info('workerdispute signed') if res else log.error('workerdispute failed')
 
@@ -580,7 +642,9 @@ def workerdispute(multi, identity):
 @cli.command()
 @click.option('--multi/--no-multi', default=False, help="prompt for identity to use")
 @click.option('--identity', type=click.Choice(['Alice', 'Bob', 'Charlie', 'Dan']), default=None, help="identity to use")
-def resolve(multi, identity):
+@click.option('--defaults', '-d', default=None, help='file with form values')
+@click.option('--dry-run/--no-dry-run', '-n', default=False, help='generate but do not store document')
+def resolve(multi, identity, defaults, dry_run):
     """
     Resolve a dispute.
 
@@ -589,6 +653,12 @@ def resolve(multi, identity):
     the decision and signed payments.
     """
     (log, user, key, urls) = init(multi, identity)
+    form = {}
+    if defaults:
+        form = parse_document(open(defaults).read())
+        if 'Title' in form and form['Title'] != 'Rein Dispute Resolution':
+            return click.echo("Input file type: " + form['Title'])
+    store = False if dry_run else True
 
     valid_results = []
     for url in urls:
@@ -632,7 +702,10 @@ def resolve(multi, identity):
     if len(valid_results) == 0:
         click.echo('None found')
 
-    doc = resolve_prompt(rein, valid_results)
+    if 'Job ID' in form.keys():
+        doc = select_by_form(valid_results, 'Job ID', form)
+    else:
+        doc = resolve_prompt(rein, valid_results)
     if not doc:
         return
 
@@ -640,13 +713,13 @@ def resolve(multi, identity):
     fields = [
                 {'label': 'Job name',                       'value_from': doc},
                 {'label': 'Job ID',                         'value_from': doc},
-                {'label': 'Resolution'},
-                {'label': 'Signed primary payment'},
-                {'label': 'Signed mediator payment'},
+                {'label': 'Resolution',                     'not_null': form},
+                {'label': 'Signed primary payment',         'not_null': form},
+                {'label': 'Signed mediator payment',        'not_null': form},
              ]
     document = assemble_document('Dispute Resolution', fields)
-    res = sign_and_store_document(rein, 'resolve', document, user.daddr, user.dkey)
-    if res:
+    res = sign_and_store_document(rein, 'resolve', document, user.daddr, user.dkey, store)
+    if res and store:
         click.echo("Dispute resolution signed by mediator. Run 'rein sync' to push to available servers.")
     log.info('resolve signed') if res else log.error('resolve failed')
 
@@ -885,3 +958,18 @@ def get_new_nonce(rein, url):
     data = answer.json()
     rein.log.info('server returned nonce %s' % data['nonce'])
     return data['nonce']
+
+
+def select_by_form(candidates, field, form):
+   """
+   Iterate through array of dicts to match a key/value. 
+   """
+   if field in form.keys():
+       for candidate in candidates:
+           if candidate[field] == form[field]:
+               return candidate
+       if match is None:
+           click.echo(field + ' not found on available servers.')
+           return None
+   else:
+       click.echo(field + " is required but not in your defaults file")
