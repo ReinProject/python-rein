@@ -1,3 +1,4 @@
+import sys
 import json
 import re
 import random
@@ -922,7 +923,7 @@ def init(multi, identity):
         rein.set_multiuser()
     if rein.has_no_account():
         click.echo("Please run setup.")
-        return
+        return sys.exit(1)
     user = get_user(rein, identity)
     key = pubkey(user.dkey)
     urls = get_urls(rein)
