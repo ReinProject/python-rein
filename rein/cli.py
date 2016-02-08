@@ -327,8 +327,8 @@ def offer(multi, identity, defaults, dry_run):
     if len(data['bids']) == 0:
         click.echo('None found')
 
-    if 'Job ID' in form.keys():
-        bid = select_by_form(bids, 'Job ID', form)
+    if 'Worker public key' in form.keys():
+        bid = select_by_form([bid], 'Worker public key', form)
     else:
         bid = bid_prompt(rein, bids)
     if not bid:
@@ -968,8 +968,7 @@ def select_by_form(candidates, field, form):
        for candidate in candidates:
            if candidate[field] == form[field]:
                return candidate
-       if match is None:
-           click.echo(field + ' not found on available servers.')
-           return None
+       click.echo(field + ' not found on available servers.')
+       return None
    else:
        click.echo(field + " is required but not in your defaults file")
