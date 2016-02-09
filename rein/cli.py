@@ -922,7 +922,11 @@ def status(multi, identity, jobid):
 @click.argument('testnet', required=True)
 def testnet(testnet):
     """
-    Select testnet or mainnet mode for Rein.
+    Enter 'true' / 'false' to toggle testnet mode.
+
+    Testnet is a separate key-value namespace both locally and on
+    available Causeway servers where contracts are assumed to be
+    for testing, and non-binding.
     """
     if testnet and testnet.lower() == 'true':
         PersistConfig.set_testnet(rein, 'true')
