@@ -24,6 +24,7 @@ from lib.market import mediator_prompt, accept_prompt, job_prompt, bid_prompt, d
         assemble_order
 from lib.order import Order
 from lib.script import build_2_of_3, build_mandatory_multisig, check_redeem_scripts
+from lib.persistconfig import PersistConfig
 import lib.config as config
 import lib.models
 
@@ -894,6 +895,7 @@ def status(multi, identity, jobid):
     documents = get_user_documents(rein)
 
     if jobid is None:
+        click.echo("Testnet: %s" % PersistConfig.get_testnet(rein))
         click.echo("User: %s" % user.name)
         click.echo("Master bitcoin address: %s" % user.maddr)
         click.echo("Delegate bitcoin address: %s" % user.daddr)
@@ -914,6 +916,21 @@ def status(multi, identity, jobid):
         documents = order.get_documents(rein, Document)
         for document in documents:
             click.echo("\n" + document.contents)
+
+
+@cli.command()
+@click.argument('testnet', required=True)
+def testnet(testnet):
+    """
+    Select testnet or mainnet mode for Rein.
+    """
+    if testnet and testnet.lower() == 'true':
+        PersistConfig.set_testnet(rein, 'true')
+        click.echo("Testnet enabled. Run 'rein testnet false' to go back to mainnet")
+    else:
+        PersistConfig.set_testnet(rein, 'false')
+        click.echo("Testnet disabled. Run 'rein testnet true' to go back to testnet")
+    return
 
 
 def init(multi, identity):

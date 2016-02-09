@@ -31,4 +31,7 @@ Base.metadata.create_all(engine)
 from document import Base
 Base.metadata.create_all(engine)
 
+from persistconfig import Base
+Base.metadata.create_all(engine)
+
 log.info('database tables updated')
