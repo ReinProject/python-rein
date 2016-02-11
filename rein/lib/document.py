@@ -2,7 +2,7 @@ import hashlib
 import requests
 import click
 import re
-from sqlalchemy import Column, Integer, String, ForeignKey, and_
+from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, and_
 from sqlalchemy.ext.declarative import declarative_base
 from validate import filter_valid_sigs, parse_document
 from order import Order
@@ -22,9 +22,10 @@ class Document(Base):
     source_key = Column(String(64), nullable=True)
     sig_verified = Column(Integer, default=False)
     order_id = Column(Integer, ForeignKey(Order.id))
+    testnet = Column(Boolean, nullable=False)
 
     def __init__(self, rein, doc_type, contents, order_id = None,
-            source_url='local', source_key=None, sig_verified=False):
+            source_url='local', source_key=None, sig_verified=False, testnet=True):
         self.identity = rein.user.id
         self.doc_type = doc_type  # enrollment, bid, offer, job, for_hire,
         self.doc_hash = hashlib.sha256(contents).hexdigest()
@@ -33,6 +34,7 @@ class Document(Base):
         self.source_key = source_key
         self.sig_verified = sig_verified
         self.order_id = order_id
+        self.testnet = testnet
 
     def get_hash(self):
         return self.doc_hash
@@ -48,15 +50,15 @@ def get_user_documents(rein):
 
 def get_documents_by_job_id(rein, url, job_id):
     # click.echo("Querying %s for job_id %s ..." % (url, job_id))
-    sel_url = "{0}query?owner={1}&query=by_job_id&job_ids={2}"
+    sel_url = "{0}query?owner={1}&query=by_job_id&job_ids={2}&testnet={3}"
     try:
-        answer = requests.get(url=sel_url.format(url, rein.user.maddr, job_id))
+        answer = requests.get(url=sel_url.format(url, rein.user.maddr, job_id, rein.testnet))
     except requests.exceptions.ConnectionError:
         rein.log.warning('Could not reach %s.' % url)
         return None
     data = answer.json()
     if len(data['by_job_id']) == 0:
-        click.echo('None found')
+        rein.log.warning('None found.')
     return filter_valid_sigs(rein, data['by_job_id'])
 
 
