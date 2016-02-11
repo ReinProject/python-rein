@@ -150,9 +150,9 @@ def post(multi, identity, defaults, dry_run):
     eligible_mediators = []
     for url in urls:
         log.info("Querying %s for mediators..." % url)
-        sel_url = "{0}query?owner={1}&query=mediators"
+        sel_url = "{0}query?owner={1}&query=mediators&testnet={2}"
         try:
-            answer = requests.get(url=sel_url.format(url, user.maddr))
+            answer = requests.get(url=sel_url.format(url, user.maddr, rein.testnet))
         except:
             click.echo('Error connecting to server.')
             log.error('server connect error ' + url)
@@ -216,9 +216,9 @@ def bid(multi, identity, defaults, dry_run):
     jobs = []
     for url in urls:    
         log.info("Querying %s for jobs..." % url)
-        sel_url = "{0}query?owner={1}&query=jobs"
+        sel_url = "{0}query?owner={1}&query=jobs&testnet={2}"
         try:
-            answer = requests.get(url=sel_url.format(url, user.maddr))
+            answer = requests.get(url=sel_url.format(url, user.maddr, rein.testnet))
         except:
             click.echo('Error connecting to server.')
             log.error('server connect error ' + url)
@@ -302,9 +302,9 @@ def offer(multi, identity, defaults, dry_run):
     bids = []
     for url in urls:
         log.info("Querying %s for bids on your jobs..." % url)
-        sel_url = "{0}query?owner={1}&delegate={2}&query=bids"
+        sel_url = "{0}query?owner={1}&delegate={2}&query=bids&testnet={3}"
         try:
-            answer = requests.get(url=sel_url.format(url, user.maddr, user.daddr))
+            answer = requests.get(url=sel_url.format(url, user.maddr, user.daddr, rein.testnet))
         except:
             click.echo('Error connecting to server.')
             log.error('server connect error ' + url)
@@ -664,9 +664,9 @@ def resolve(multi, identity, defaults, dry_run):
     valid_results = []
     for url in urls:
         log.info("Querying %s for jobs we're mediating..." % url)
-        sel_url = "{0}query?owner={1}&query=review&mediator={2}"
+        sel_url = "{0}query?owner={1}&query=review&mediator={2}&testnet={3}"
         try:
-            answer = requests.get(url=sel_url.format(url, user.maddr, key))
+            answer = requests.get(url=sel_url.format(url, user.maddr, key, rein.testnet))
         except:
             click.echo('Error connecting to server.')
             log.error('server connect error ' + url)
@@ -685,9 +685,9 @@ def resolve(multi, identity, defaults, dry_run):
     valid_results = []
     for url in urls:
         log.info("Querying %s for %s ..." % (url, job_ids_string))
-        sel_url = "{0}query?owner={1}&job_ids={2}&query=by_job_id"
+        sel_url = "{0}query?owner={1}&job_ids={2}&query=by_job_id&testnet={3}"
         try:
-            answer = requests.get(url=sel_url.format(url, user.maddr, job_ids_string))
+            answer = requests.get(url=sel_url.format(url, user.maddr, job_ids_string, rein.testnet))
         except:
             click.echo('Error connecting to server.')
             log.error('server connect error ' + url)
@@ -856,7 +856,8 @@ def sync(multi, identity):
                     "nonce": nonce[url],
                     "signature": signature,
                     "signature_address": user.daddr,
-                    "owner": user.maddr}
+                    "owner": user.maddr,
+                    "testnet": rein.testnet}
             body = json.dumps(data)
             headers = {'Content-Type': 'application/json'}
             answer = requests.post(url='{0}put'.format(url), headers=headers, data=body)
