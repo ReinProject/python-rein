@@ -3,7 +3,7 @@ import logging
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from user import User, Base
-
+from persistconfig import PersistConfig
 
 class Config():
     def __init__(self):
@@ -19,6 +19,8 @@ class Config():
         self.log.info('starting python-rein')
         self.setup_db()
         self.log.info('database connected')
+        self.testnet = PersistConfig.get_testnet(self)
+        self.log.info('testnet = ' + str(self.testnet))
 
     def setup_logging(self):
         self.log = logging.getLogger('python-rein')
