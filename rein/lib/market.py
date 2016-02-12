@@ -219,7 +219,7 @@ def sign_and_store_document(rein, doc_type, document, signature_address=None, si
         signed = "%s\n%s\n%s\n%s\n%s\n%s" % (b, document, c, signature_address, signature, d)
         click.echo('\n' + signed + '\n')
         if store:
-            d = Document(rein, doc_type, signed, sig_verified=True)
+            d = Document(rein, doc_type, signed, sig_verified=True, testnet=rein.testnet)
             rein.session.add(d)
             rein.session.commit()
     return validated
@@ -246,7 +246,7 @@ def assemble_order(rein, document):
                 documents += res
         order_id = Order.get_order_id(rein, job_id)
         if not order_id:
-            o = Order(job_id)
+            o = Order(job_id, testnet=rein.testnet)
             rein.session.add(o)        
             rein.session.commit()
 
@@ -260,7 +260,7 @@ def assemble_order(rein, document):
         if d:
             d.set_order_id(order_id)
         else:
-            new_document = Document(rein, doc_type, document, order_id, 'external', source_key=None, sig_verified=True)
+            new_document = Document(rein, doc_type, document, order_id, 'external', source_key=None, sig_verified=True, testnet=rein.testnet)
             rein.session.add(new_document)
 
         rein.session.commit()

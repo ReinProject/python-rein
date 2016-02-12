@@ -232,7 +232,7 @@ def bid(multi, identity, defaults, dry_run):
     for job in unique_jobs:
         order = Order.get_by_job_id(rein, job['Job ID'])
         if not order:
-            order = Order(job['Job ID'])
+            order = Order(job['Job ID'], testnet=rein.testnet)
             rein.session.add(order)
             rein.session.commit()
         state = order.get_state(rein, Document)
@@ -318,7 +318,7 @@ def offer(multi, identity, defaults, dry_run):
     for bid in unique_bids:
         order = Order.get_by_job_id(rein, bid['Job ID'])
         if not order:
-            order = Order(bid['Job ID'])
+            order = Order(bid['Job ID'], testnet=rein.testnet)
             rein.session.add(order)
             rein.session.commit()
         state = order.get_state(rein, Document)

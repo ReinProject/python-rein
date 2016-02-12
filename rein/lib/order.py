@@ -42,9 +42,11 @@ class Order(Base):
     worker_maddr = Column(String(64), nullable=True)
     job_creator = Column(Integer, nullable=True)
     open_for_bid = Column(Boolean, nullable=True)
+    testnet = Column(Boolean, nullable=False)
 
-    def __init__(self, job_id):
+    def __init__(self, job_id, testnet):
         self.job_id = job_id
+        self.testnet = testnet
 
     def attach_documents(self, job_id):
         documents = self.get_documents()
@@ -54,16 +56,19 @@ class Order(Base):
     def get_documents(self, rein, Document, doc_type=None):
         if doc_type:
             return rein.session.query(Document).filter(and_(Document.order_id == self.id,
-                                                            Document.doc_type == doc_type)).all()
+                                                            Document.doc_type == doc_type,
+                                                            Document.testnet == rein.testnet)).all()
         else:
-            return rein.session.query(Document).filter(Document.order_id == self.id).all()
+            return rein.session.query(Document).filter(and_(Document.order_id == self.id,
+                                                            Document.testnet == rein.testnet)).all()
 
     def get_state(self, rein, Document):
         """
         Walks from the job_posting through possible order flows to arrive at the last
         step represented in the documents.
         """
-        documents = rein.session.query(Document).filter(Document.order_id == self.id).all()
+        documents = rein.session.query(Document).filter(and_(Document.order_id == self.id,
+                                                             Document.testnet == rein.testnet)).all()
         current = 'job_posting'
         while 1:
             moved = False
@@ -76,7 +81,8 @@ class Order(Base):
 
     @classmethod
     def get_by_job_id(self, rein, job_id):
-        order = rein.session.query(Order).filter(Order.job_id == job_id).first()
+        order = rein.session.query(Order).filter(and_(Order.job_id == job_id,
+                                                      Order.testnet == rein.testnet)).first()
         return order
 
     @classmethod
@@ -85,21 +91,24 @@ class Order(Base):
 
     @classmethod
     def get_user_orders(self, rein, Document):
-        documents = rein.session.query(Document).filter(Document.identity == rein.user.id).all()
+        documents = rein.session.query(Document).filter(and_(Document.identity == rein.user.id,
+                                                             Document.testnet == rein.testnet)).all()
         order_ids = []
         for document in documents:
             if document.order_id not in order_ids:
                 order_ids.append(document.order_id)
         orders = []
         for order_id in order_ids:
-            order = rein.session.query(Order).filter(Order.id == order_id).first()
+            order = rein.session.query(Order).filter(and_(Order.id == order_id,
+                                                          Order.testnet == rein.testnet)).first()
             if order:
                 orders.append(order)
         return orders
 
     @classmethod
     def get_order_id(self, rein, job_id):
-        order = rein.session.query(Order).filter(Order.job_id == job_id).first()
+        order = rein.session.query(Order).filter(and_(Order.job_id == job_id,
+                                                      Order.testnet == rein.testnet)).first()
         if order:
             return order.id
         return None

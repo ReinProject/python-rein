@@ -19,7 +19,7 @@ class Config():
         self.log.info('starting python-rein')
         self.setup_db()
         self.log.info('database connected')
-        self.testnet = PersistConfig.get_testnet(self)
+        self.testnet = 1 if PersistConfig.get_testnet(self) else 0
         self.log.info('testnet = ' + str(self.testnet))
 
     def setup_logging(self):

@@ -45,7 +45,8 @@ class Document(Base):
 
 def get_user_documents(rein):
     return rein.session.query(Document).filter(and_(Document.identity == rein.user.id,
-                                                    Document.source_url == 'local')).all()
+                                                    Document.source_url == 'local',
+                                                    Document.testnet == rein.testnet)).all()
 
 
 def get_documents_by_job_id(rein, url, job_id):

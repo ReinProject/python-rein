@@ -29,7 +29,8 @@ class Placement(Base):
 
 def get_placements(rein, url, doc_id):
     return rein.session.query(Placement).filter(and_(Placement.url == url,
-                                                     Placement.doc_id == doc_id)).all()
+                                                     Placement.doc_id == doc_id,
+                                                     Placement.testnet == rein.testnet)).all()
 
 
 def get_remote_document_hash(rein, plc):

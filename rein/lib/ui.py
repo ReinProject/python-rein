@@ -182,7 +182,7 @@ def enroll(rein):
     if res:
         User.set_enrolled(rein, user)
         # insert signed document into documents table as type 'enrollment'
-        document = Document(rein, 'enrollment', signed, sig_verified=True)
+        document = Document(rein, 'enrollment', signed, sig_verified=True, testnet=rein.testnet)
         rein.session.add(document)
         rein.session.commit()
     return res
