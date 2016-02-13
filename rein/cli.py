@@ -896,7 +896,6 @@ def status(multi, identity, jobid):
     documents = get_user_documents(rein)
 
     if jobid is None:
-        click.echo("Testnet: %s" % PersistConfig.get_testnet(rein))
         click.echo("User: %s" % user.name)
         click.echo("Master bitcoin address: %s" % user.maddr)
         click.echo("Delegate bitcoin address: %s" % user.daddr)
@@ -905,6 +904,7 @@ def status(multi, identity, jobid):
         if user.will_mediate: 
             click.echo("Mediator fee: %s %%" % user.mediator_fee)
         click.echo("Total document count: %s" % len(documents))   
+        click.echo("Testnet: %s" % PersistConfig.get_testnet(rein))
         click.echo('')
         click.echo('ID  Job ID                 Status')
         click.echo('-----------------------------------------------------')
