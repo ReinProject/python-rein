@@ -72,7 +72,7 @@ Bitcoin Core provides a very simple way to create Bitcoin addresses. When the pr
 
 Before we obtain any addresses, let's encrypt the wallet.
 
-<img src="img/encrypt.png">
+<img src="http://reinproject.org/img/encrypt.png">
 
 Enter a strong password of at least 10 characters. It is **very important** that you have this password when you need access in the future so put it in your password manager, write it down, and/or memorize it. If you lose the password or the wallet file, you will lose access to any Rein identities and Bitcoin funds for which it holds the keys.
 
@@ -80,7 +80,7 @@ Enter a strong password of at least 10 characters. It is **very important** that
 
 Make a few backup copies of the wallet to removable media such as flash drives, memory cards, or optical media. Ideally you will store these in a safe or safe deposit box.
 
-<img src="img/backup.png">
+<img src="http://reinproject.org/img/backup.png">
 
 ##Step 3 -- Create Your User Account
 
@@ -92,13 +92,13 @@ Choose to create a new account, fill in your Name or the handle by which you'd t
 
 ###Obtain address from Bitcoin-Qt
 
-<img src="/img/rein-enroll.png">
+<img src="http://reinproject.org/img/rein-enroll.png">
 
 Let's obtain the Master Bitcoin address from Bitcoin-Qt. Here you will go to File -> Receiving Addresses... and click new until there are a couple of addresses showing. Copy the first address and paste it here.
 
 Next, we'll get a different address from Bitcoin-Qt and copy and paste it at the Delegate Bitcoin address prompt.
 
-<img src="/img/rein-enroll2.png">
+<img src="http://reinproject.org/img/rein-enroll2.png">
 
 ###Get a private key from Bitcoin-Qt
 
@@ -106,17 +106,17 @@ For the final prompts in rein setup, we will need the private keys for the two a
 
 Open the Debug Window to the Console tab.
 
-<img src="/img/debug.png">
+<img src="http://reinproject.org//img/debug.png">
 
 There you will type the following command:
 
     dumpprivkey &lt;your address&gt;
 
-<img src="/img/dumpprivkey1.png">
+<img src="http://reinproject.org/img/dumpprivkey1.png">
 
 After a second or two, this will print out the private key for the address. 
 
-<img src="/img/dumpprivkey2.png">
+<img src="http://reinproject.org/img/dumpprivkey2.png">
 
 Copy the private key (redacted) and paste it in for the Delegate Bitcoin private key. You will repeat this process for the Master address but before we do that, let's answer the prompts around being a mediator.
 
@@ -128,7 +128,7 @@ You should now have a section of text on the screen that starts with "Rein User 
 
 Open your browser and open the file at ~/Rein/bitcoin-signature-tool/index.html. Click over to the Sign tab and repeat the above procedure to get the private key for your Master Bitcoin address.
 
-<img src="/img/master-signing.png">
+<img src="http://reinproject.org/img/master-signing.png">
 
 The private key will go in the Private Key box shaded in red. Copy the "Rein User Enrollment" text into the Message box shaded in yellow. 
 
@@ -171,7 +171,3 @@ If you are a mediator who must resolve a dispute, you will see a transaction lis
 For further reference, much of the above process is shown in the video [Rein - Getting started: Install and Setup - part 2/4 ](https://www.youtube.com/watch?v=PaF5URG2dLc)
 
 If you have any questions, corrections, or recommendations please post an issue here or submit a pull request.
-
-
-
-
