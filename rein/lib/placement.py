@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, and_
+from sqlalchemy import Column, Integer, String, Boolean, and_
 from sqlalchemy.ext.declarative import declarative_base
 import requests
 import hashlib
@@ -14,12 +14,14 @@ class Placement(Base):
     url = Column(String(250), nullable=False)
     remote_key = Column(String(64), nullable=False)
     verified = Column(Integer, nullable=False)
+    testnet = Column(Boolean, nullable=False)
 
-    def __init__(self, doc_id, url, remote_key, verified=0):
+    def __init__(self, doc_id, url, remote_key, verified=0, testnet=True):
         self.doc_id = doc_id
         self.url = url
         self.remote_key = remote_key
         self.verified = verified
+        self.testnet = testnet
 
     def set_verified(self):
         self.verified = 1

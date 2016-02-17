@@ -16,8 +16,9 @@ class User(Base):
     will_mediate = Column(Boolean, nullable=False)
     mediator_fee = Column(Float, nullable=False)
     enrolled = Column(Boolean, nullable=False)
+    testnet = Column(Boolean, nullable=False)
 
-    def __init__(self, name, contact, maddr, daddr, dkey, will_mediate, mediator_fee):
+    def __init__(self, name, contact, maddr, daddr, dkey, will_mediate, mediator_fee, testnet):
         self.name = name
         self.contact = contact
         self.maddr = maddr
@@ -26,6 +27,7 @@ class User(Base):
         self.will_mediate = will_mediate
         self.mediator_fee = mediator_fee
         self.enrolled = False
+        self.testnet = testnet
 
     @classmethod
     def set_enrolled(self, rein, user):

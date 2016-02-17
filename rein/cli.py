@@ -166,6 +166,8 @@ def post(multi, identity, defaults, dry_run):
         mediator = select_by_form(eligible_mediators, 'Mediator public key', form)
     else:
         mediator = mediator_prompt(rein, eligible_mediators)
+    if not mediator:
+        return
     click.echo("Chosen mediator: " + str(mediator['User']))
 
     log.info('got user and key for post')
@@ -749,7 +751,7 @@ def request(multi, identity, url):
         url = 'http://' + url
 
     if get_bucket_count(rein, url) > 4:
-        click.echo("You already have enough (5) buckets from %s" % url)
+        click.echo("You already have enough (3) buckets from %s" % url)
         log.warning('too many buckets')
         return
     sel_url = "{0}request?owner={1}&delegate={2}&contact={3}"
@@ -799,6 +801,10 @@ def sync(multi, identity):
 
     click.echo("User: " + user.name)
 
+    if len(urls) == 0:
+        click.echo("No buckets registered. Run 'rein request' to continue.")
+        return
+
     create_placements(rein.engine)
 
     upload = []
@@ -832,7 +838,7 @@ def sync(multi, identity):
         if len(placements) == 0:
             remote_key = ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits)
                                  for _ in range(32))
-            plc = Placement(doc.id, url, remote_key)
+            plc = Placement(doc.id, url, remote_key, rein.testnet)
             rein.session.add(plc)
             rein.session.commit()
         else:
@@ -962,11 +968,13 @@ def is_number(s):
 def get_user(rein, identity):
     if rein.multi and identity:
         rein.user = rein.session.query(User).filter(User.name == identity,
-                                                    User.enrolled == True).first()
+                                                    User.enrolled == True,
+                                                    User.testnet == rein.testnet).first()
     elif rein.multi:
         rein.user = identity_prompt(rein)
     else:
-        rein.user = rein.session.query(User).filter(User.enrolled == True).first()
+        rein.user = rein.session.query(User).filter(User.enrolled == True,
+                                                    User.testnet == rein.testnet).first()
     return rein.user
 
 

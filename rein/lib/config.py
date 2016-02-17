@@ -42,7 +42,7 @@ class Config():
 
     def has_no_account(self):
         if not os.path.isfile(os.path.join(self.config_dir, self.db_filename)) or \
-           self.session.query(User).count() == 0:
+           self.session.query(User).filter(User.testnet == self.testnet).count() == 0:
             return True
         else:
             return False

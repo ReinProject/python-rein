@@ -64,7 +64,8 @@ def btc_privkey_prompt(name, addr=None):
 
 
 def identity_prompt(rein):
-    users = rein.session.query(User).filter(User.enrolled == True).all()
+    users = rein.session.query(User).filter(User.enrolled == True,
+                                            User.testnet == rein.testnet).all()
     user_count = len(users) 
     index = 0
     i = 0
@@ -108,7 +109,7 @@ def create_account(rein):
     mediator_fee = 1
     if will_mediate:
         mediator_fee = click.prompt(hilight("Mediator fee (%)", True, True), default=1.0)
-    new_identity = User(name, contact, maddr, daddr, dkey, will_mediate, mediator_fee)
+    new_identity = User(name, contact, maddr, daddr, dkey, will_mediate, mediator_fee, rein.testnet)
     rein.session.add(new_identity)
     rein.session.commit()
     data = {'name': name,
@@ -167,6 +168,8 @@ def enroll(rein):
     enrollment = "Rein User Enrollment\nUser: %s\nContact: %s\nMaster signing address: %s" \
                  "\nDelegate signing address: %s\nWilling to mediate: %s%s" % \
                  (user.name, user.contact, user.maddr, user.daddr, user.will_mediate, mediator_extras)
+    if rein.testnet:
+        enrollment += '\nTestnet: True'
     f = open(rein.enroll_filename, 'w')
     f.write(enrollment)
     f.close()
