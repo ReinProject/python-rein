@@ -329,6 +329,7 @@ def offer(multi, identity, defaults, dry_run):
     
     if len(data['bids']) == 0:
         click.echo('None found')
+        return
 
     if 'Worker public key' in form.keys():
         bid = select_by_form([bid], 'Worker public key', form)
@@ -555,6 +556,7 @@ def creatordispute(multi, identity, defaults, dry_run):
 
     if len(valid_results) == 0:
         click.echo('None found')
+        return
 
     if 'Job ID' in form.keys():
         doc = select_by_form(valid_results, 'Job ID', form)
@@ -619,6 +621,7 @@ def workerdispute(multi, identity, defaults, dry_run):
     
     if len(valid_results) == 0:
         click.echo('None found')
+        return
 
     if 'Job ID' in form.keys():
         doc = select_by_form(valid_results, 'Job ID', form)
@@ -704,6 +707,7 @@ def resolve(multi, identity, defaults, dry_run):
     valid_results = unique(valid_results, 'Job ID')
     if len(valid_results) == 0:
         click.echo('None found')
+        return
 
     if 'Job ID' in form.keys():
         doc = select_by_form(valid_results, 'Job ID', form)
