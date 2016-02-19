@@ -910,6 +910,9 @@ def status(multi, identity, jobid):
         if user.will_mediate: 
             click.echo("Mediator fee: %s %%" % user.mediator_fee)
         click.echo("Total document count: %s" % len(documents))   
+        click.echo("Registered servers: ")
+        for url in urls:
+            click.echo("  " + url)
         click.echo("Testnet: %s" % PersistConfig.get_testnet(rein))
         click.echo('')
         click.echo('ID  Job ID                 Status')
