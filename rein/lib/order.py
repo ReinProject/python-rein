@@ -91,8 +91,9 @@ class Order(Base):
 
     @classmethod
     def get_user_orders(self, rein, Document):
-        documents = rein.session.query(Document).filter(and_(Document.identity == rein.user.id,
-                                                             Document.testnet == rein.testnet)).all()
+        documents = rein.session.query(Document).filter(
+                            and_(Document.identity == rein.user.id,
+                                 Document.testnet == rein.testnet)).order_by(Document.id.desc()).all()
         order_ids = []
         for document in documents:
             if document.order_id not in order_ids:
