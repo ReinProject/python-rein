@@ -1,7 +1,7 @@
 from document import Document, get_documents_by_job_id, get_document_type, calc_hash
 from validate import validate_enrollment, parse_document
 from bucket import get_urls
-from bitcoinecdsa import sign, verify, pubkey_to_address
+from bitcoinecdsa import sign, verify, pubkey, pubkey_to_address
 from order import Order
 import os
 import click
@@ -10,11 +10,16 @@ from ui import shorten, get_choice
 
 def mediator_prompt(rein, eligible_mediators):
     mediators = unique(eligible_mediators, 'Mediator public key')
+    key = pubkey(rein.user.dkey)
     i = 0
     for m in mediators:
+        if m["Mediator public key"] == key:
+            mediators.remove(m)
+            continue
         click.echo('%s - %s - Fee: %s - Public key: %s' % (str(i), m['User'], m['Mediator fee'], m['Mediator public key']))
         i += 1
     if len(mediators) == 0:
+        click.echo("None found.")
         return None
     choice = get_choice(mediators, 'mediator')
     if choice == 'q':
