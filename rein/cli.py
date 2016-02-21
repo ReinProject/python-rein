@@ -842,7 +842,7 @@ def sync(multi, identity):
         if len(placements) == 0:
             remote_key = ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits)
                                  for _ in range(32))
-            plc = Placement(doc.id, url, remote_key, rein.testnet)
+            plc = Placement(doc.id, url, remote_key, False, rein.testnet)
             rein.session.add(plc)
             rein.session.commit()
         else:
