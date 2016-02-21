@@ -28,10 +28,15 @@ def mediator_prompt(rein, eligible_mediators):
 
 # called in offer()
 def bid_prompt(rein, bids):
+    """
+    Prompts user to choose a bid on one of their jobs. This means they should be the job creator and
+    not the worker or mediator.
+    """
     i = 0
     valid_bids = []
+    key = pubkey(rein.user.dkey)
     for b in bids:
-        if 'Description' not in b:
+        if 'Description' not in b or b['Worker public key'] == key or b['Mediator public key'] == key:
             continue 
         click.echo('%s - %s - %s - %s - %s BitCoin' % (str(i), b['Job name'], b["Worker"],
                                                   shorten(b['Description']), b['Bid amount (BTC)']))
