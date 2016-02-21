@@ -26,7 +26,7 @@ def mediator_prompt(rein, eligible_mediators):
         return False
     return mediators[choice]
 
-
+# called in offer()
 def bid_prompt(rein, bids):
     i = 0
     valid_bids = []
@@ -49,8 +49,17 @@ def bid_prompt(rein, bids):
 
 
 def job_prompt(rein, jobs):
-    i = 0
+    """
+    Prompt user for jobs they can bid on. Filters out jobs they created or are mediator for.
+    """
+    key = pubkey(rein.user.dkey)
+    valid_jobs = []
     for j in jobs:
+        if j['Job creator public key'] != key and j['Mediator public key'] != key:
+            valid_jobs.append(j)
+        
+    i = 0
+    for j in valid_jobs:
         click.echo('%s - %s - %s - %s' % (str(i), j["Job creator"],
                                           j['Job name'], shorten(j['Description'])))
         i += 1
