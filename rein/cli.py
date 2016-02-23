@@ -188,6 +188,7 @@ def post(multi, identity, defaults, dry_run):
                 {'label': 'Description',                    'not_null': form},
                 {'label': 'Mediator',                       'value': mediator['User']},
                 {'label': 'Mediator contact',               'value': mediator['Contact']},
+                {'label': 'Mediator fee',                   'value': mediator['Mediator fee']},
                 {'label': 'Mediator public key',            'value': mediator['Mediator public key']},
                 {'label': 'Mediator master address',        'value': mediator['Master signing address']},
                 {'label': 'Job creator',                    'value': user.name},
