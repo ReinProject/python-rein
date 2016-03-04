@@ -337,7 +337,7 @@ def offer(multi, identity, defaults, dry_run):
         if state in ['bid', 'job_posting']:
             bids.append(bid)
     
-    if len(data['bids']) == 0:
+    if len(bids) == 0:
         click.echo('None found')
         return
 
