@@ -346,7 +346,6 @@ def offer(multi, identity, defaults, dry_run):
     else:
         bid = bid_prompt(rein, bids)
     if not bid:
-        click.echo('None chosen')
         return
 
     log.info('got bid to offer')

@@ -6,6 +6,9 @@ Rein is a new decentralized labor market that provides a safe and easy way to ea
 
 In this tutorial, we will show you how to use Rein to earn Bitcoin online. We will also show you how to generate a couple of standalone Bitcoin keys that will form the basis of your user account in Rein.
 
+## Time to complete
+
+10-20 minutes
 
 ##Prerequisites
 
