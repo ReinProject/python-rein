@@ -165,6 +165,15 @@ def post(multi, identity, defaults, dry_run):
     if 'Mediator public key' in form.keys():
         mediator = select_by_form(eligible_mediators, 'Mediator public key', form)
     else:
+        click.echo("Post a job\n\nFunds for each job in Rein are stored in two multisig addresses. One address\n"
+                   "is for the primary payment that will go to the worker on completion. The\n"
+                   "second address pays the mediator to be available to resolve a dispute whether\n"
+                   "if necessary. The second address should be funded according to the percentage\n"
+                   "specified by the mediator and is in addition to the primary payment. The\n"
+                   "listing below shows available mediators and the fee they charge. You should\n"
+                   "consider the fee as well as any reputational data you are able to find when\n"
+                   "choosing a mediator. You choice may affect the number and quality of bids\n"
+                   "you receive.\n")
         mediator = mediator_prompt(rein, eligible_mediators)
     if not mediator:
         return
@@ -179,6 +188,7 @@ def post(multi, identity, defaults, dry_run):
                 {'label': 'Description',                    'not_null': form},
                 {'label': 'Mediator',                       'value': mediator['User']},
                 {'label': 'Mediator contact',               'value': mediator['Contact']},
+                {'label': 'Mediator fee',                   'value': mediator['Mediator fee']},
                 {'label': 'Mediator public key',            'value': mediator['Mediator public key']},
                 {'label': 'Mediator master address',        'value': mediator['Master signing address']},
                 {'label': 'Job creator',                    'value': user.name},
@@ -189,7 +199,7 @@ def post(multi, identity, defaults, dry_run):
     document = assemble_document('Job', fields)
     res = sign_and_store_document(rein, 'job_posting', document, user.daddr, user.dkey, store)
     if res and store:
-            click.echo("Posting created. Run 'rein sync' to push to available servers.")
+        click.echo("Posting created. Run 'rein sync' to push to available servers.")
     log.info('posting signed') if res else log.error('posting failed')
 
 
@@ -360,6 +370,12 @@ def offer(multi, identity, defaults, dry_run):
 
     res = sign_and_store_document(rein, 'offer', document, user.daddr, user.dkey, store)
     if res and store:
+        click.echo("Two funding addresses and corresponding redeem scripts have been created for\n"
+                   "this job. When it is time to distribute payment, you would use the redeem\n"
+                   "script and a tool like Rein's modified version of Coinb.in to build and sign\n"
+                   "payment transactions. As long as there is no dispute, the job creator would\n"
+                   "sign a transaction paying the worker all funds held by the primary escrow\n"
+                   "address and the mediator all funds held by the mediator escrow address.\n")
         click.echo("Offer created. Run 'rein sync' to push to available servers.")
     log.info('offer signed') if res else log.error('offer failed')
 
