@@ -23,7 +23,7 @@ def parse_document(document):
     m = re.search('(Rein .*)\n', document)
     if m:
         ret['Title'] = m.group(1)
-    matches = re.finditer("(.+):\s(.+)(\n|$)", document)
+    matches = re.finditer("(.+?):\s(.+)(\n|$)", document)
     for match in matches:
         ret[match.group(1)] = match.group(2)
     return ret
@@ -40,7 +40,7 @@ def parse_sig(sig):
     m = re.search('\n(Rein .*)\n', sig)
     if m:
         ret['Title'] = m.group(1)
-    matches = re.finditer("(.+):\s(.+)\n", sig)
+    matches = re.finditer("(.+?):\s(.+)\n", sig)
     for match in matches:
         ret[match.group(1)] = match.group(2)
     m = re.search(
@@ -204,7 +204,25 @@ IGJcg+MoqpBQNtptelyZfC2zBKk5SZQQjtf4pHSxb0yZH6kn/9Dhd1TWFfXUXsWmZq78xYye4lKi1aQU
 1DVK9Rdi2wcpcfEkep7FSNUui7fzadmxsW
 IMcU7MvLl7T+hY0mmMw6mblLstnXd9Ly36z7uYMqv7ZZEuZQOvuXN2GjYU0Nq4So9GKQRkQwIis7EiN6luTMcOY=
 -----END BITCOIN SIGNED MESSAGE-----"""
-
+    sig4 = """-----BEGIN BITCOIN SIGNED MESSAGE-----
+Rein Job
+Job name: Record a Rein Theme Song
+Job ID: n0qlna45dgynluhtl0gf
+Category: Music
+Description: Rein needs a theme song and what better way to do it than through Rein itself? This is call to any poet/musicians out there that are willing to rewrite some of the lyrics to Who'll Stop the Rain or I Can See Clearly Now to be about the following: decentralized money, gigs, Bitcoin, freelancing, Internet. The delivery should be a royalty-free song that you recorded yourself provided in FLAC or OGG format.
+Mediator: bitspill
+Mediator contact: rein@bitspill.net
+Mediator fee: 1.0%
+Mediator public key: 025a19c3aa027e9114a2f79b6e2f76d85c5b3fb59723ea9dba97e019f1f751d0eb
+Mediator master address: 12AR5UHwzpqScrYiJvgJeNbp222eWv6vRF
+Job creator: weex
+Job creator contact: rein@exchb.com
+Job creator public key: 0300d36a92be6d3c0b0d0aff5b14486b28013152acc4b55fc0ec84c4a209a3f234
+Job creator master address: 1wexCMzikX7yxcWwzmbKHrtmxShqfthpe
+-----BEGIN SIGNATURE-----
+1dezq4MkERrT5vRKyMTLsugNz74JVy4U6
+HwZeP2VhGu5VVFpfKLvSY2Zja/DPeax/2Lk0q3OnxujfKhWL/ex2fdyRosdBupTaQ7FxKl/NQP8+f55dt4PWUow=
+-----END BITCOIN SIGNED MESSAGE-----"""
     # Test all of the functions
     print(validate_enrollment(sig1))
     print(validate_review(sig2))
@@ -214,3 +232,5 @@ IMcU7MvLl7T+hY0mmMw6mblLstnXd9Ly36z7uYMqv7ZZEuZQOvuXN2GjYU0Nq4So9GKQRkQwIis7EiN6
     print(validate_enrollment(validate_review(validate_audit(sig3)[2])[2])['valid'])
     print(validate_enrollment(validate_review(sig2)[2])['valid'])
     print(validate_enrollment(sig1)['valid'])
+
+    print('Description' in parse_document(sig4))
