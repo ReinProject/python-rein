@@ -10,7 +10,7 @@ class Config():
         self.db_filename = 'local.db'
         self.backup_filename = 'backup-rein.json'
         self.enroll_filename = 'enrollment.txt'
-        self.sig_enroll_filename = 'enrollment.txt.sig'
+        self.sig_enroll_filename = 'enrollment.txt'
         self.config_dir = os.path.join(os.path.expanduser('~'), '.rein')
         self.user = None
         self.multi = False
