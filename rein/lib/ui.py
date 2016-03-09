@@ -147,7 +147,8 @@ def import_account(rein):
         click.echo("Invalid Bitcoin address(es) in backup file.")
         sys.exit()
     if 'testnet' not in data:
-        data['testnet'] = 0
+        click.echo("Warning: testnet not set in backup. Setting to "+ str(rein.testnet))
+        data['testnet'] = rein.testnet
     new_identity = User(data['name'],
                         data['contact'],
                         data['maddr'],
