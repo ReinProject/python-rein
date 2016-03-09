@@ -118,7 +118,8 @@ def create_account(rein):
             'daddr': daddr,
             'dkey': dkey,
             'will_mediate': will_mediate,
-            'mediator_fee': mediator_fee}
+            'mediator_fee': mediator_fee,
+            'testnet': rein.testnet}
     if not os.path.isfile(rein.backup_filename):
         f = open(rein.backup_filename, 'w')
         try:
@@ -145,13 +146,16 @@ def import_account(rein):
     if not check_bitcoin_address(data['maddr']) or not check_bitcoin_address(data['daddr']):
         click.echo("Invalid Bitcoin address(es) in backup file.")
         sys.exit()
+    if 'testnet' not in data:
+        data['testnet'] = 0
     new_identity = User(data['name'],
                         data['contact'],
                         data['maddr'],
                         data['daddr'],
                         data['dkey'],
                         data['will_mediate'],
-                        data['mediator_fee'])
+                        data['mediator_fee'],
+                        data['testnet'])
     rein.session.add(new_identity)
     rein.session.commit()
     rein.user = new_identity
