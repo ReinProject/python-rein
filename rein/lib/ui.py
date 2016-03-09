@@ -179,6 +179,8 @@ def enroll(rein):
         filename = click.prompt(hilight("File containing signed statement", True, True), type=str, default=rein.sig_enroll_filename)
         if os.path.isfile(filename):
             done = True
+        else:
+            click.echo("File not found. Please check the file name and location and try again.")
     f = open(filename, 'r')
     signed = f.read()
     res = validate_enrollment(signed)

@@ -247,6 +247,7 @@ def sign_and_store_document(rein, doc_type, document, signature_address=None, si
             d = Document(rein, doc_type, signed, sig_verified=True, testnet=rein.testnet)
             rein.session.add(d)
             rein.session.commit()
+        return d
     return validated
 
 def assemble_order(rein, document):
