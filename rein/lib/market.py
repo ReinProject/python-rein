@@ -104,15 +104,19 @@ def delivery_prompt(rein, choices, detail='Description'):
 
 def accept_prompt(rein, choices, detail='Description'):
     i = 0
+    click.echo("Offers and Deliveries")
+    click.echo("---------------------")
     for c in choices:
         if 'Primary escrow redeem script' not in c:
             continue
         if detail in c:
-            click.echo('%s - %s - %s - %s' % (str(i), c['Job name'], c['Job ID'], shorten(c[detail])))
+            click.echo('%s: %s - %s - %s - %s' % (c['state'].title(), str(i),
+                        c['Job name'], c['Job ID'], shorten(c[detail])))
         else:
-            click.echo('%s - %s - %s - %s' % (str(i), c['Job name'], c['Job ID'], shorten(c['Description'])))
+            click.echo('%s: %s - %s - %s - %s' % (c['state'].title(), str(i),
+                        c['Job name'], c['Job ID'], shorten(c['Description'])))
         i += 1
-    choice = get_choice(choices, 'delivery')
+    choice = get_choice(choices, 'delivery or offer')
     if choice == 'q':
         return None
     chosen = choices[choice]

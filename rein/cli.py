@@ -498,6 +498,8 @@ def accept(multi, identity, defaults, dry_run):
     our_orders = []
     for res in valid_results:
         if res['Job creator public key'] == key:
+            order = Order.get_by_job_id(rein, res['Job ID'])
+            res['state'] = order.get_state(rein, Document)
             our_orders.append(res)
 
     if len(our_orders) == 0:
