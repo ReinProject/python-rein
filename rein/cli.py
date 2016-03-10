@@ -272,6 +272,7 @@ def bid(multi, identity, defaults, dry_run):
     fields = [
                 {'label': 'Job name',                       'value_from': job},
                 {'label': 'Worker',                         'value': user.name},
+                {'label': 'Worker contacat',                'value': user.contact},
                 {'label': 'Description',                    'not_null': form},
                 {'label': 'Bid amount (BTC)',               'not_null': form},
                 {'label': 'Primary escrow address',         'value': primary_addr},
