@@ -17,7 +17,6 @@ class PersistConfig(Base):
         self.value = value
         session.add(self)
         session.commit()
-        return self
 
     def set(self, rein, key, value=''):
         self.key = value
@@ -30,7 +29,6 @@ class PersistConfig(Base):
             res.value = value
         else:
             p = PersistConfig(rein.session, 'testnet', value)
-            click.echo(p)
             rein.session.add(p)
         rein.session.commit()
 
