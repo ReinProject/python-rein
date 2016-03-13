@@ -14,7 +14,7 @@ In this tutorial, we will show you how to use Rein to earn Bitcoin online. We wi
 
 Before following this tutorial, you'll need a few things.
 
-You should have Python 2.7 with pip installed on your computer and be reasonably certain that the computer is free of malware.
+You should have Python 2.7 with pip and virtualenv installed on your computer and be reasonably certain that the computer is free of malware.
 
 You should also have Bitcoin Core installed. It's not required that it be sync'd to the blockchain for this HOWTO. We'll be using it to generate addresses but to be able to detect payments and spend your earnings, you will want to sync it up later.
 
@@ -26,7 +26,7 @@ Once you have all of the prerequisites out of the way, let's move on to installi
 
 ##Step 1 -- Install python-rein and helper apps
 
-The first step in using Rein to earn Bitcoin is to install the python-rein software on your computer. Currently, the best way to install python-rein is simply to clone it from the Github repository. In the future, it will likely be available through your package manager.
+The first step in using Rein to earn Bitcoin is to install the python-rein software on your computer. Currently, the best way to install python-rein is to create a virtual environment with virtualenv and clone it from the Github repository. In the future, it will likely be available through your package manager.
 
 ###Clone the repo    
 
