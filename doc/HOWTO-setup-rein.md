@@ -153,7 +153,7 @@ Rein uses microhosting servers to share data between its users. Let's connect py
     
 You should now have a message saying you have 1 bucket at the above server. Repeat with a second server.
 
-    $ rein request rein1-ams.reinproject.org:2016
+    $ rein request rein2-ams.reinproject.org:2016
 
 Again, a message should confirm that you have 1 bucket at the above server.
 
