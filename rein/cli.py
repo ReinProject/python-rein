@@ -197,6 +197,15 @@ def post(multi, identity, defaults, dry_run):
                 {'label': 'Job creator master address',     'value': user.maddr},
              ]
     document_text = assemble_document('Job', fields)
+    if not rein.testnet:
+        m = re.search('test', document_text, re.IGNORECASE)
+        if m:
+            click.echo('Your post includes the word "test". If this post is a test, '
+                       'please put rein into testnet mode with "rein testnet true" '
+                       'and setup a test identity before posting.')
+            if not click.confirm(hilight('Would you like to continue to post this on mainnet?', True, True), default=False):
+                return
+
     document = sign_and_store_document(rein, 'job_posting', document_text, user.daddr, user.dkey, store)
     if document and store:
         click.echo("Posting created. Run 'rein sync' to push to available servers.")
