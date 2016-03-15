@@ -70,10 +70,10 @@ def job_prompt(rein, jobs):
         click.echo('%s - %s - %s - %s' % (str(i), j["Job creator"],
                                           j['Job name'], shorten(j['Description'])))
         i += 1
-    choice = get_choice(jobs, 'job')
+    choice = get_choice(valid_jobs, 'job')
     if choice == 'q':
         return False
-    job = jobs[choice]
+    job = valid_jobs[choice]
     click.echo('You have chosen a Job posted by %s.\n\nFull description: %s\n\nPlease pay attention '
                'to each requirement and provide a time frame to complete the job. (Ctrl-c to abort)\n' % 
                (job['Job creator'], job['Description']))
