@@ -957,7 +957,7 @@ def status(multi, identity, jobid):
         remote_documents = []
         for url in urls:    
             log.info("Querying %s for job id %s..." % (url, jobid))
-            sel_url = "{0}query?owner={1}&query=by_job_id&job_ids=[{2}]&testnet={3}"
+            sel_url = "{0}query?owner={1}&query=by_job_id&job_ids={2}&testnet={3}"
             try:
                 answer = requests.get(url=sel_url.format(url, user.maddr, jobid, rein.testnet))
             except:
