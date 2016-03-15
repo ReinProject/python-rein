@@ -296,14 +296,18 @@ def assemble_order(rein, document):
     # with that job id. if it can figure out the doc type, it sets the order id on it. this allows
     # Order.get_documents() to provide all documents or to provide just the post or the bid.
 
-def unique(the_array, key):
+def unique(the_array, key=None):
     """
     Filter an array of dicts by key
     """
     unique = []
     values = []
     for element in the_array:
-        if key in element and element[key] not in values:
-            values.append(element[key])
-            unique.append(element)
+        if key:
+            if key in element and element[key] not in values:
+                values.append(element[key])
+                unique.append(element)
+        else:
+            if element not in unique:
+                unique.append(element)
     return unique

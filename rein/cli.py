@@ -954,11 +954,29 @@ def status(multi, identity, jobid):
             past_tense = order.get_past_tense(order.get_state(rein, Document))
             click.echo("%s   %s   %s" % (order.id, order.job_id, past_tense))
     else:
-        order = Order.get_by_job_id(rein, jobid)
-        documents = order.get_documents(rein, Document)
-        for document in documents:
-            click.echo("\n" + document.contents)
-
+        remote_documents = []
+        for url in urls:    
+            log.info("Querying %s for job id %s..." % (url, jobid))
+            sel_url = "{0}query?owner={1}&query=by_job_id&job_ids=[{2}]&testnet={3}"
+            try:
+                answer = requests.get(url=sel_url.format(url, user.maddr, jobid, rein.testnet))
+            except:
+                click.echo('Error connecting to server.')
+                log.error('server connect error ' + url)
+                continue
+            data = answer.json()
+            remote_documents += filter_and_parse_valid_sigs(rein, data['by_job_id'])
+        unique_documents = unique(remote_documents)
+        for doc in remote_documents:
+            click.echo(doc)
+        if len(remote_documents) == 0:
+            order = Order.get_by_job_id(rein, jobid)
+            if order:
+                documents = order.get_documents(rein, Document)
+                for document in documents:
+                    click.echo("\n" + document.contents)
+            else:
+                click.echo("Job id not found")
 
 @cli.command()
 @click.argument('testnet', required=True)
