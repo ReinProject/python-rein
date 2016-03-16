@@ -6,10 +6,7 @@ import string
 import requests
 import hashlib
 import click
-from pprint import pprint
 from datetime import datetime
-from subprocess import check_output
-
 from sqlalchemy import and_
 
 # Import models
