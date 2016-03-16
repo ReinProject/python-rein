@@ -1,6 +1,6 @@
 from document import Document, get_documents_by_job_id, get_document_type, calc_hash
 from validate import validate_enrollment, parse_document
-from bucket import get_urls
+from bucket import Bucket 
 from bitcoinecdsa import sign, verify, pubkey, pubkey_to_address
 from order import Order
 import os
@@ -263,7 +263,7 @@ def assemble_order(rein, document):
     if 'Job ID' not in parsed:
         return 0
     job_id = parsed['Job ID']
-    urls = get_urls(rein)
+    urls = Bucket.get_urls(rein)
     documents = []
     if job_id:
         for url in urls:

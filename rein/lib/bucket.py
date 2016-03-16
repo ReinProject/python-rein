@@ -30,17 +30,18 @@ class Bucket(Base):
         if bytes_free: self.bytes_free
         if expires: self.expires
 
+    @staticmethod
+    def get_bucket_count(rein, url=None):
+        if url:
+            return rein.session.query(Bucket).filter(and_(Bucket.url == url, Bucket.identity == rein.user.id)).count()
+        else:
+            return rein.session.query(Bucket).filter(Bucket.identity == rein.user.id).count()
 
-def get_bucket_count(rein, url=None):
-    if url:
-        return rein.session.query(Bucket).filter(and_(Bucket.url == url, Bucket.identity == rein.user.id)).count()
-    else:
-        return rein.session.query(Bucket).filter(Bucket.identity == rein.user.id).count()
-
-def get_urls(rein):
-    buckets = rein.session.query(Bucket).filter(Bucket.identity == rein.user.id).all()
-    urls = []
-    for b in buckets:
-        if b.url not in urls:
-            urls.append(b.url)
-    return urls
+    @staticmethod
+    def get_urls(rein):
+        buckets = rein.session.query(Bucket).filter(Bucket.identity == rein.user.id).all()
+        urls = []
+        for b in buckets:
+            if b.url not in urls:
+                urls.append(b.url)
+        return urls

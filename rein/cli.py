@@ -14,14 +14,12 @@ from sqlalchemy import and_
 
 from lib.ui import create_account, import_account, enroll, identity_prompt, hilight
 from lib.user import User
-from lib.bucket import Bucket, get_bucket_count, get_urls
+from lib.bucket import Bucket
 from lib.document import Document, get_user_documents, get_job_id
 from lib.placement import Placement, create_placements, get_remote_document_hash, get_placements
 from lib.validate import filter_and_parse_valid_sigs, parse_document 
 from lib.bitcoinecdsa import sign, pubkey
-from lib.market import mediator_prompt, accept_prompt, job_prompt, bid_prompt, delivery_prompt,\
-        dispute_prompt, resolve_prompt, assemble_document, sign_and_store_document, unique,\
-        assemble_order
+from lib.market import * 
 from lib.order import Order
 from lib.script import build_2_of_3, build_mandatory_multisig, check_redeem_scripts
 from lib.persistconfig import PersistConfig
@@ -782,7 +780,7 @@ def request(multi, identity, url):
     if not url.startswith('http://') and not url.startswith('https://'):
         url = 'http://' + url
 
-    if get_bucket_count(rein, url) > 4:
+    if Bucket.get_bucket_count(rein, url) > 4:
         click.echo("You already have enough (3) buckets from %s" % url)
         log.warning('too many buckets')
         return
@@ -1006,7 +1004,7 @@ def init(multi, identity):
         return sys.exit(1)
     user = get_user(rein, identity)
     key = pubkey(user.dkey)
-    urls = get_urls(rein)
+    urls = Bucket.get_urls(rein)
     return (log, user, key, urls)
 
 
