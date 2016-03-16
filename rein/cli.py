@@ -15,7 +15,7 @@ from sqlalchemy import and_
 from lib.ui import create_account, import_account, enroll, identity_prompt, hilight
 from lib.user import User
 from lib.bucket import Bucket
-from lib.document import Document, get_user_documents, get_job_id
+from lib.document import Document
 from lib.placement import Placement, create_placements, get_remote_document_hash, get_placements
 from lib.validate import filter_and_parse_valid_sigs, parse_document 
 from lib.bitcoinecdsa import sign, pubkey
@@ -410,7 +410,7 @@ def deliver(multi, identity, defaults, dry_run):
             return click.echo("Input file type: " + form['Title'])
     store = False if dry_run else True
 
-    Order.update_orders(rein, Document, get_user_documents)
+    Order.update_orders(rein, Document, Document.get_user_documents)
 
     documents = []
     orders = Order.get_user_orders(rein, Document)
@@ -488,7 +488,7 @@ def accept(multi, identity, defaults, dry_run):
             return click.echo("Input file type: " + form['Title'])
     store = False if dry_run else True
 
-    Order.update_orders(rein, Document, get_user_documents)
+    Order.update_orders(rein, Document, Document.get_user_documents)
 
     documents = []
     orders = Order.get_user_orders(rein, Document)
@@ -564,7 +564,7 @@ def creatordispute(multi, identity, defaults, dry_run):
             return click.echo("Input file type: " + form['Title'])
     store = False if dry_run else True
 
-    Order.update_orders(rein, Document, get_user_documents)
+    Order.update_orders(rein, Document, Document.get_user_documents)
 
     documents = []
     orders = Order.get_user_orders(rein, Document)
@@ -629,7 +629,7 @@ def workerdispute(multi, identity, defaults, dry_run):
 
     valid_results = []
 
-    Order.update_orders(rein, Document, get_user_documents)
+    Order.update_orders(rein, Document, Document.get_user_documents)
 
     documents = []
     orders = Order.get_user_orders(rein, Document)
@@ -843,7 +843,7 @@ def sync(multi, identity):
         nonce[url] = get_new_nonce(rein, url)
         if nonce[url] is None:
             continue
-        check = get_user_documents(rein) 
+        check = Document.get_user_documents(rein) 
         if len(check) == 0:
             click.echo("Nothing to do.")
 
@@ -928,8 +928,8 @@ def status(multi, identity, jobid):
     """
     (log, user, key, urls) = init(multi, identity)
 
-    Order.update_orders(rein, Document, get_user_documents)
-    documents = get_user_documents(rein)
+    Order.update_orders(rein, Document, Document.get_user_documents)
+    documents = Document.get_user_documents(rein)
 
     if jobid is None:
         click.echo("User: %s" % user.name)

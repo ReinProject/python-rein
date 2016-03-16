@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, String, Boolean, and_
 from sqlalchemy.ext.declarative import declarative_base
 try:
-    from document import Document, get_user_documents
+    from document import Document
 except:
     pass
 
@@ -116,12 +116,11 @@ class Order(Base):
 
     @classmethod
     def update_orders(self, rein, Document, get_user_documents):
-        from document import get_job_id
         from market import assemble_order
         documents = get_user_documents(rein)
         processed_job_ids = []
         for document in documents:
-            job_id = get_job_id(document.contents)
+            job_id = Document.get_job_id(document.contents)
             if job_id not in processed_job_ids:
                 if document.source_url == 'local' and document.doc_type != 'enrollment':
                     assemble_order(rein, document)

@@ -1,4 +1,4 @@
-from document import Document, get_documents_by_job_id, get_document_type, calc_hash
+from document import Document
 from validate import validate_enrollment, parse_document
 from bucket import Bucket 
 from bitcoinecdsa import sign, verify, pubkey, pubkey_to_address
@@ -267,7 +267,7 @@ def assemble_order(rein, document):
     documents = []
     if job_id:
         for url in urls:
-            res = get_documents_by_job_id(rein, url, job_id)
+            res = Document.get_documents_by_job_id(rein, url, job_id)
             if res:
                 documents += res
         order_id = Order.get_order_id(rein, job_id)
@@ -277,11 +277,11 @@ def assemble_order(rein, document):
             rein.session.commit()
 
     for document in documents:
-        doc_type = get_document_type(document)
+        doc_type = Document.get_document_type(document)
         if not doc_type:
             rein.log.info('doc_type not detected')
             continue
-        doc_hash = calc_hash(document)
+        doc_hash = Document.calc_hash(document)
         d = rein.session.query(Document).filter(Document.doc_hash == doc_hash).first()
         if d:
             d.set_order_id(order_id)

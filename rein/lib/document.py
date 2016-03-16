@@ -42,53 +42,53 @@ class Document(Base):
     def set_order_id(self, id):
         self.order_id = id
 
+    @staticmethod
+    def get_user_documents(rein):
+        return rein.session.query(Document).filter(and_(Document.identity == rein.user.id,
+                                                        Document.source_url == 'local',
+                                                        Document.testnet == rein.testnet)).all()
 
-def get_user_documents(rein):
-    return rein.session.query(Document).filter(and_(Document.identity == rein.user.id,
-                                                    Document.source_url == 'local',
-                                                    Document.testnet == rein.testnet)).all()
+    @staticmethod
+    def get_documents_by_job_id(rein, url, job_id):
+        # click.echo("Querying %s for job_id %s ..." % (url, job_id))
+        sel_url = "{0}query?owner={1}&query=by_job_id&job_ids={2}&testnet={3}"
+        try:
+            answer = requests.get(url=sel_url.format(url, rein.user.maddr, job_id, rein.testnet))
+        except requests.exceptions.ConnectionError:
+            rein.log.warning('Could not reach %s.' % url)
+            return None
+        data = answer.json()
+        if len(data['by_job_id']) == 0:
+            rein.log.warning('None found.')
+        return filter_valid_sigs(rein, data['by_job_id'])
 
+    @staticmethod
+    def get_job_id(text):
+        m = re.search('Job ID: (.+)\n', text)
+        if m:
+            return m.group(1)
+        else:
+            return None
 
-def get_documents_by_job_id(rein, url, job_id):
-    # click.echo("Querying %s for job_id %s ..." % (url, job_id))
-    sel_url = "{0}query?owner={1}&query=by_job_id&job_ids={2}&testnet={3}"
-    try:
-        answer = requests.get(url=sel_url.format(url, rein.user.maddr, job_id, rein.testnet))
-    except requests.exceptions.ConnectionError:
-        rein.log.warning('Could not reach %s.' % url)
+    @staticmethod
+    def get_document_type(document):
+        parsed = parse_document(document)
+        titles = {'Rein User Enrollment':    'enrollment',
+                  'Rein Job':                'job_posting',
+                  'Rein Bid':                'bid',
+                  'Rein Offer':              'offer',
+                  'Rein Delivery':           'delivery',
+                  'Rein Accept Delivery':    'accept',
+                  'Rein Dispute Delivery':   'creatordispute',
+                  'Rein Dispute Offer':      'workerdispute',
+                  'Rein Dispute Resolution': 'resolution',
+                 }
+        if 'Title' in parsed:
+            return titles[parsed['Title']]
         return None
-    data = answer.json()
-    if len(data['by_job_id']) == 0:
-        rein.log.warning('None found.')
-    return filter_valid_sigs(rein, data['by_job_id'])
 
-
-def get_job_id(text):
-    m = re.search('Job ID: (.+)\n', text)
-    if m:
-        return m.group(1)
-    else:
-        return None
-
-
-def get_document_type(document):
-    parsed = parse_document(document)
-    titles = {'Rein User Enrollment':    'enrollment',
-              'Rein Job':                'job_posting',
-              'Rein Bid':                'bid',
-              'Rein Offer':              'offer',
-              'Rein Delivery':           'delivery',
-              'Rein Accept Delivery':    'accept',
-              'Rein Dispute Delivery':   'creatordispute',
-              'Rein Dispute Offer':      'workerdispute',
-              'Rein Dispute Resolution': 'resolution',
-             }
-    if 'Title' in parsed:
-        return titles[parsed['Title']]
-    return None
-
-
-def calc_hash(text):
-    text = text.decode('ascii')
-    text = text.encode('utf8')
-    return hashlib.sha256(text).hexdigest()
+    @staticmethod
+    def calc_hash(text):
+        text = text.decode('ascii')
+        text = text.encode('utf8')
+        return hashlib.sha256(text).hexdigest()
