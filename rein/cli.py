@@ -1022,14 +1022,16 @@ def is_number(s):
 
 def get_user(rein, identity):
     if rein.multi and identity:
-        rein.user = rein.session.query(User).filter(User.name == identity,
-                                                    User.enrolled == True,
-                                                    User.testnet == rein.testnet).first()
+        rein.user = rein.session.query(User).filter(
+                            and_(User.name == identity,
+                                 User.enrolled == True,
+                                 User.testnet == rein.testnet)).first()
     elif rein.multi:
         rein.user = identity_prompt(rein)
     else:
-        rein.user = rein.session.query(User).filter(User.enrolled == True,
-                                                    User.testnet == rein.testnet).first()
+        rein.user = rein.session.query(User).filter(
+                            and_(User.enrolled == True,
+                                 User.testnet == rein.testnet)).first()
     return rein.user
 
 
