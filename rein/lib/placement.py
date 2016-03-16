@@ -29,24 +29,25 @@ class Placement(Base):
     def clear_verified(self):
         self.verified = 0
 
-def get_placements(rein, url, doc_id):
-    return rein.session.query(Placement).filter(and_(Placement.url == url,
-                                                     Placement.doc_id == doc_id,
-                                                     Placement.testnet == rein.testnet)).all()
+    @staticmethod
+    def get_placements(rein, url, doc_id):
+        return rein.session.query(Placement).filter(and_(Placement.url == url,
+                                                         Placement.doc_id == doc_id,
+                                                         Placement.testnet == rein.testnet)).all()
 
+    @staticmethod
+    def get_remote_document_hash(rein, plc):
+        sel_url = "{0}get?key={1}"
+        answer = requests.get(url=sel_url.format(plc.url, plc.remote_key))
+        if answer.status_code == 404:
+            rein.log.error("%s not found at %s" % (str(plc.doc_id), plc.url))
+            return False
+        else:
+            text = answer.json()['value']
+            text = text.decode('ascii')
+            text = text.encode('utf8')
+            return hashlib.sha256(text).hexdigest()
 
-def get_remote_document_hash(rein, plc):
-    sel_url = "{0}get?key={1}"
-    answer = requests.get(url=sel_url.format(plc.url, plc.remote_key))
-    if answer.status_code == 404:
-        rein.log.error("%s not found at %s" % (str(plc.doc_id), plc.url))
-        return False
-    else:
-        text = answer.json()['value']
-        text = text.decode('ascii')
-        text = text.encode('utf8')
-        return hashlib.sha256(text).hexdigest()
-    
-
-def create_placements(engine):
-    Base.metadata.create_all(engine)
+    @staticmethod
+    def create_placements(engine):
+        Base.metadata.create_all(engine)

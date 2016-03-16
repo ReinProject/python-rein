@@ -12,18 +12,25 @@ from subprocess import check_output
 
 from sqlalchemy import and_
 
-from lib.ui import create_account, import_account, enroll, identity_prompt, hilight
+# Import models
+from lib.persistconfig import PersistConfig
 from lib.user import User
 from lib.bucket import Bucket
 from lib.document import Document
-from lib.placement import Placement, create_placements, get_remote_document_hash, get_placements
+from lib.placement import Placement
+from lib.order import Order
+
+# Import helper functions
+from lib.ui import *
 from lib.validate import filter_and_parse_valid_sigs, parse_document 
 from lib.bitcoinecdsa import sign, pubkey
 from lib.market import * 
-from lib.order import Order
 from lib.script import build_2_of_3, build_mandatory_multisig, check_redeem_scripts
-from lib.persistconfig import PersistConfig
+
+# Import config
 import lib.config as config
+
+# Create tables
 import lib.models
 
 rein = config.Config()
@@ -835,7 +842,7 @@ def sync(multi, identity):
         click.echo("No buckets registered. Run 'rein request' to continue.")
         return
 
-    create_placements(rein.engine)
+    Placement.create_placements(rein.engine)
 
     upload = []
     nonce = {}
@@ -852,19 +859,19 @@ def sync(multi, identity):
                 click.echo('Document is too big. 8192 bytes should be enough for anyone.')
                 log.error("Document oversized %s" % doc.doc_hash)
             else:
-                placements = get_placements(rein, url, doc.id)
+                placements = Placement.get_placements(rein, url, doc.id)
                            
                 if len(placements) == 0:
                     upload.append([doc, url])
                 else:
                     for plc in placements:
-                        if get_remote_document_hash(rein, plc) != doc.doc_hash:
+                        if Placement.get_remote_document_hash(rein, plc) != doc.doc_hash:
                             upload.append([doc, url])
     
     failed = []
     succeeded = 0
     for doc, url in upload:
-        placements = get_placements(rein, url, doc.id)
+        placements = Placement.get_placements(rein, url, doc.id)
         if len(placements) == 0:
             remote_key = ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits)
                                  for _ in range(32))
