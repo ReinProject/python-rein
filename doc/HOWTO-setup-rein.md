@@ -16,7 +16,7 @@ Before following this tutorial, you'll need a few things.
 
 You should have Python 2.7 with pip installed on your computer and be reasonably certain that the computer is free of malware.
 
-You should also have Bitcoin Core installed. It's not required that it be sync'd to the blockchain for this HOWTO. We'll be using it to generate addresses but to be able to detect payments and spend your earnings, you will want to sync it up later.
+You should also have Bitcoin Core (or similar) installed. It's not required that it be sync'd to the blockchain for this HOWTO. We'll be using it to generate addresses but to be able to detect payments and spend your earnings, you will want to sync it up later.
 
 You should have a way to boot into a GNU+Linux Live CD environment. Perhaps by using unetbootin and the latest Ubuntu ISO with a thumb drive.
 
@@ -67,11 +67,11 @@ You should now have the bitcoin-signature-tool and Coinbin for Rein to help make
 
 Rein provides the ability to have as many identities as you would like, though for anything where trust and reputation are important, you will probably want to transact through your main identity. These identities are defined by a Bitcoin ECDSA keypair (i.e. an address) which we call the identity's master address. 
 
-In this setup, we'll show you how to use **Bitcoin Core** to generate Bitcoin addresses and save their private keys for convenient use later.
+In this setup, we'll show you how to use **Bitcoin Core (or similar)** to generate Bitcoin addresses and save their private keys for convenient use later.
 
 ###Create an encrypted Bitcoin Wallet
 
-Bitcoin Core provides a very simple way to create Bitcoin addresses. When the program `bitcoin-qt` is opened for the first time, it generates a wallet automatically. This wallet can then be encrypted to protect against theft and copies of the wallet can be backed up to removable media.
+Bitcoin Core (or similar) provides a very simple way to create Bitcoin addresses. When the program `bitcoin-qt` is opened for the first time, it generates a wallet automatically. This wallet can then be encrypted to protect against theft and copies of the wallet can be backed up to removable media.
 
 Before we obtain any addresses, let's encrypt the wallet.
 
