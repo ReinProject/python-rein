@@ -1059,3 +1059,7 @@ def select_by_form(candidates, field, form):
        return None
    else:
        click.echo(field + " is required but not in your defaults file")
+
+
+if __name__ == '__main__':
+    cli()
