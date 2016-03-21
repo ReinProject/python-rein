@@ -50,7 +50,11 @@ With rein installed, we can easily check if it is setup correctly by running it.
 
     $ rein
     
-This should display a page of help text showing lots of commands. You can use --help with any of the commands to get more information.
+This should display a page of help text showing lots of commands.
+
+You can use --help with any of the commands to get more information; for example:
+
+    $ rein setup --help
 
 ###Download the helper apps
 
