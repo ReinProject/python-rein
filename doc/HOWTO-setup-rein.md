@@ -113,7 +113,7 @@ Open the Debug Window to the Console tab.
 
 There you will type the following command:
 
-    dumpprivkey &lt;your address&gt;
+    dumpprivkey <your address>
 
 <img src="http://reinproject.org/img/dumpprivkey1.png">
 
