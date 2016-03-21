@@ -94,7 +94,7 @@ def create_account(rein):
                'microhosting servers.\n\n'
                'If this computer or its local database are lost or stolen, you\n'
                'will use the private key for your master address to revoke and\n'
-               'and replace the delegate address.\n')
+               'replace the delegate address.\n')
     daddr = btc_addr_prompt('Delegate')
     click.echo('\nIn order for python-rein to authenticate on your behalf, it\n'
                'will store the delegate\'s private key in the local database.\n')
