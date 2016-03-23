@@ -113,7 +113,7 @@ For the final prompts in rein setup, we will need the private keys for the two a
 
 Open the Debug Window to the Console tab.
 
-<img src="http://reinproject.org//img/debug.png">
+<img src="http://reinproject.org/img/debug.png">
 
 There you will type the following command:
 
