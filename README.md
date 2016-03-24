@@ -76,7 +76,7 @@ For the primary payment, a simple 2-of-3 escrow address is created. To spend the
 
 Having only been signed by one party, this payment should be reviewed before the second party adds their signature and broadcasts the transaction.
 
-For example in a normal, non-disputed transaction the worker should check that their address is the one being paid that the Bitcoin network fee is reasonable. If an error is found, the signing party can be contacted to build a new transaction with the correct information.
+For example in a normal, non-disputed transaction the worker should check that their address is the one being paid and that the Bitcoin network fee is reasonable. If an error is found, the signing party can be contacted to build a new transaction with the correct information.
 
 ### Mediator payment
 
