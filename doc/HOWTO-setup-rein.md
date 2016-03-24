@@ -113,7 +113,7 @@ For the final prompts in rein setup, we will need the private keys for the two a
 
 Open the Debug Window to the Console tab.
 
-<img src="http://reinproject.org//img/debug.png">
+<img src="http://reinproject.org/img/debug.png">
 
 There you will type the following command:
 
@@ -133,15 +133,19 @@ If you choose to be a mediator, you will be prompted for your mediation fee in p
 
 You should now have a section of text on the screen that starts with "Rein User Enrollment". To finish creating your user account, we'll sign this text using the Bitcoin Signature Tool.
 
+For simplicity the same content is saved in a file called enrollment.txt in your ~/python-rein/ directory.
+
 Open your browser and open the file at ~/Rein/bitcoin-signature-tool/index.html. Click over to the Sign tab and repeat the above procedure to get the private key for your Master Bitcoin address.
 
 <img src="http://reinproject.org/img/master-signing.png">
 
-The private key will go in the Private Key box shaded in red. Copy the "Rein User Enrollment" text into the Message box shaded in yellow. 
+The private key will go in the Private Key box shaded in red.
+
+Open enrollment.txt with your favorite plain-text editor, cut the content and paste it into the Message box shaded in yellow.
 
 Click "Sign Message" to generate the signature. A block of text that includes the message and signature will be generated in the green area. Click it to highlight it and copy that text.
 
-Save this text to a plain-text file called enrollment.txt.sig in your ~/python-rein/ directory.
+Paste this text into your editor and save the file.
 
 Once this is done, you will complete the account setup by pressing enter back in the terminal window where `rein setup` is running.
 
