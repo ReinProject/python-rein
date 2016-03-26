@@ -115,10 +115,10 @@ def setup(multi):
         else:
             click.echo("Signature verification failed. Please try again.")
             log.error('enrollment failed')
-    elif rein.session.query(Document).filter(Document.doc_type == 'enrollment').count() < \
-            rein.session.query(User).filter(User.enrolled == True).count():
+    elif rein.session.query(Document).filter(Document.doc_type == 'enrollment', Document.testnet == rein.testnet).count() < \
+            rein.session.query(User).filter(User.enrolled == 0, User.testnet == rein.testnet).count():
         click.echo('Continuing previously unfinished setup.\n')
-        get_user(rein, False)
+        get_user(rein, False, False)
         res = enroll(rein)
         if res['valid']:
             click.echo("Enrollment complete. Run 'rein request' to request free microhosting to sync to.")
@@ -1006,7 +1006,7 @@ def init(multi, identity):
     if rein.has_no_account():
         click.echo("Please run setup.")
         return sys.exit(1)
-    user = get_user(rein, identity)
+    user = get_user(rein, identity, True)
     key = pubkey(user.dkey)
     urls = Bucket.get_urls(rein)
     return (log, user, key, urls)
@@ -1020,17 +1020,17 @@ def is_number(s):
         return False
 
 
-def get_user(rein, identity):
+def get_user(rein, identity, enrolled):
     if rein.multi and identity:
         rein.user = rein.session.query(User).filter(
                             and_(User.name == identity,
-                                 User.enrolled == True,
+                                 User.enrolled == enrolled,
                                  User.testnet == rein.testnet)).first()
     elif rein.multi:
         rein.user = identity_prompt(rein)
     else:
         rein.user = rein.session.query(User).filter(
-                            and_(User.enrolled == True,
+                            and_(User.enrolled == enrolled,
                                  User.testnet == rein.testnet)).first()
     return rein.user
 
