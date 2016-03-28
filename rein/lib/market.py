@@ -298,7 +298,7 @@ def assemble_order(rein, document):
 
 def unique(the_array, key=None):
     """
-    Filter an array of dicts by key
+    Filter an array of dicts by key. Only lets through dicts that include key.
     """
     unique = []
     values = []

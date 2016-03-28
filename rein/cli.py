@@ -584,14 +584,19 @@ def creatordispute(multi, identity, defaults, dry_run):
 
     valid_results = filter_and_parse_valid_sigs(rein, contents)
 
-    if len(valid_results) == 0:
+    not_our_orders = []
+    for res in valid_results:
+        if res['Job creator public key'] == key:
+            not_our_orders.append(res)
+
+    if len(not_our_orders) == 0:
         click.echo('None found')
         return
 
     if 'Job ID' in form.keys():
-        doc = select_by_form(valid_results, 'Job ID', form)
+        doc = select_by_form(not_our_orders, 'Job ID', form)
     else:
-        doc = dispute_prompt(rein, valid_results, "Deliverables")
+        doc = dispute_prompt(rein, not_our_orders, "Deliverables")
     if not doc:
         return
 
@@ -649,14 +654,19 @@ def workerdispute(multi, identity, defaults, dry_run):
 
     valid_results = filter_and_parse_valid_sigs(rein, contents)
     
-    if len(valid_results) == 0:
+    not_our_orders = []
+    for res in valid_results:
+        if res['Worker public key'] == key:
+            not_our_orders.append(res)
+
+    if len(not_our_orders) == 0:
         click.echo('None found')
         return
 
     if 'Job ID' in form.keys():
-        doc = select_by_form(valid_results, 'Job ID', form)
+        doc = select_by_form(not_our_orders, 'Job ID', form)
     else:
-        doc = dispute_prompt(rein, valid_results, 'Deliverables')
+        doc = dispute_prompt(rein, not_our_orders, 'Deliverables')
     if not doc:
         return
 
