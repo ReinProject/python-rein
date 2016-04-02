@@ -24,7 +24,7 @@ class Config():
 
     def setup_logging(self):
         self.log = logging.getLogger('python-rein')
-        logging.basicConfig(filename="rein.log", filemode="a")
+        logging.basicConfig(filename=os.path.join(os.path.expanduser('~'), '.rein', "rein.log"), filemode="a")
         self.log.setLevel(logging.INFO)
 
     def setup_db(self):
