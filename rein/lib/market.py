@@ -26,6 +26,7 @@ def mediator_prompt(rein, eligible_mediators):
         return False
     return mediators[choice]
 
+
 # called in offer()
 def bid_prompt(rein, bids):
     """

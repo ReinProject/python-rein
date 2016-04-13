@@ -4,6 +4,21 @@ import bitcoinecdsa
 import unittest
 import click
 
+
+def choose_best_block(blocks):
+    hashes = []
+    times = {}
+    for b in blocks:
+        hashes.append(b['hash'])
+    if len(hashes) == 0:
+        return None, None
+    the_hash = max(set(hashes), key=hashes.count)
+    for b in blocks:
+        if the_hash == b['hash']:
+            the_time = b['time']
+    return the_hash, the_time
+
+
 def strip_armor(sig, dash_space=False):
     '''Removes ASCII-armor from a signed message by default exlcudes 'dash-space' headers'''
     sig = sig.replace('- ----', '-' * 5) if dash_space else sig

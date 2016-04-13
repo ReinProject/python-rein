@@ -19,7 +19,7 @@ from lib.order import Order
 
 # Import helper functions
 from lib.ui import *
-from lib.validate import filter_and_parse_valid_sigs, parse_document 
+from lib.validate import filter_and_parse_valid_sigs, parse_document, choose_best_block
 from lib.bitcoinecdsa import sign, pubkey
 from lib.market import * 
 from lib.script import build_2_of_3, build_mandatory_multisig, check_redeem_scripts
@@ -150,6 +150,7 @@ def post(multi, identity, defaults, dry_run):
     store = False if dry_run else True
 
     eligible_mediators = []
+    blocks = []
     for url in urls:
         log.info("Querying %s for mediators..." % url)
         sel_url = "{0}query?owner={1}&query=mediators&testnet={2}"
@@ -162,7 +163,10 @@ def post(multi, identity, defaults, dry_run):
         data = answer.json()
         if len(data['mediators']) == 0:
             click.echo('None found')
+        if data['block_info']:
+            blocks.append(data['block_info'])
         eligible_mediators += filter_and_parse_valid_sigs(rein, data['mediators'])
+    (block_hash, block_time) = choose_best_block(blocks)
 
     if 'Mediator public key' in form.keys():
         mediator = select_by_form(eligible_mediators, 'Mediator public key', form)
@@ -188,6 +192,9 @@ def post(multi, identity, defaults, dry_run):
                 {'label': 'Job ID',                         'value': job_guid},
                 {'label': 'Category',                       'not_null': form},
                 {'label': 'Description',                    'not_null': form},
+                {'label': 'Clock hash',                     'value': block_hash},
+                {'label': 'Time',                           'value': str(block_time)},
+                {'label': 'Expiration (days)',              'validator': is_int},
                 {'label': 'Mediator',                       'value': mediator['User']},
                 {'label': 'Mediator contact',               'value': mediator['Contact']},
                 {'label': 'Mediator fee',                   'value': mediator['Mediator fee']},
@@ -1029,6 +1036,12 @@ def is_number(s):
     except ValueError:
         return False
 
+def is_int(s):
+    try:
+        int(s)
+        return True
+    except ValueError:
+        return False
 
 def get_user(rein, identity, enrolled):
     if rein.multi and identity:
