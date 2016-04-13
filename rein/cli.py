@@ -19,7 +19,7 @@ from lib.order import Order
 
 # Import helper functions
 from lib.ui import *
-from lib.validate import filter_and_parse_valid_sigs, parse_document, choose_best_block
+from lib.validate import filter_and_parse_valid_sigs, parse_document, choose_best_block, filter_out_expired
 from lib.bitcoinecdsa import sign, pubkey
 from lib.market import * 
 from lib.script import build_2_of_3, build_mandatory_multisig, check_redeem_scripts
@@ -245,6 +245,7 @@ def bid(multi, identity, defaults, dry_run):
     store = False if dry_run else True
 
     jobs = []
+    blocks = []
     for url in urls:    
         log.info("Querying %s for jobs..." % url)
         sel_url = "{0}query?owner={1}&query=jobs&testnet={2}"
@@ -255,8 +256,12 @@ def bid(multi, identity, defaults, dry_run):
             log.error('server connect error ' + url)
             continue
         data = answer.json()
+        if data['block_info']:
+            blocks.append(data['block_info'])
         jobs += filter_and_parse_valid_sigs(rein, data['jobs'])
+    (block_hash, block_time) = choose_best_block(blocks)
 
+    live_jobs = filter_out_expired(jobs, block_time)
     unique_jobs = unique(jobs, 'Job ID')
 
     jobs = []
