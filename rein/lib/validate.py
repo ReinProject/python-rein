@@ -6,27 +6,27 @@ import click
 import requests
 
 
-def filter_out_expired(jobs, block_time):
-    # loop through jobs
+def filter_out_expired(user, urls, jobs, block_time):
     live = []
     for j in jobs:
         if 'Expiration (days)' not in j:
             continue
-        # request block info for the clock hash and check that the time is equal. if it's
-        # not, then forget about that.
-        sel_url = url + 'bitcoin?query=getbyhash={0}'
-        try:
-            answer = requests.get(url=sel_url.format(j['Clock hash']))
-        except requests.exceptions.ConnectionError:
-            click.echo('Could not reach %s.' % url)
-            return None
-        data = answer.json()
-        if data['time'] == j['Time'] and data['time'] > datetime.datetime.now():
-            live.append(j)
+        # request block info for the clock hash
+        for url in urls:
+            sel_url = url + 'bitcoin?owner={0}&query=getbyhash&hash={1}'
+            try:
+                answer = requests.get(url=sel_url.format(user.maddr, j['Clock hash']))
+            except requests.exceptions.ConnectionError:
+                click.echo('Could not reach %s.' % url)
+                return None
+            data = answer.json()
+            click.echo(data)
+            #i check that the time is equal. if it's  not, then drop it.
+            if data['time'] == j['Time'] and data['time'] > datetime.datetime.now():
+                live.append(j)
         # So we want to check the expiration time and the server should be checking that
         # the time listed in the post matches the block hash but we need to verify anyway.
-        # for us, verification is requesting block info for each hash that we have a question
-        # about. We are querying then the same set of servers as we got these jobs from.
+        # For us, verification is requesting block info for each hash in question.
     return live
 
 
