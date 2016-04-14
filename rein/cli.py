@@ -167,6 +167,9 @@ def post(multi, identity, defaults, dry_run):
             blocks.append(data['block_info'])
         eligible_mediators += filter_and_parse_valid_sigs(rein, data['mediators'])
     (block_hash, block_time) = choose_best_block(blocks)
+    if block_hash is None:
+        click.echo("None of your servers responded with block info.")
+        return
 
     if 'Mediator public key' in form.keys():
         mediator = select_by_form(eligible_mediators, 'Mediator public key', form)
@@ -925,7 +928,8 @@ def sync(multi, identity):
             answer = requests.post(url='{0}put'.format(url), headers=headers, data=body)
             res = answer.json()
             if 'result' not in res or res['result'] != 'success':
-                log.error('upload failed doc=%s plc=%s url=%s' % (doc.id, plc.id, url))
+                log.error('upload failed doc=%s plc=%s url=%s res=%s' % (doc.id, plc.id, url, res))
+                click.echo("Upload error: %s" % (res['error']))
                 failed.append(doc)
             else:
                 plc.verified += 1
