@@ -4,29 +4,48 @@ import bitcoinecdsa
 import unittest
 import click
 import requests
+import time
+from block import Block
 
-
-def filter_out_expired(user, urls, jobs, block_time):
+def filter_out_expired(rein, user, urls, jobs):
     live = []
+    times = {}
+    click.echo('Verifying block times...')
+    with click.progressbar(jobs) as bar:
+        for j in bar:
+            if 'Clock hash' not in j:
+                continue
+            block_hash = j['Clock hash']
+            if 'Expiration (days)' not in j:
+                continue
+            if Block.get_time(rein, block_hash):
+                times[block_hash] = Block.get_time(rein, block_hash)
+            elif block_hash not in times:
+                # request block info for the clock hash
+                for url in urls:
+                    sel_url = url + 'bitcoin?owner={0}&query=getbyhash&hash={1}'
+                    try:
+                        answer = requests.get(url=sel_url.format(user.maddr, block_hash))
+                    except requests.exceptions.ConnectionError:
+                        click.echo('Could not reach %s.' % url)
+                        return None
+                    data = answer.json()
+                    if not Block.get_time(rein, block_hash):
+                        b = Block(block_hash, data['time'], data['height'])
+                        rein.session.add(b)
+                        rein.session.commit()
+
     for j in jobs:
-        if 'Expiration (days)' not in j:
+        if 'Clock hash' not in j:
             continue
-        # request block info for the clock hash
-        for url in urls:
-            sel_url = url + 'bitcoin?owner={0}&query=getbyhash&hash={1}'
-            try:
-                answer = requests.get(url=sel_url.format(user.maddr, j['Clock hash']))
-            except requests.exceptions.ConnectionError:
-                click.echo('Could not reach %s.' % url)
-                return None
-            data = answer.json()
-            click.echo(data)
-            #i check that the time is equal. if it's  not, then drop it.
-            if data['time'] == j['Time'] and data['time'] > datetime.datetime.now():
+        block_hash = j['Clock hash']
+        try:
+            expiration = int(j['Expiration (days)'])*86400
+        except:
+            expiration = 14*86400
+        if int(times[block_hash]) == int(j['Time']):
+            if times[block_hash] + expiration > int(time.time()):
                 live.append(j)
-        # So we want to check the expiration time and the server should be checking that
-        # the time listed in the post matches the block hash but we need to verify anyway.
-        # For us, verification is requesting block info for each hash in question.
     return live
 
 

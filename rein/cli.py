@@ -264,8 +264,8 @@ def bid(multi, identity, defaults, dry_run):
         jobs += filter_and_parse_valid_sigs(rein, data['jobs'])
     (block_hash, block_time) = choose_best_block(blocks)
 
-    live_jobs = filter_out_expired(user, urls, jobs, block_time)
-    unique_jobs = unique(jobs, 'Job ID')
+    live_jobs = filter_out_expired(rein, user, urls, jobs)
+    unique_jobs = unique(live_jobs, 'Job ID')
 
     jobs = []
     for job in unique_jobs:
