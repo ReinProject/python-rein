@@ -19,7 +19,7 @@ from lib.order import Order
 
 # Import helper functions
 from lib.ui import *
-from lib.validate import filter_and_parse_valid_sigs, parse_document, choose_best_block
+from lib.validate import filter_and_parse_valid_sigs, parse_document, choose_best_block, filter_out_expired
 from lib.bitcoinecdsa import sign, pubkey
 from lib.market import * 
 from lib.script import build_2_of_3, build_mandatory_multisig, check_redeem_scripts
@@ -167,6 +167,9 @@ def post(multi, identity, defaults, dry_run):
             blocks.append(data['block_info'])
         eligible_mediators += filter_and_parse_valid_sigs(rein, data['mediators'])
     (block_hash, block_time) = choose_best_block(blocks)
+    if block_hash is None:
+        click.echo("None of your servers responded with block info.")
+        return
 
     if 'Mediator public key' in form.keys():
         mediator = select_by_form(eligible_mediators, 'Mediator public key', form)
@@ -245,6 +248,7 @@ def bid(multi, identity, defaults, dry_run):
     store = False if dry_run else True
 
     jobs = []
+    blocks = []
     for url in urls:    
         log.info("Querying %s for jobs..." % url)
         sel_url = "{0}query?owner={1}&query=jobs&testnet={2}"
@@ -255,9 +259,13 @@ def bid(multi, identity, defaults, dry_run):
             log.error('server connect error ' + url)
             continue
         data = answer.json()
+        if data['block_info']:
+            blocks.append(data['block_info'])
         jobs += filter_and_parse_valid_sigs(rein, data['jobs'])
+    (block_hash, block_time) = choose_best_block(blocks)
 
-    unique_jobs = unique(jobs, 'Job ID')
+    live_jobs = filter_out_expired(rein, user, urls, jobs)
+    unique_jobs = unique(live_jobs, 'Job ID')
 
     jobs = []
     for job in unique_jobs:
@@ -920,7 +928,8 @@ def sync(multi, identity):
             answer = requests.post(url='{0}put'.format(url), headers=headers, data=body)
             res = answer.json()
             if 'result' not in res or res['result'] != 'success':
-                log.error('upload failed doc=%s plc=%s url=%s' % (doc.id, plc.id, url))
+                log.error('upload failed doc=%s plc=%s url=%s res=%s' % (doc.id, plc.id, url, res))
+                click.echo("Upload error: %s" % (res['error']))
                 failed.append(doc)
             else:
                 plc.verified += 1

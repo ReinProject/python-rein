@@ -65,7 +65,10 @@ def job_prompt(rein, jobs):
     for j in jobs:
         if j['Job creator public key'] != key and j['Mediator public key'] != key:
             valid_jobs.append(j)
-        
+    if len(valid_jobs) == 0:
+        click.echo('None found.')
+        return None
+
     i = 0
     for j in valid_jobs:
         click.echo('%s - %s - %s - %s' % (str(i), j["Job creator"],

@@ -3,6 +3,50 @@ import re
 import bitcoinecdsa
 import unittest
 import click
+import requests
+import time
+from block import Block
+
+def filter_out_expired(rein, user, urls, jobs):
+    live = []
+    times = {}
+    click.echo('Verifying block times...')
+    with click.progressbar(jobs) as bar:
+        for j in bar:
+            if 'Clock hash' not in j:
+                continue
+            block_hash = j['Clock hash']
+            if 'Expiration (days)' not in j:
+                continue
+            if Block.get_time(rein, block_hash):
+                times[block_hash] = Block.get_time(rein, block_hash)
+            elif block_hash not in times:
+                # request block info for the clock hash
+                for url in urls:
+                    sel_url = url + 'bitcoin?owner={0}&query=getbyhash&hash={1}'
+                    try:
+                        answer = requests.get(url=sel_url.format(user.maddr, block_hash))
+                    except requests.exceptions.ConnectionError:
+                        click.echo('Could not reach %s.' % url)
+                        return None
+                    data = answer.json()
+                    if not Block.get_time(rein, block_hash):
+                        b = Block(block_hash, data['time'], data['height'])
+                        rein.session.add(b)
+                        rein.session.commit()
+
+    for j in jobs:
+        if 'Clock hash' not in j:
+            continue
+        block_hash = j['Clock hash']
+        try:
+            expiration = int(j['Expiration (days)'])*86400
+        except:
+            expiration = 14*86400
+        if int(times[block_hash]) == int(j['Time']):
+            if times[block_hash] + expiration > int(time.time()):
+                live.append(j)
+    return live
 
 
 def choose_best_block(blocks):
