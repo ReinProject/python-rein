@@ -195,10 +195,13 @@ def assemble_document(title, fields):
     for field in fields:
         entry = {}
         entry['label'] = field['label']
+        prompt = field['label']
+        if 'help' in field.keys():
+            prompt = '\n' + field['help'] + '\n' + field['label']
         if 'validator' in field.keys():
             valid = False
             while not valid:
-                answer = click.prompt(field['label'])
+                answer = click.prompt(prompt)
                 valid = field['validator'](answer)
             entry['value'] = answer
         elif 'value' in field.keys():
@@ -208,7 +211,7 @@ def assemble_document(title, fields):
         elif 'not_null' in field.keys() and field['not_null']:
             entry['value'] = field['not_null'][field['label']]
         else:
-            entry['value'] = click.prompt(field['label'])
+            entry['value'] = click.prompt(prompt)
         data.append(entry)
     document = "Rein %s\n" % title
     for entry in data:

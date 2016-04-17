@@ -191,9 +191,14 @@ def post(multi, identity, defaults, dry_run):
     log.info('got user and key for post')
     job_guid = ''.join(random.SystemRandom().choice(string.ascii_lowercase + string.digits) for _ in range(20))
     fields = [
-                {'label': 'Job name',                       'not_null': form},
+                {'label': 'Job name',                       'not_null': form,
+                    'help': 'Choose a brief but descriptive name for the job.'},
                 {'label': 'Job ID',                         'value': job_guid},
-                {'label': 'Category',                       'not_null': form},
+                {'label': 'Tags', 'validator': is_tags, 'not_null': form,
+                    'help': 'Each post can have a set of tags associated with it. Though not implemented yet,\n'
+                            'these tags may be used in searches and filters later. No spaces, dashes, or\n'
+                            'special characters are allowed in these tags. Please enter them comma-separated.\n'
+                            'Example: software, 3dprinting'},
                 {'label': 'Description',                    'not_null': form},
                 {'label': 'Clock hash',                     'value': block_hash},
                 {'label': 'Time',                           'value': str(block_time)},
@@ -1051,6 +1056,12 @@ def is_int(s):
         return True
     except ValueError:
         return False
+
+def is_tags(s):
+    if re.search(r'[^a-z0-9 ,]', s.lower()):
+        return False
+    else:
+        return True
 
 def get_user(rein, identity, enrolled):
     if rein.multi and identity:
