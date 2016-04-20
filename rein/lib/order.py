@@ -14,10 +14,10 @@ FLOW = {
                                                                                  'workerdispute']},
         'delivery':       {'pre': ['offer'],                            'next': ['accept', 'creatordispute',
                                                                                  'workerdispute']},
-        'creatordispute': {'pre': ['offer', 'delivery'],                'next': ['resolve', 'workerdispute']},
-        'workerdispute':  {'pre': ['offer', 'delivery', 'accept'],      'next': ['resolve', 'creatordispute']},
+        'creatordispute': {'pre': ['offer', 'delivery'],                'next': ['resolution', 'workerdispute']},
+        'workerdispute':  {'pre': ['offer', 'delivery', 'accept'],      'next': ['resolution', 'creatordispute']},
         'accept':         {'pre': ['delivery'],                         'next': ['workerdispute', 'complete']},
-        'resolve':        {'pre': ['creatordispute', 'workerdispute'],  'next': ['complete']},
+        'resolution':     {'pre': ['creatordispute', 'workerdispute'],  'next': ['complete']},
        }
 
 PAST_TENSE = {
@@ -28,7 +28,7 @@ PAST_TENSE = {
         'creatordispute':   'disputed by job creator',
         'workerdispute':    'disputed by worker',
         'accept':           'complete, work accepted',
-        'resolve':          'complete, dispute resolved'
+        'resolution':       'complete, dispute resolved'
         }
 
 class Order(Base):
