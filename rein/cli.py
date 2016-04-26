@@ -6,6 +6,7 @@ import string
 import requests
 import hashlib
 import click
+from pprint import pprint
 from datetime import datetime
 from sqlalchemy import and_
 
@@ -1000,8 +1001,15 @@ def status(multi, identity, jobid):
             data = answer.json()
             remote_documents += filter_and_parse_valid_sigs(rein, data['by_job_id'])
         unique_documents = unique(remote_documents)
+        combined = {}
         for doc in remote_documents:
-            click.echo(doc)
+            combined.update(doc)
+
+        cleanup = ['Title', 'signature', 'signature_address', 'valid']
+        for key in cleanup:
+            if key in combined:
+                del combined[key]
+        pprint(combined)
         if len(remote_documents) == 0:
             order = Order.get_by_job_id(rein, jobid)
             if order:
