@@ -39,3 +39,21 @@ class PersistConfig(Base):
             return True
         else:
             return False
+
+    @classmethod
+    def set_tor(self, rein, value):
+        res = rein.session.query(PersistConfig).filter(PersistConfig.key == 'tor').first()
+        if res:
+            res.value = value
+        else:
+            p = PersistConfig(rein.session, 'tor', value)
+            rein.session.add(p)
+        rein.session.commit()
+
+    @classmethod
+    def get_tor(self, rein):
+        res = rein.session.query(PersistConfig).filter(PersistConfig.key == 'tor').first()
+        if res and res.value == 'true':
+            return True
+        else:
+            return False

@@ -20,6 +20,9 @@ class Config():
         self.setup_db()
         self.log.info('database connected')
         self.testnet = 1 if PersistConfig.get_testnet(self) else 0
+        self.tor = 1 if PersistConfig.get_tor(self) else 0
+        if self.tor:
+            self.setup_tor()
         self.log.info('testnet = ' + str(self.testnet))
 
     def setup_logging(self):
@@ -33,6 +36,12 @@ class Config():
         DBSession = sessionmaker(bind=self.engine)
         self.session = DBSession()
         Base.metadata.create_all(self.engine)
+
+    def setup_tor(self):
+        import socket
+        import socks
+        socks.set_default_proxy(socks.SOCKS5, '127.0.0.1', 9150)
+        socket.socket = socks.socksocket
 
     def set_multiuser(self):
         self.multi = True
