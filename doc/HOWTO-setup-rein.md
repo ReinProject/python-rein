@@ -153,7 +153,13 @@ Python-rein will check the signature in the text file you just created and if it
 
 We are now ready for the next step, which is to register with some Rein servers.
 
-##Step 3 -- Register and Upload Enrollment
+##Step 4 -- Enable Tor (optional)
+
+Privacy is an important feature that Rein aims to provide to its users. For users of the [Tor Browser Bundle](https://www.torproject.org), a single command can be run to enable Tor which should cause all traffic to be routed through Tor.
+
+    rein tor true
+
+##Step 5 -- Register and Upload Enrollment
 
 Rein uses microhosting servers to share data between its users. Let's connect python-rein to two such servers, that are being operated as a community service by ReinProject.org.
 
