@@ -980,6 +980,7 @@ def status(multi, identity, jobid):
         for url in urls:
             click.echo("  " + url)
         click.echo("Testnet: %s" % PersistConfig.get_testnet(rein))
+        click.echo("Tor: %s" % PersistConfig.get_tor(rein))
         click.echo('')
         click.echo('ID  Job ID                 Status')
         click.echo('-----------------------------------------------------')
@@ -1035,6 +1036,21 @@ def testnet(testnet):
     else:
         PersistConfig.set_testnet(rein, 'false')
         click.echo("Testnet disabled. Run 'rein testnet true' to go back to testnet")
+    return
+
+
+@cli.command()
+@click.argument('tor', required=True)
+def tor(tor):
+    """
+    Enter 'true' / 'false' to toggle connection through Tor.
+    """
+    if tor and tor.lower() == 'true':
+        PersistConfig.set_tor(rein, 'true')
+        click.echo("Tor enabled.")
+    else:
+        PersistConfig.set_tor(rein, 'false')
+        click.echo("Tor disabled.")
     return
 
 
