@@ -853,6 +853,59 @@ def request(multi, identity, url):
 @cli.command()
 @click.option('--multi/--no-multi', default=False, help="prompt for identity to use")
 @click.option('--identity', type=click.Choice(['Alice', 'Bob', 'Charlie', 'Dan']), default=None, help="identity to use")
+@click.argument('url', required=True)
+def buy(multi, identity, url):
+    """
+    Buy microhosting space.
+
+    Purchase microhosting from one server out of a paid network of servers 
+    which store and serve all data required for Rein.
+    """
+    (log, user, key, urls) = init(multi, identity)
+
+    click.echo("User: " + user.name)
+    log.info('got user for request')
+
+    if not url.endswith('/'):
+        url = url + '/'
+    if not url.startswith('http://') and not url.startswith('https://'):
+        url = 'http://' + url
+
+    sel_url = "{0}buy?owner={1}&delegate={2}&contact={3}"
+
+    try:
+        answer = requests.get(url=sel_url.format(url, user.maddr, user.daddr, user.contact))
+    except:
+        click.echo('Error connecting to server.')
+        log.error('server connect error ' + url)
+        return
+
+    if answer.status_code != 200:
+        click.echo("Buy failed. Please try again later or with a different server.")
+        log.error('server returned error')
+        return
+    else:
+        data = json.loads(answer.text)
+        click.echo('Please pay %s BTC to %s to enable bucket at %s' % (str(data['price']), data['address'], url))
+        log.info('server buy request successful')
+
+    if 'result' in data and data['result'] == 'error':
+        click.echo('The server returned an error: %s' % data['message'])
+
+    # later need to check if bucket payment was received
+    for bucket in data['buckets']:
+        b = rein.session.query(Bucket).filter(and_(Bucket.url==url, Bucket.date_created==bucket['created'])).first()
+        if b is None:
+            b = Bucket(url, user.id, bucket['id'], bucket['bytes_free'],
+                       datetime.strptime(bucket['created'], '%Y-%m-%d %H:%M:%S'))
+            rein.session.add(b)
+            rein.session.commit()
+        log.info('saved buy bucket created %s' % bucket['created'])
+
+
+@cli.command()
+@click.option('--multi/--no-multi', default=False, help="prompt for identity to use")
+@click.option('--identity', type=click.Choice(['Alice', 'Bob', 'Charlie', 'Dan']), default=None, help="identity to use")
 def sync(multi, identity):
     """
     Upload records to each registered server.
