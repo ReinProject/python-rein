@@ -2,11 +2,11 @@
 
 Rein is a new experiment in decentralized markets. The Rein model mirrors that of internet at large through the use of paid microhosting to store data about users and gigs. Since storage and bandwidth requirements are low, a high amount of redundancy and censorship-resistance may be acheived at low cost (on par with the cost of a gourmet coffee for a year of redundant hosting on several servers).
 
-This is very much a minimum viable product. Servers don't charge for their services, or sync with each other, and while the client attempts to validate what it sees, this validation is not complete nor has the software seen a security review. As such, you are advised to limit use of Rein to small jobs where loss of funds or time spent would not present a significant burden.
+This is very much a minimum viable product. Servers can be paid for their services but they do not communicate with each other, and while the client attempts to validate what it sees, this validation is not complete nor has the software seen a security review. As such, you are advised to limit use of Rein to small jobs where loss of funds or time spent would not present a significant burden.
 
 To read more about the project, visit http://reinproject.org
 
-Python-rein is a command-line interface to the Rein decentralized professional services market.
+Python-rein is a command-line interface client to the Rein market.
 
 ## Installation
 
