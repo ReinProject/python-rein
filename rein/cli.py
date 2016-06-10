@@ -41,12 +41,12 @@ rein = config.Config()
 def cli(ctx, debug):
     """
     Rein is a decentralized professional services market. Python-rein is a command-line
-interface to interact with Rein. Use this program to create an account, post a job, etc.
+interface to Rein. Use this program to create an account, post a job, bid, etc.
 
 \b
     Quick start:
         $ rein setup     - create an identity
-        $ rein request   - get free microhosting
+        $ rein buy       - request microhosting
         $ rein sync      - push your identity to microhosting servers
         $ rein status    - get user status, or dump of job's documents
 
@@ -67,7 +67,7 @@ interface to interact with Rein. Use this program to create an account, post a j
         $ rein creatordispute   - job creator files dispute
         $ rein resolve          - mediator posts decision
 
-    For more info visit: http://reinproject.org
+    For more info and the setup guide visit: http://reinproject.org
     """
     if debug:
         click.echo("Debuggin'")
@@ -82,7 +82,7 @@ def setup(multi):
 
     You will choose a name or handle for your account, include public contact information, 
     and a delegate Bitcoin address/private key that the program will use to sign documents
-    on your behalf. An enrollment document will be creatd and you will need to sign it
+    on your behalf. An enrollment document will be created and you will need to sign it
     with your master Bitcoin private key.
     """
     log = rein.get_log()
@@ -105,13 +105,13 @@ def setup(multi):
             return
         click.echo("------------")
         click.echo("The file %s has just been saved with your user details and needs to be signed "
-                   "with your master Bitcoin private key. The private key for this address should be "
+                   "with your master private key. The private key for this address should be "
                    "kept offline and multiple encrypted backups made. This key will effectively "
                    "become your identity in Rein and a delegate address will be used for day-to-day "
                    "transactions.\n\n" % rein.enroll_filename)
         res = enroll(rein)
         if isinstance(res, dict) and  res['valid']:
-            click.echo("Enrollment complete. Run 'rein request' to request free microhosting to sync to.")
+            click.echo("Enrollment complete. Run 'rein buy' to purchase microhosting (required for sync).")
             log.info('enrollment complete')
         else:
             click.echo("Signature verification failed. Please try again.")
@@ -122,7 +122,7 @@ def setup(multi):
         get_user(rein, False, False)
         res = enroll(rein)
         if res['valid']:
-            click.echo("Enrollment complete. Run 'rein request' to request free microhosting to sync to.")
+            click.echo("Enrollment complete. Run 'rein buy' to purchase microhosting (required for sync).")
             log.info('enrollment complete')
         else:
             click.echo("Signature verification failed. Please try again.")
@@ -177,12 +177,12 @@ def post(multi, identity, defaults, dry_run):
     else:
         click.echo("Post a job\n\nFunds for each job in Rein are stored in two multisig addresses. One address\n"
                    "is for the primary payment that will go to the worker on completion. The\n"
-                   "second address pays the mediator to be available to resolve a dispute whether\n"
+                   "second address pays the mediator to be available to resolve a dispute\n"
                    "if necessary. The second address should be funded according to the percentage\n"
                    "specified by the mediator and is in addition to the primary payment. The\n"
                    "listing below shows available mediators and the fee they charge. You should\n"
                    "consider the fee as well as any reputational data you are able to find when\n"
-                   "choosing a mediator. You choice may affect the number and quality of bids\n"
+                   "choosing a mediator. Your choice may affect the number and quality of bids\n"
                    "you receive.\n")
         mediator = mediator_prompt(rein, eligible_mediators)
     if not mediator:
@@ -198,7 +198,7 @@ def post(multi, identity, defaults, dry_run):
                 {'label': 'Tags', 'validator': is_tags, 'not_null': form,
                     'help': 'Each post can have a set of tags associated with it. Though not implemented yet,\n'
                             'these tags may be used in searches and filters later. No spaces, dashes, or\n'
-                            'special characters are allowed in these tags. Please enter them comma-separated.\n'
+                            'special characters are allowed. Please enter them as a comma-separated list.\n'
                             'Example: software, 3dprinting'},
                 {'label': 'Description',                    'not_null': form},
                 {'label': 'Clock hash',                     'value': block_hash},
@@ -240,9 +240,9 @@ def bid(multi, identity, defaults, dry_run):
     """
     Bid on a job.
 
-    Choose from available jobs posted to your registered servers your client knows
-    about, and create a bid. Your bid should include the amount of Bitcoin you need
-    to complete the job and when you expect to have it complete.
+    Choose from available jobs posted to your registered servers, and create a bid.
+    Your bid should include the price in bitcoin you're requesting to complete the
+    job and when you expect to have it complete.
     """
     
     (log, user, key, urls) = init(multi, identity)
@@ -334,8 +334,9 @@ def offer(multi, identity, defaults, dry_run):
     Award a job.
 
     A job creator would use this command to award the job to a specific bid. 
-    Once signed and pushed, escrow addresses should be funded and work can
-    begin.
+    Once signed and pushed, escrow addresses should be funded by the job
+    creator. Then the job creator should contact the worker and after the
+    worker verifies the payments are correct, work can begin.
     """
     (log, user, key, urls) = init(multi, identity)
     form = {}
@@ -577,9 +578,8 @@ def creatordispute(multi, identity, defaults, dry_run):
     """
     File a dispute (as a job creator).
 
-    If you are a job creator, file a dispute on one of your jobs, for example
-    because the job is not done on time, they would use this command to file
-    a dispute.
+    If you are a job creator, file a dispute on a job, for example if the job is
+    not done on time.
     """
     (log, user, key, urls) = init(multi, identity)
     form = {}
@@ -715,9 +715,9 @@ def resolve(multi, identity, defaults, dry_run):
     """
     Resolve a dispute.
 
-    For mediators who are party to a disputed transaction, this
-    command enables you to review those transactions and post
-    the decision and signed payments.
+    For mediators who are party to a disputed transaction, this command
+    enables you to review each step, post a decision and post signed payment
+    transactions.
     """
     (log, user, key, urls) = init(multi, identity)
     form = {}
@@ -859,7 +859,7 @@ def buy(multi, identity, url):
     Buy microhosting space.
 
     Purchase microhosting from one server out of a paid network of servers 
-    which store and serve all data required for Rein.
+    which store and serve data required for Rein.
     """
     (log, user, key, urls) = init(multi, identity)
 
@@ -911,9 +911,9 @@ def sync(multi, identity):
     Upload records to each registered server.
 
     Each user, bid, offer, etc. (i.e. anything except actual payments) is 
-    stored as document across a public database that is maintained across
-    a network of paid servers. This command pushes the documents you have
-    created to the servers from which you have purchased hosting. 
+    stored as document across a network of paid servers. This command pushes
+    the documents you have created to the servers from which you have
+    purchased microhosting.
     """
     (log, user, key, urls) = init(multi, identity)
 
