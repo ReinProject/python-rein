@@ -23,22 +23,7 @@ Production:
 
 ## Getting started
 
-Setup your identity with:
-
-    rein setup
-
-During the setup process you will enter your name/username, email or BitMessage address, master Bitcoin address, delegate Bitcoin address, and delegate private key. The enrollment, a document storing your initial user information, will need to be signed with the [Bitcoin Signature Tool](https://github.com/ReinProject/bitcoin-signature-tool) which you should download for offline use. Once signed, the enrollment will be stored in the local database for later upload.
-
-Next, you will register (hopefully several) servers with your client. This is done with the _request_ command which is meant to ask for free microhosting (for a limited time only). ReinProject.org is running two such servers. Register them with your client like so:
-
-    rein request http://rein1-sfo.reinproject.org
-    rein request http://rein2-ams.reinproject.org
-
-Upload your enrollment with the _sync_ command which puts each document you produce on each server it knows about.
-
-    rein sync
-
-Though some commands request data, none of them upload anything automatically. This means running _rein sync_ is necessary if you want to post anything where others can see it.
+Please see the [setup guide](https://github.com/ReinProject/python-rein/blob/master/doc/HOWTO-setup-rein.md).
 
 ### Mediators
 
