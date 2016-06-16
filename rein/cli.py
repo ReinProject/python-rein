@@ -1073,6 +1073,33 @@ def status(multi, identity, jobid):
             else:
                 click.echo("Job id not found")
 
+
+@cli.command()
+def start():
+    """
+    Use Rein from the browser.
+
+    Starts a local web server and opens a browser with 
+    simple UI to use Rein.
+    """
+    import webbrowser
+    from flask import Flask, send_from_directory
+
+    app = Flask(__name__)
+
+    @app.route('/')
+    def hello_world():
+            return send_from_directory('html', 'index.html')
+            #return 'Hello, World!'
+
+    @app.route('/<path:path>')
+    def send_js(path):
+            return send_from_directory('html', path)
+    
+    webbrowser.open('http://127.0.0.1:5000')
+    app.run(host='127.0.0.1')
+
+
 @cli.command()
 @click.argument('testnet', required=True)
 def testnet(testnet):
