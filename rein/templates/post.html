@@ -1,0 +1,8 @@
+{% extends "layout.html" %}
+{% block body %}
+<ul>
+{% for m in mediators %}
+   <li>{{ m.username }}</li>
+{% endfor %}
+</ul>
+{% endblock %}

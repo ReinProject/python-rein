@@ -1181,6 +1181,12 @@ def select_by_form(candidates, field, form):
    else:
        click.echo(field + " is required but not in your defaults file")
 
+class Mediator():
+    def __init__(self, username, maddr, daddr, rate):
+        self.username = username
+        self.maddr = maddr
+        self.daddr = daddr
+        self.rate = rate
 
 def get_mediators(user, urls, log):
     eligible_mediators = []
@@ -1201,7 +1207,12 @@ def get_mediators(user, urls, log):
             blocks.append(data['block_info'])
         eligible_mediators += filter_and_parse_valid_sigs(rein, data['mediators'])
     mediators = unique(eligible_mediators, 'Mediator public key')
-    return mediators
+    objs = []
+    for m in mediators:
+        print m[u'User']
+        newMediator = Mediator(m[u'User'], m[u'Master signing address'], m[u'Delegate signing address'], m[u'Mediator fee'])
+        objs.append(newMediator)
+    return objs
 
 
 @cli.command()
@@ -1215,7 +1226,7 @@ def start(multi, identity):
     simple UI to use Rein.
     """
     import webbrowser
-    from flask import Flask, send_from_directory
+    from flask import Flask, send_from_directory, render_template
 
     app = Flask(__name__)
     (log, user, key, urls) = init(multi, identity)
@@ -1227,7 +1238,8 @@ def start(multi, identity):
 
     @app.route("/api/v1/mediators")
     def api_get_mediators():
-        return str(get_mediators(user, urls, log))
+        mediators = get_mediators(user, urls, log)
+        return render_template("post.html", mediators=mediators)
 
     @app.route('/<path:path>')
     def send_js(path):
