@@ -1,8 +1,59 @@
 {% extends "layout.html" %}
 {% block body %}
-<ul>
+
+<div class="row">
+	<div id="breadcrumb" class="col-xs-12">
+		<a href="#" class="show-sidebar">
+			<i class="fa fa-bars"></i>
+		</a>
+		<ol class="breadcrumb pull-left">
+			<li><a href="index.html">Dashboard</a></li>
+			<li><a href="#">Charts</a></li>
+			<li><a href="#">xCharts</a></li>
+		</ol>
+    </div>
+</div>
+<div class="row">
+	<div class="col-xs-12 col-sm-6">
+<h4>Post New Job</h4>
+<form class="form-horizontal" role="form" method="POST" action="{{ url_for('job_post') }}">
+    {{ form.csrf_token }}
+    <div class="form-group">
+        <label class="col-sm-4 control-label">{{ form.job_name.label }}</label>
+        <div class="col-sm-6">{{ form.job_name(rows=1, cols=40, class="form-control", data_toggle="tooltip", title="Give this job a unique and descriptive name. Workers will use this to decide whether to learn more about your job!") }}</div>
+    </div>
+    <div class="form-group">
+        <label class="col-sm-4 control-label">{{ form.description.label }}</label>
+        <div class="col-sm-8">{{ form.description(rows=5, cols=80, class="form-control", title="Enter a description of what you need done.") }}</div>
+    </div>
+    <div class="form-group">
+        <label class="col-sm-4 control-label">{{ form.tags.label }}</label>
+        <div class="col-sm-6">{{ form.tags(rows=1, cols=40, class="form-control", title="Enter a comma-separated list of terms relevant to your job.") }}</div>
+    </div>
+    <div class="form-group">
+        <label class="col-sm-4 control-label">{{ form.expire_days.label }}</label>
+        <div class="col-sm-3">{{ form.expire_days(rows=1, cols=40, class="form-control", title="Expiration time in days to receive bids.") }}</div>
+    </div>
+<table class="table">
+<thead>
+    <tr>
+        <th>Select</th>
+        <th>Name</th>
+        <th>Rate</th>
+        <th>Public key</th>
+    </tr>
+</thead>
+<tbody>
 {% for m in mediators %}
-   <li>{{ m.username }}</li>
+    <tr>
+        <td><input type="radio" value="{{ m.pubkey }}"></td>
+        <td>{{ m.username }}</td>
+        <td>{{ m.rate }}</td>
+        <td>{{ m.pubkey }}</td>
+    </tr>
 {% endfor %}
-</ul>
+</tbody>
+</table>
+    </div>
+</div>
 {% endblock %}

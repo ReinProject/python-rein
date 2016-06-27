@@ -1182,10 +1182,10 @@ def select_by_form(candidates, field, form):
        click.echo(field + " is required but not in your defaults file")
 
 class Mediator():
-    def __init__(self, username, maddr, daddr, rate):
+    def __init__(self, username, maddr, pubkey, rate):
         self.username = username
         self.maddr = maddr
-        self.daddr = daddr
+        self.pubkey = pubkey
         self.rate = rate
 
 def get_mediators(user, urls, log):
@@ -1209,8 +1209,7 @@ def get_mediators(user, urls, log):
     mediators = unique(eligible_mediators, 'Mediator public key')
     objs = []
     for m in mediators:
-        print m[u'User']
-        newMediator = Mediator(m[u'User'], m[u'Master signing address'], m[u'Delegate signing address'], m[u'Mediator fee'])
+        newMediator = Mediator(m[u'User'], m[u'Master signing address'], m[u'Mediator public key'], m[u'Mediator fee'])
         objs.append(newMediator)
     return objs
 
@@ -1227,6 +1226,7 @@ def start(multi, identity):
     """
     import webbrowser
     from flask import Flask, send_from_directory, render_template
+    from lib.forms import JobPostForm
 
     app = Flask(__name__)
     (log, user, key, urls) = init(multi, identity)
@@ -1240,6 +1240,12 @@ def start(multi, identity):
     def api_get_mediators():
         mediators = get_mediators(user, urls, log)
         return render_template("post.html", mediators=mediators)
+
+    @app.route("/post")
+    def job_post():
+        mediators = get_mediators(user, urls, log)
+        form = JobPostForm()
+        return render_template("post.html", form=form, mediators=mediators)
 
     @app.route('/<path:path>')
     def send_js(path):
