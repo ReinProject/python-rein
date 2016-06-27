@@ -1075,32 +1075,6 @@ def status(multi, identity, jobid):
 
 
 @cli.command()
-def start():
-    """
-    Use Rein from the browser.
-
-    Starts a local web server and opens a browser with 
-    simple UI to use Rein.
-    """
-    import webbrowser
-    from flask import Flask, send_from_directory
-
-    app = Flask(__name__)
-
-    @app.route('/')
-    def hello_world():
-            return send_from_directory('html', 'index.html')
-            #return 'Hello, World!'
-
-    @app.route('/<path:path>')
-    def send_js(path):
-            return send_from_directory('html', path)
-    
-    webbrowser.open('http://127.0.0.1:5000')
-    app.run(host='127.0.0.1')
-
-
-@cli.command()
 @click.argument('testnet', required=True)
 def testnet(testnet):
     """
@@ -1206,6 +1180,66 @@ def select_by_form(candidates, field, form):
        return None
    else:
        click.echo(field + " is required but not in your defaults file")
+
+
+def get_mediators(user, urls, log):
+    eligible_mediators = []
+    blocks = []
+    for url in urls:
+        log.info("Querying %s for mediators..." % url)
+        sel_url = "{0}query?owner={1}&query=mediators&testnet={2}"
+        try:
+            answer = requests.get(url=sel_url.format(url, user.maddr, rein.testnet))
+        except:
+            click.echo('Error connecting to server.')
+            log.error('server connect error ' + url)
+            continue
+        data = answer.json()
+        if len(data['mediators']) == 0:
+            click.echo('None found')
+        if data['block_info']:
+            blocks.append(data['block_info'])
+        eligible_mediators += filter_and_parse_valid_sigs(rein, data['mediators'])
+    mediators = unique(eligible_mediators, 'Mediator public key')
+    return mediators
+
+
+@cli.command()
+@click.option('--multi/--no-multi', '-m', default=False, help="prompt for identity to use")
+@click.option('--identity', '-i', type=click.Choice(['Alice', 'Bob', 'Charlie', 'Dan']), default=None, help="identity to use")
+def start(multi, identity):
+    """
+    Use Rein from the browser.
+
+    Starts a local web server and opens a browser with
+    simple UI to use Rein.
+    """
+    import webbrowser
+    from flask import Flask, send_from_directory
+
+    app = Flask(__name__)
+    (log, user, key, urls) = init(multi, identity)
+
+    @app.route('/')
+    def hello_world():
+        return send_from_directory('html', 'index.html')
+        #return 'Hello, World!'
+
+    @app.route("/api/v1/mediators")
+    def api_get_mediators():
+        return str(get_mediators(user, urls, log))
+
+    @app.route('/<path:path>')
+    def send_js(path):
+        return send_from_directory('html', path)
+
+    host = '127.0.0.1'
+    port = 5001
+
+    webbrowser.open('http://'+host+':' + str(port))
+    app.run(host=host, port=port, debug=True)
+
+    # testing steps: Disable tor. Then turn on debug because debug doesn't work when socket is overriden
 
 
 if __name__ == '__main__':
