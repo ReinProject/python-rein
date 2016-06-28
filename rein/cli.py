@@ -925,15 +925,16 @@ def sync(multi, identity):
 
     Placement.create_placements(rein.engine)
 
+    check = Document.get_user_documents(rein)
+    if len(check) == 0:
+        click.echo("Nothing to do.")
+
     upload = []
     nonce = {}
     for url in urls:
         nonce[url] = get_new_nonce(rein, url)
         if nonce[url] is None:
             continue
-        check = Document.get_user_documents(rein) 
-        if len(check) == 0:
-            click.echo("Nothing to do.")
 
         for doc in check:
             if len(doc.contents) > 8192:
@@ -1225,34 +1226,72 @@ def start(multi, identity):
     simple UI to use Rein.
     """
     import webbrowser
-    from flask import Flask, send_from_directory, render_template
+    from flask import Flask, request, redirect, url_for, flash, send_from_directory, render_template
     from lib.forms import JobPostForm
 
+    host = '127.0.0.1'
+    port = 5001
+
     app = Flask(__name__)
+    app.secret_key = ''.join(random.SystemRandom().choice(string.digits) for _ in range(32))
     (log, user, key, urls) = init(multi, identity)
 
     @app.route('/')
-    def hello_world():
+    def dashboard():
         return send_from_directory('html', 'index.html')
-        #return 'Hello, World!'
 
-    @app.route("/api/v1/mediators")
-    def api_get_mediators():
-        mediators = get_mediators(user, urls, log)
-        return render_template("post.html", mediators=mediators)
-
-    @app.route("/post")
+    @app.route("/post", methods=['POST', 'GET'])
     def job_post():
         mediators = get_mediators(user, urls, log)
         form = JobPostForm()
-        return render_template("post.html", form=form, mediators=mediators)
+        if request.method == 'POST' and form.validate_on_submit():
+            mediator = None
+            print "hi"
+            for m in mediators:
+                if m['Mediator public key'] == form.pubkey.data:
+                    mediator = m
+            if mediator is None:
+                flash("Error: invalid mediator chosen")
+                return redirect('/#post')
+            fields = [
+                {'label': 'Job name',                       'not_null': form.job_name.data,
+                    'help': 'Choose a brief but descriptive name for the job.'},
+                {'label': 'Job ID',                         'value': job_guid},
+                {'label': 'Tags', 'validator': is_tags, 'not_null': form.tags.data,
+                    'help': 'Each post can have a set of tags associated with it. Though not implemented yet,\n'
+                            'these tags may be used in searches and filters later. No spaces, dashes, or\n'
+                            'special characters are allowed. Please enter them as a comma-separated list.\n'
+                            'Example: software, 3dprinting'},
+                {'label': 'Description',                    'not_null': form.description.data},
+                {'label': 'Clock hash',                     'value': block_hash},
+                {'label': 'Time',                           'value': str(block_time)},
+                {'label': 'Expiration (days)',              'validator': is_int},
+                {'label': 'Mediator',                       'value': mediator['User']},
+                {'label': 'Mediator contact',               'value': mediator['Contact']},
+                {'label': 'Mediator fee',                   'value': mediator['Mediator fee']},
+                {'label': 'Mediator public key',            'value': mediator['Mediator public key']},
+                {'label': 'Mediator master address',        'value': mediator['Master signing address']},
+                {'label': 'Job creator',                    'value': user.name},
+                {'label': 'Job creator contact',            'value': user.contact},
+                {'label': 'Job creator public key',         'value': key},
+                {'label': 'Job creator master address',     'value': user.maddr},
+                     ]
+            document_text = assemble_document('Job', fields)
+            document = sign_and_store_document(rein, 'job_posting', document_text, user.daddr, user.dkey, store)
+            if document and store:
+                click.echo("Posting created. Run 'rein sync' to push to available servers.")
+            assemble_order(rein, document)
+            log.info('posting signed') if document else log.error('posting failed')
+            return redirect("/")
+        elif request.method == 'POST':
+            flash("There was some sort of a problem.")
+            return redirect("/#post")
+        else:
+            return render_template("post.html", form=form, mediators=mediators)
 
     @app.route('/<path:path>')
     def send_js(path):
         return send_from_directory('html', path)
-
-    host = '127.0.0.1'
-    port = 5001
 
     webbrowser.open('http://'+host+':' + str(port))
     app.run(host=host, port=port, debug=True)
