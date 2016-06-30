@@ -12,9 +12,18 @@
 		</ol>
     </div>
 </div>
+<div class="well">
 <div class="row">
 	<div class="col-xs-12 col-sm-6">
 <h4>Post New Job</h4>
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+    {% for message in messages %}
+      <p  class="txt-danger"><b>{{ message }}</b></p>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+
 <form class="form-horizontal" role="form" method="POST" action="{{ url_for('job_post') }}">
     {{ form.csrf_token }}
     <div class="form-group">
@@ -56,5 +65,6 @@
 <input type="submit" value="Post!">
 </form>
     </div>
+</div>
 </div>
 {% endblock %}
