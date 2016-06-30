@@ -1232,13 +1232,18 @@ def start(multi, identity):
     host = '127.0.0.1'
     port = 5001
 
-    app = Flask(__name__)
+    tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'html')
+
+    app = Flask(__name__, template_folder=tmpl_dir)
     app.secret_key = ''.join(random.SystemRandom().choice(string.digits) for _ in range(32))
     (log, user, key, urls) = init(multi, identity)
 
+    documents = Document.get_user_documents(rein)
+    orders = Order.get_user_orders(rein, Document)
+
     @app.route('/')
     def dashboard():
-        return send_from_directory('html', 'index.html')
+        return render_template('index.html', user=user)
 
     @app.route("/post", methods=['POST', 'GET'])
     def job_post():
@@ -1291,7 +1296,16 @@ def start(multi, identity):
 
     @app.route('/<path:path>')
     def send_js(path):
-        return send_from_directory('html', path)
+        if path.find('.html') >= 0:
+            return render_template(path,
+                            user=user,
+                            key=key,
+                            urls=urls,
+                            documents=documents,
+                            orders=orders)
+        else:
+            return send_from_directory(tmpl_dir, path)
+
 
     webbrowser.open('http://'+host+':' + str(port))
     app.run(host=host, port=port, debug=True)
