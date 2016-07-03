@@ -1,4 +1,5 @@
 {% extends "layout.html" %}
+{% from "_form_helpers.html" import render_error %}
 {% block body %}
 
 <div class="row">
@@ -29,18 +30,22 @@
     <div class="form-group">
         <label class="col-sm-4 control-label">{{ form.job_name.label }}</label>
         <div class="col-sm-6">{{ form.job_name(rows=1, cols=40, class="form-control", data_toggle="tooltip", title="Give this job a unique and descriptive name. Workers will use this to decide whether to learn more about your job!") }}</div>
+        {{ render_error(form.job_name) }}
     </div>
     <div class="form-group">
         <label class="col-sm-4 control-label">{{ form.description.label }}</label>
         <div class="col-sm-8">{{ form.description(rows=5, cols=80, class="form-control", title="Enter a description of what you need done.") }}</div>
+        {{ render_error(form.description) }}
     </div>
     <div class="form-group">
         <label class="col-sm-4 control-label">{{ form.tags.label }}</label>
         <div class="col-sm-6">{{ form.tags(rows=1, cols=40, class="form-control", title="Enter a comma-separated list of terms relevant to your job.") }}</div>
+        {{ render_error(form.tags) }}
     </div>
     <div class="form-group">
         <label class="col-sm-4 control-label">{{ form.expire_days.label }}</label>
         <div class="col-sm-3">{{ form.expire_days(rows=1, cols=40, class="form-control", title="Expiration time in days to receive bids.") }}</div>
+        {{ render_error(form.expire_days) }}
     </div>
 <table class="table">
 <thead>

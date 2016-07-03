@@ -1247,8 +1247,7 @@ def start(multi, identity):
 
     @app.route("/post", methods=['POST', 'GET'])
     def job_post():
-        mediators = get_mediators(user, urls, log)
-        form = JobPostForm()
+        form = JobPostForm(request.form)
         if request.method == 'POST' and form.validate_on_submit():
             mediator = None
             print "hi"
