@@ -4,10 +4,6 @@ from wtforms import TextField, TextAreaField, RadioField
 from wtforms.validators import Required
 
 class JobPostForm(Form):
-    #mediators = get_mediators(user, urls, log)
-    #mediator_pubkeys = []
-    #    for m in mediators:
-    #        mediator_pubkeys.append(m.pubkey)
     job_name = TextField('Job name', validators = [Required()])
     description = TextAreaField('Description', validators = [Required()])
     tags = TextField('Tags', validators = [Required()])

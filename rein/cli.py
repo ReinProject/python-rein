@@ -1241,13 +1241,11 @@ def start(multi, identity):
     documents = Document.get_user_documents(rein)
     orders = Order.get_user_orders(rein, Document)
 
-    @app.route('/')
-    def dashboard():
-        return render_template('index.html', user=user)
 
     @app.route("/post", methods=['POST', 'GET'])
     def job_post():
         form = JobPostForm(request.form)
+        mediators = get_mediators(user, urls, log)
         if request.method == 'POST' and form.validate_on_submit():
             mediator = None
             print "hi"
@@ -1289,12 +1287,20 @@ def start(multi, identity):
             return redirect("/")
         elif request.method == 'POST':
             flash("There was some sort of a problem.")
-            return redirect("/#post")
+            return redirect("/post")
         else:
-            return render_template("post.html", form=form, mediators=mediators)
+            return render_template("post.html",
+                            form=form,
+                            user=user,
+                            key=key,
+                            urls=urls,
+                            documents=documents,
+                            orders=orders)
 
+
+    @app.route('/')
     @app.route('/<path:path>')
-    def send_js(path):
+    def serve_file(path="index.html"):
         if path.find('.html') >= 0:
             return render_template(path,
                             user=user,
