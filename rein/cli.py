@@ -924,8 +924,6 @@ def sync(multi, identity):
         click.echo("No buckets registered. Run 'rein request' to continue.")
         return
 
-    Placement.create_placements(rein.engine)
-    
     mediators = get_mediators(rein, user, urls, log)
     for m in mediators:
         from pprint import pprint
