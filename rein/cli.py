@@ -17,6 +17,7 @@ from lib.bucket import Bucket
 from lib.document import Document
 from lib.placement import Placement
 from lib.order import Order
+from lib.mediator import Mediator
 
 # Import helper functions
 from lib.ui import *
@@ -924,6 +925,15 @@ def sync(multi, identity):
         return
 
     Placement.create_placements(rein.engine)
+    
+    mediators = get_mediators(rein, user, urls, log)
+    for m in mediators:
+        from pprint import pprint
+        pprint(m)
+        if not Mediator.get(m['Master signing address'], rein.testnet):
+            newMediator = Mediator(m, testnet)
+            rein.session.add(newMediator)
+            rein.session.commit()
 
     check = Document.get_user_documents(rein)
     if len(check) == 0:
@@ -1007,7 +1017,26 @@ def sync(multi, identity):
 
     click.echo('%s docs checked on %s servers, %s uploads done.' % (len(check), len(urls), str(succeeded)))
 
-
+def get_mediators(rein, user, urls, log):
+    eligible_mediators = []
+    blocks = []
+    for url in urls:
+        log.info("Querying %s for mediators..." % url)
+        sel_url = "{0}query?owner={1}&query=mediators&testnet={2}"
+        try:
+            answer = requests.get(url=sel_url.format(url, user.maddr, rein.testnet))
+        except:
+            click.echo('Error connecting to server.')
+            log.error('server connect error ' + url)
+            continue
+        data = answer.json()
+        if len(data['mediators']) == 0:
+            click.echo('None found')
+        if data['block_info']:
+            blocks.append(data['block_info'])
+        eligible_mediators += filter_and_parse_valid_sigs(rein, data['mediators'])
+    return unique(eligible_mediators, 'Mediator public key')
+    
 @cli.command()
 @click.option('--multi/--no-multi', default=False, help="prompt for identity to use")
 @click.option('--identity', type=click.Choice(['Alice', 'Bob', 'Charlie', 'Dan']), default=None, help="identity to use")
@@ -1182,38 +1211,6 @@ def select_by_form(candidates, field, form):
    else:
        click.echo(field + " is required but not in your defaults file")
 
-class Mediator():
-    def __init__(self, username, maddr, pubkey, rate):
-        self.username = username
-        self.maddr = maddr
-        self.pubkey = pubkey
-        self.rate = rate
-
-def get_mediators(user, urls, log):
-    eligible_mediators = []
-    blocks = []
-    for url in urls:
-        log.info("Querying %s for mediators..." % url)
-        sel_url = "{0}query?owner={1}&query=mediators&testnet={2}"
-        try:
-            answer = requests.get(url=sel_url.format(url, user.maddr, rein.testnet))
-        except:
-            click.echo('Error connecting to server.')
-            log.error('server connect error ' + url)
-            continue
-        data = answer.json()
-        if len(data['mediators']) == 0:
-            click.echo('None found')
-        if data['block_info']:
-            blocks.append(data['block_info'])
-        eligible_mediators += filter_and_parse_valid_sigs(rein, data['mediators'])
-    mediators = unique(eligible_mediators, 'Mediator public key')
-    objs = []
-    for m in mediators:
-        newMediator = Mediator(m[u'User'], m[u'Master signing address'], m[u'Mediator public key'], m[u'Mediator fee'])
-        objs.append(newMediator)
-    return objs
-
 
 @cli.command()
 @click.option('--multi/--no-multi', '-m', default=False, help="prompt for identity to use")
@@ -1228,7 +1225,8 @@ def start(multi, identity):
     import webbrowser
     from flask import Flask, request, redirect, url_for, flash, send_from_directory, render_template
     from lib.forms import JobPostForm
-
+    from lib.mediator import Mediator 
+    
     host = '127.0.0.1'
     port = 5001
 
@@ -1240,21 +1238,13 @@ def start(multi, identity):
 
     documents = Document.get_user_documents(rein)
     orders = Order.get_user_orders(rein, Document)
-
+    mediators = Mediator.get()
 
     @app.route("/post", methods=['POST', 'GET'])
     def job_post():
         form = JobPostForm(request.form)
-        mediators = get_mediators(user, urls, log)
         if request.method == 'POST' and form.validate_on_submit():
-            mediator = None
-            print "hi"
-            for m in mediators:
-                if m['Mediator public key'] == form.pubkey.data:
-                    mediator = m
-            if mediator is None:
-                flash("Error: invalid mediator chosen")
-                return redirect('/#post')
+            mediator = get_mediator(form.mediator_pubkey.data)
             fields = [
                 {'label': 'Job name',                       'not_null': form.job_name.data,
                     'help': 'Choose a brief but descriptive name for the job.'},
