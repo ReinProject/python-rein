@@ -1236,7 +1236,7 @@ def start(multi, identity):
 
     documents = Document.get_user_documents(rein)
     orders = Order.get_user_orders(rein, Document)
-    mediators = Mediator.get()
+    mediators = Mediator.get(None, rein.testnet)
 
     @app.route("/post", methods=['POST', 'GET'])
     def job_post():
@@ -1283,7 +1283,8 @@ def start(multi, identity):
                             key=key,
                             urls=urls,
                             documents=documents,
-                            orders=orders)
+                            orders=orders,
+                            mediators=mediators)
 
 
     @app.route('/')

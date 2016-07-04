@@ -59,10 +59,10 @@
 <tbody>
 {% for m in mediators %}
     <tr>
-        <td><input type="radio" value="{{ m.pubkey }}"></td>
+        <td><input type="radio" value="{{ m.maddr }}"></td>
         <td>{{ m.username }}</td>
         <td>{{ m.rate }}</td>
-        <td>{{ m.pubkey }}</td>
+        <td>{{ m.dpubkey }}</td>
     </tr>
 {% endfor %}
 </tbody>
