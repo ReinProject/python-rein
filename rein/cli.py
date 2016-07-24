@@ -1232,11 +1232,27 @@ def start(multi, identity):
 
     app = Flask(__name__, template_folder=tmpl_dir)
     app.secret_key = ''.join(random.SystemRandom().choice(string.digits) for _ in range(32))
-    (log, user, key, urls) = init(multi, identity)
 
+    (log, user, key, urls) = init(multi, identity)
     documents = Document.get_user_documents(rein)
     orders = Order.get_user_orders(rein, Document)
     mediators = Mediator.get(None, rein.testnet)
+    jobs = []
+    blocks = []
+    for url in urls:    
+        log.info("Querying %s for jobs..." % url)
+        sel_url = "{0}query?owner={1}&query=jobs&testnet={2}"
+        try:
+            answer = requests.get(url=sel_url.format(url, user.maddr, rein.testnet))
+        except:
+            click.echo('Error connecting to server.')
+            log.error('server connect error ' + url)
+            continue
+        data = answer.json()
+        if data['block_info']:
+            blocks.append(data['block_info'])
+        jobs += filter_and_parse_valid_sigs(rein, data['jobs'])
+    (block_hash, block_time) = choose_best_block(blocks)
 
     def flash_errors(form):
         for field, errors in form.errors.items():
@@ -1250,7 +1266,7 @@ def start(multi, identity):
     def job_post():
         form = JobPostForm(request.form)
         if request.method == 'POST' and form.validate_on_submit():
-            mediator = Mediator.get(form.mediator_maddr.data, rein.testnet)
+            mediator = Mediator.get(form.mediator_maddr.data, rein.testnet)[0]
             job_guid = ''.join(random.SystemRandom().choice(string.ascii_lowercase + string.digits) for _ in range(20))
             fields = [
                 {'label': 'Job name',                       'not_null': form.job_name.data,
@@ -1265,11 +1281,11 @@ def start(multi, identity):
                 {'label': 'Clock hash',                     'value': block_hash},
                 {'label': 'Time',                           'value': str(block_time)},
                 {'label': 'Expiration (days)',              'validator': is_int},
-                {'label': 'Mediator',                       'value': mediator['User']},
-                {'label': 'Mediator contact',               'value': mediator['Contact']},
-                {'label': 'Mediator fee',                   'value': mediator['Mediator fee']},
-                {'label': 'Mediator public key',            'value': mediator['Mediator public key']},
-                {'label': 'Mediator master address',        'value': mediator['Master signing address']},
+                {'label': 'Mediator',                       'value': mediator.username},
+                {'label': 'Mediator contact',               'value': mediator.contact},
+                {'label': 'Mediator fee',                   'value': mediator.mediator_fee},
+                {'label': 'Mediator public key',            'value': mediator.dpubkey},
+                {'label': 'Mediator master address',        'value': mediator.maddr},
                 {'label': 'Job creator',                    'value': user.name},
                 {'label': 'Job creator contact',            'value': user.contact},
                 {'label': 'Job creator public key',         'value': key},
