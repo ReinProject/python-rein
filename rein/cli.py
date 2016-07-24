@@ -6,6 +6,7 @@ import string
 import requests
 import hashlib
 import click
+import time
 from pprint import pprint
 from datetime import datetime
 from sqlalchemy import and_
@@ -1253,6 +1254,8 @@ def start(multi, identity):
             blocks.append(data['block_info'])
         jobs += filter_and_parse_valid_sigs(rein, data['jobs'])
     (block_hash, block_time) = choose_best_block(blocks)
+    str_block_time = datetime.fromtimestamp(block_time).strftime('%Y-%m-%d %H:%M:%S')
+    time_offset = abs(block_time - int(time.time() + time.timezone))
 
     def flash_errors(form):
         for field, errors in form.errors.items():
@@ -1310,7 +1313,10 @@ def start(multi, identity):
                             urls=urls,
                             documents=documents,
                             orders=orders,
-                            mediators=mediators)
+                            mediators=mediators,
+                            block_time=str_block_time,
+                            time_offset=time_offset
+                            )
 
 
     @app.route('/')

@@ -25,6 +25,12 @@
   {% endif %}
 {% endwith %}
 
+<p>Block time: {{ block_time }} UTC
+{% if time_offset > 3600*4 %}
+<span class="txt-danger">Off by more than 4 hours!</span>
+{% endif %}
+</p>
+
 <form class="form-horizontal" role="form" method="POST" action="{{ url_for('job_post') }}">
     {{ form.csrf_token }}
     <div class="form-group">
