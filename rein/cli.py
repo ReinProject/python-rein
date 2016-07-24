@@ -1272,21 +1272,21 @@ def start(multi, identity):
             mediator = Mediator.get(form.mediator_maddr.data, rein.testnet)[0]
             job_guid = ''.join(random.SystemRandom().choice(string.ascii_lowercase + string.digits) for _ in range(20))
             fields = [
-                {'label': 'Job name',                       'not_null': form.job_name.data,
+                {'label': 'Job name',                       'value': form.job_name.data,
                     'help': 'Choose a brief but descriptive name for the job.'},
                 {'label': 'Job ID',                         'value': job_guid},
-                {'label': 'Tags', 'validator': is_tags, 'not_null': form.tags.data,
+                {'label': 'Tags',                           'value': form.tags.data,
                     'help': 'Each post can have a set of tags associated with it. Though not implemented yet,\n'
                             'these tags may be used in searches and filters later. No spaces, dashes, or\n'
                             'special characters are allowed. Please enter them as a comma-separated list.\n'
                             'Example: software, 3dprinting'},
-                {'label': 'Description',                    'not_null': form.description.data},
+                {'label': 'Description',                    'value': form.description.data},
                 {'label': 'Clock hash',                     'value': block_hash},
                 {'label': 'Time',                           'value': str(block_time)},
-                {'label': 'Expiration (days)',              'validator': is_int},
+                {'label': 'Expiration (days)',              'value': form.expire_days.data},
                 {'label': 'Mediator',                       'value': mediator.username},
                 {'label': 'Mediator contact',               'value': mediator.contact},
-                {'label': 'Mediator fee',                   'value': mediator.mediator_fee},
+                {'label': 'Mediator fee',                   'value': str(mediator.mediator_fee)},
                 {'label': 'Mediator public key',            'value': mediator.dpubkey},
                 {'label': 'Mediator master address',        'value': mediator.maddr},
                 {'label': 'Job creator',                    'value': user.name},
@@ -1295,6 +1295,7 @@ def start(multi, identity):
                 {'label': 'Job creator master address',     'value': user.maddr},
                      ]
             document_text = assemble_document('Job', fields)
+            store = True
             document = sign_and_store_document(rein, 'job_posting', document_text, user.daddr, user.dkey, store)
             if document and store:
                 click.echo("Posting created. Run 'rein sync' to push to available servers.")
