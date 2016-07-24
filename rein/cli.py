@@ -1223,7 +1223,7 @@ def start(multi, identity):
     import webbrowser
     from flask import Flask, request, redirect, url_for, flash, send_from_directory, render_template
     from lib.forms import JobPostForm
-    from lib.mediator import Mediator 
+    from lib.mediator import Mediator
     
     host = '127.0.0.1'
     port = 5001
@@ -1238,11 +1238,20 @@ def start(multi, identity):
     orders = Order.get_user_orders(rein, Document)
     mediators = Mediator.get(None, rein.testnet)
 
+    def flash_errors(form):
+        for field, errors in form.errors.items():
+            for error in errors:
+                 flash(u"Error in the %s field - %s" % (
+                       getattr(form, field).label.text,
+                       error
+                       ))
+
     @app.route("/post", methods=['POST', 'GET'])
     def job_post():
         form = JobPostForm(request.form)
         if request.method == 'POST' and form.validate_on_submit():
-            mediator = get_mediator(form.mediator_pubkey.data)
+            mediator = Mediator.get(form.mediator_maddr.data, rein.testnet)
+            job_guid = ''.join(random.SystemRandom().choice(string.ascii_lowercase + string.digits) for _ in range(20))
             fields = [
                 {'label': 'Job name',                       'not_null': form.job_name.data,
                     'help': 'Choose a brief but descriptive name for the job.'},
@@ -1274,7 +1283,8 @@ def start(multi, identity):
             log.info('posting signed') if document else log.error('posting failed')
             return redirect("/")
         elif request.method == 'POST':
-            flash("There was some sort of a problem.")
+            flash_errors(form)
+            #flash("There was some sort of a problem.")
             return redirect("/post")
         else:
             return render_template("post.html",

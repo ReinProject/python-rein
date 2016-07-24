@@ -11,7 +11,9 @@ class JobPostForm(Form):
     mediators = Mediator.get(None, rein.testnet)
     mediator_maddrs = []
     for m in mediators:
-        mediator_maddrs.append(m.maddr)
+        mediator_maddrs.append((m.maddr, '{}</td><td>{}</td><td>{}'.format(m.username,
+                                                           m.mediator_fee,
+                                                           m.dpubkey)))
     job_name = TextField('Job name', validators = [Required()])
     description = TextAreaField('Description', validators = [Required()])
     tags = TextField('Tags', validators = [Required()])

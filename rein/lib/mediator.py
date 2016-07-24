@@ -1,14 +1,21 @@
 from sqlalchemy import Column, Integer, String, Float, Boolean, and_
+#from sqlalchemy import create_engine
+#from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 import requests
 import click
 import config
+#import os
 from validate import filter_and_parse_valid_sigs
 from market import unique
 
 Base = declarative_base()
-
 rein = config.Config()
+
+#engine = create_engine("sqlite:///%s" % os.path.join(rein.config_dir, rein.db_filename))
+#Base.metadata.bind = engine
+#DBSession = sessionmaker(bind=engine)
+#session = DBSession()
 
 class Mediator(Base):
     __tablename__ = 'mediator'
@@ -36,7 +43,11 @@ class Mediator(Base):
     @classmethod
     def get(self, maddr, testnet):
         if maddr is None:
-            return rein.session.query(Mediator).all()
+            res = rein.session.query(Mediator).all()
+            ret = []
+            for r in res:
+                ret.append(r)
+            return ret
         else:
             return rein.session.query(Mediator).filter(Mediator.maddr == maddr).all()
 
@@ -64,9 +75,3 @@ def get_mediators_bad(rein, user, urls, log):
         newMediator = Mediator(m[u'User'], m[u'Master signing address'], m[u'Mediator public key'], m[u'Mediator fee'])
         objs.append(newMediator)
     return objs
-
-def get_mediator(rein, user, urls, log, pubkey):
-    mediators = get_mediators(rein, user, urls, log)
-    for m in mediators:
-        if m.pubkey == pubkey:
-            return m

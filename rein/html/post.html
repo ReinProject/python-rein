@@ -48,6 +48,7 @@
         {{ render_error(form.expire_days) }}
     </div>
 <table class="table">
+    
 <thead>
     <tr>
         <th>Select</th>
@@ -57,12 +58,10 @@
     </tr>
 </thead>
 <tbody>
-{% for m in mediators %}
+{% for subfield in form.mediator_maddr %}
     <tr>
-        <td><input type="radio" value="{{ m.maddr }}"></td>
-        <td>{{ m.username }}</td>
-        <td>{{ m.rate }}</td>
-        <td>{{ m.dpubkey }}</td>
+        <td>{{ subfield }}</td>
+        <td>{{ subfield.label }}</td>
     </tr>
 {% endfor %}
 </tbody>

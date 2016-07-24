@@ -35,7 +35,7 @@ class Config():
         self.log.addHandler(handler)
 
     def setup_db(self):
-        self.engine = create_engine("sqlite:///%s" % os.path.join(self.config_dir, self.db_filename))
+        self.engine = create_engine("sqlite:///%s" % os.path.join(self.config_dir, self.db_filename), connect_args = {'check_same_thread':False})
         Base.metadata.bind = self.engine
         DBSession = sessionmaker(bind=self.engine)
         self.session = DBSession()
