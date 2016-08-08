@@ -1240,6 +1240,7 @@ def start(multi, identity):
     mediators = Mediator.get(None, rein.testnet)
     jobs = []
     blocks = []
+    connected = False
     for url in urls:    
         log.info("Querying %s for jobs..." % url)
         sel_url = "{0}query?owner={1}&query=jobs&testnet={2}"
@@ -1249,10 +1250,15 @@ def start(multi, identity):
             click.echo('Error connecting to server.')
             log.error('server connect error ' + url)
             continue
+        connected = True
         data = answer.json()
         if data['block_info']:
             blocks.append(data['block_info'])
         jobs += filter_and_parse_valid_sigs(rein, data['jobs'])
+    if not connected:
+        click.echo('No servers were available. Please check your internet connection.')
+        log.error('no servers available')
+        return
     (block_hash, block_time) = choose_best_block(blocks)
     str_block_time = datetime.fromtimestamp(block_time).strftime('%Y-%m-%d %H:%M:%S')
     time_offset = abs(block_time - int(time.time() + time.timezone))
