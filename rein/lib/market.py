@@ -39,7 +39,7 @@ def bid_prompt(rein, bids):
     for b in bids:
         if 'Description' not in b or b['Job creator public key'] != key:
             continue 
-        click.echo('%s - %s - %s - %s - %s BitCoin' % (str(i), b['Job name'], b["Worker"],
+        click.echo('%s - %s - %s - %s - %s bitcoin' % (str(i), b['Job name'], b["Worker"],
                                                   shorten(b['Description']), b['Bid amount (BTC)']))
         valid_bids.append(b)
         i += 1
