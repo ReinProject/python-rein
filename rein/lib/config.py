@@ -2,8 +2,10 @@ import os
 import logging
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.declarative import declarative_base
 from user import User, Base
 from persistconfig import PersistConfig
+
 
 class Config():
     def __init__(self):

@@ -11,15 +11,6 @@ from pprint import pprint
 from datetime import datetime
 from sqlalchemy import and_
 
-# Import models
-from lib.persistconfig import PersistConfig
-from lib.user import User
-from lib.bucket import Bucket
-from lib.document import Document
-from lib.placement import Placement
-from lib.order import Order
-from lib.mediator import Mediator
-
 # Import helper functions
 from lib.ui import *
 from lib.validate import filter_and_parse_valid_sigs, parse_document, choose_best_block, filter_out_expired
@@ -33,6 +24,15 @@ import lib.config as config
 # Create tables
 import lib.models
 
+# Import models
+from lib.persistconfig import PersistConfig
+from lib.user import User
+from lib.bucket import Bucket
+from lib.document import Document
+from lib.placement import Placement
+from lib.order import Order
+from lib.mediator import Mediator
+
 rein = config.Config()
 
 # TODO: break out store from sign_and_store because dry-run.
@@ -42,8 +42,9 @@ rein = config.Config()
 @click.pass_context
 def cli(ctx, debug):
     """
-    Rein is a decentralized professional services market. Python-rein is a command-line
-interface to Rein. Use this program to create an account, post a job, bid, etc.
+    Rein is a decentralized professional services market and Python-rein is a client
+that provides a user interface. Use this program from your local browser or command 
+line to create an account, post a job, bid, etc.
 
 \b
     Quick start:
@@ -1234,6 +1235,10 @@ def start(multi, identity):
     app = Flask(__name__, template_folder=tmpl_dir)
     app.secret_key = ''.join(random.SystemRandom().choice(string.digits) for _ in range(32))
 
+    if rein.has_no_account():
+        print "Going to handle this right."
+        return
+
     (log, user, key, urls) = init(multi, identity)
     documents = Document.get_user_documents(rein)
     orders = Order.get_user_orders(rein, Document)
@@ -1310,7 +1315,6 @@ def start(multi, identity):
             return redirect("/")
         elif request.method == 'POST':
             flash_errors(form)
-            #flash("There was some sort of a problem.")
             return redirect("/post")
         else:
             return render_template("post.html",
@@ -1324,7 +1328,6 @@ def start(multi, identity):
                             block_time=str_block_time,
                             time_offset=time_offset
                             )
-
 
     @app.route('/')
     @app.route('/<path:path>')
