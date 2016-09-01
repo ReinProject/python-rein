@@ -9,7 +9,6 @@ from order import Order
 
 Base = declarative_base()
 
-
 class Document(Base):
     __tablename__ = 'document'
 
@@ -23,6 +22,18 @@ class Document(Base):
     sig_verified = Column(Integer, default=False)
     order_id = Column(Integer, ForeignKey(Order.id))
     testnet = Column(Boolean, nullable=False)
+
+    titles = {'Rein User Enrollment':    'enrollment',
+              'Rein Job':                'job_posting',
+              'Rein Bid':                'bid',
+              'Rein Offer':              'offer',
+              'Rein Delivery':           'delivery',
+              'Rein Accept Delivery':    'accept',
+              'Rein Dispute Delivery':   'creatordispute',
+              'Rein Dispute Offer':      'workerdispute',
+              'Rein Dispute Resolution': 'resolution',
+             }
+
 
     def __init__(self, rein, doc_type, contents, order_id = None,
             source_url='local', source_key=None, sig_verified=False, testnet=True):
@@ -49,6 +60,27 @@ class Document(Base):
                                                         Document.testnet == rein.testnet)).all()
 
     @staticmethod
+    def get_by_type(rein, doc_type):
+        docs = rein.session.query(Document).filter(Document.testnet == rein.testnet).all()
+
+        # convert doc_type to nice title (bid -> "Rein Bid")
+        target = ''
+        for title in Document.titles:
+            if Document.titles[title] == doc_type:
+                target = title
+        if not target:
+            raise('Non-existent doc_type requested')
+
+        res = []
+        for d in docs:
+            parsed = parse_document(d.contents)
+            if 'Title' in parsed:
+                if parsed['Title'] == target:
+                    parsed['id'] = d.id
+                    res.append(parsed)
+        return res
+
+    @staticmethod
     def get_documents_by_job_id(rein, url, job_id):
         # click.echo("Querying %s for job_id %s ..." % (url, job_id))
         sel_url = "{0}query?owner={1}&query=by_job_id&job_ids={2}&testnet={3}"
@@ -73,18 +105,8 @@ class Document(Base):
     @staticmethod
     def get_document_type(document):
         parsed = parse_document(document)
-        titles = {'Rein User Enrollment':    'enrollment',
-                  'Rein Job':                'job_posting',
-                  'Rein Bid':                'bid',
-                  'Rein Offer':              'offer',
-                  'Rein Delivery':           'delivery',
-                  'Rein Accept Delivery':    'accept',
-                  'Rein Dispute Delivery':   'creatordispute',
-                  'Rein Dispute Offer':      'workerdispute',
-                  'Rein Dispute Resolution': 'resolution',
-                 }
         if 'Title' in parsed:
-            return titles[parsed['Title']]
+            return Document.titles[parsed['Title']]
         return None
 
     @staticmethod

@@ -4,6 +4,7 @@ from wtforms import TextField, TextAreaField, RadioField
 from wtforms.validators import Required
 import config
 from mediator import Mediator
+from document import Document
 
 rein = config.Config()
 
@@ -19,3 +20,13 @@ class JobPostForm(Form):
     tags = TextField('Tags', validators = [Required()])
     expire_days = TextField('Expiration (days)', validators = [Required()])
     mediator_maddr = RadioField('Choose mediator', choices = mediator_maddrs)
+
+class JobOfferForm(Form):
+    bids = Document.get_by_type(rein, 'bid')
+    bid_ids = []
+    for b in bids:
+        bid_ids.append((b['id'], '{}</td><td>{}</td><td>{}'.format(b['Job name'],
+                                                           b['Worker'],
+                                                           b['Description'],
+                                                           b['Bid amount (BTC)'])))
+    bid_id = RadioField('Choose Bid', choices = bid_ids)
