@@ -34,6 +34,7 @@ def filter_out_expired(rein, user, urls, jobs):
                         b = Block(block_hash, data['time'], data['height'])
                         rein.session.add(b)
                         rein.session.commit()
+                        times[block_hash] = Block.get_time(rein, block_hash)
 
     for j in jobs:
         if 'Clock hash' not in j:
