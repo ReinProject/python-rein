@@ -1224,7 +1224,7 @@ def start(multi, identity):
     """
     import webbrowser
     from flask import Flask, request, redirect, url_for, flash, send_from_directory, render_template
-    from lib.forms import JobPostForm
+    from lib.forms import JobPostForm, JobOfferForm
     from lib.mediator import Mediator
     
     host = '127.0.0.1'
@@ -1243,6 +1243,7 @@ def start(multi, identity):
     documents = Document.get_user_documents(rein)
     orders = Order.get_user_orders(rein, Document)
     mediators = Mediator.get(None, rein.testnet)
+    bids = Document.get_by_type(rein, 'bid')
     jobs = []
     blocks = []
     connected = False
@@ -1328,6 +1329,51 @@ def start(multi, identity):
                             block_time=str_block_time,
                             time_offset=time_offset
                             )
+
+
+    @app.route("/offer", methods=['POST', 'GET'])
+    def job_offer():
+        form = JobOfferForm(request.form)
+        if request.method == 'POST' and form.validate_on_submit():
+            bid = Document.get(form.id.data)[0]
+            fields = [
+                {'label': 'Job name',                       'value': bid['Job name']},
+                {'label': 'Job ID',                         'value': bid['Job ID']},
+                {'label': 'Description',                    'value': bid['Description']},
+                {'label': 'Bid amount (BTC)',               'value': bid['Bid amount (BTC)']},
+                {'label': 'Primary escrow address',         'value': bid['Primary escrow address']},
+                {'label': 'Mediator escrow address',        'value': bid['Mediator escrow address']},
+                {'label': 'Job creator',                    'value': bid['Job creator']},
+                {'label': 'Job creator public key',         'value': bid['Job creator public key']},
+                {'label': 'Mediator public key',            'value': bid['Mediator public key']},
+                {'label': 'Worker public key',              'value': bid['Worker public key']},
+                {'label': 'Primary escrow redeem script',   'value': bid['Primary escrow redeem script']},
+                {'label': 'Mediator escrow redeem script',  'value': bid['Mediator escrow redeem script']},
+                     ]
+            document_text = assemble_document('Offer', fields)
+            store = True
+            document = sign_and_store_document(rein, 'offer', document_text, user.daddr, user.dkey, store)
+            if document and store:
+                click.echo("Posting created. Run 'rein sync' to push to available servers.")
+            assemble_order(rein, document)
+            log.info('posting signed') if document else log.error('posting failed')
+            return redirect("/")
+        elif request.method == 'POST':
+            flash_errors(form)
+            return redirect("/offer")
+        else:
+            return render_template("offer.html",
+                            form=form,
+                            user=user,
+                            key=key,
+                            urls=urls,
+                            documents=documents,
+                            orders=orders,
+                            bids=bids,
+                            block_time=str_block_time,
+                            time_offset=time_offset
+                            )
+
 
     @app.route('/')
     @app.route('/<path:path>')

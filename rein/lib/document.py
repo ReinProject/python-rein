@@ -34,7 +34,6 @@ class Document(Base):
               'Rein Dispute Resolution': 'resolution',
              }
 
-
     def __init__(self, rein, doc_type, contents, order_id = None,
             source_url='local', source_key=None, sig_verified=False, testnet=True):
         self.identity = rein.user.id
@@ -52,6 +51,10 @@ class Document(Base):
 
     def set_order_id(self, id):
         self.order_id = id
+
+    @staticmethod
+    def get(id):
+        return rein.session.query(Document).get(id)
 
     @staticmethod
     def get_user_documents(rein):
