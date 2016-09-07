@@ -156,15 +156,8 @@ def post(multi, identity, defaults, dry_run):
     eligible_mediators = []
     blocks = []
     for url in urls:
-        log.info("Querying %s for mediators..." % url)
         sel_url = "{0}query?owner={1}&query=mediators&testnet={2}"
-        try:
-            answer = requests.get(url=sel_url.format(url, user.maddr, rein.testnet))
-        except:
-            click.echo('Error connecting to server.')
-            log.error('server connect error ' + url)
-            continue
-        data = answer.json()
+        data = safe_get(sel_url.format(url, user.maddr, rein.testnet))
         if len(data['mediators']) == 0:
             click.echo('None found')
         if data['block_info']:
@@ -259,15 +252,8 @@ def bid(multi, identity, defaults, dry_run):
     jobs = []
     blocks = []
     for url in urls:    
-        log.info("Querying %s for jobs..." % url)
         sel_url = "{0}query?owner={1}&query=jobs&testnet={2}"
-        try:
-            answer = requests.get(url=sel_url.format(url, user.maddr, rein.testnet))
-        except:
-            click.echo('Error connecting to server.')
-            log.error('server connect error ' + url)
-            continue
-        data = answer.json()
+        data = safe_get(sel_url.format(url, user.maddr, rein.testnet))
         if data['block_info']:
             blocks.append(data['block_info'])
         jobs += filter_and_parse_valid_sigs(rein, data['jobs'])
@@ -351,15 +337,8 @@ def offer(multi, identity, defaults, dry_run):
 
     bids = []
     for url in urls:
-        log.info("Querying %s for bids on your jobs..." % url)
         sel_url = "{0}query?owner={1}&delegate={2}&query=bids&testnet={3}"
-        try:
-            answer = requests.get(url=sel_url.format(url, user.maddr, user.daddr, rein.testnet))
-        except:
-            click.echo('Error connecting to server.')
-            log.error('server connect error ' + url)
-            continue
-        data = answer.json()
+        data = safe_get(sel_url.format(url, user.maddr, user.daddr, rein.testnet))
         bids += filter_and_parse_valid_sigs(rein, data['bids'])
 
     unique_bids = unique(bids, 'Description')
@@ -732,15 +711,9 @@ def resolve(multi, identity, defaults, dry_run):
 
     valid_results = []
     for url in urls:
-        log.info("Querying %s for jobs we're mediating..." % url)
         sel_url = "{0}query?owner={1}&query=review&mediator={2}&testnet={3}"
-        try:
-            answer = requests.get(url=sel_url.format(url, user.maddr, key, rein.testnet))
-        except:
-            click.echo('Error connecting to server.')
-            log.error('server connect error ' + url)
-            continue
-        results = answer.json()['review']
+        data = safe_get(sel_url.format(url, user.maddr, key, rein.testnet))
+        results = data['review']
         valid_results += filter_and_parse_valid_sigs(rein, results)
 
     valid_results = unique(valid_results, 'Job ID')
@@ -753,17 +726,10 @@ def resolve(multi, identity, defaults, dry_run):
     job_ids_string = ','.join(job_ids)
     valid_results = []
     for url in urls:
-        log.info("Querying %s for %s ..." % (url, job_ids_string))
         sel_url = "{0}query?owner={1}&job_ids={2}&query=by_job_id&testnet={3}"
-        try:
-            answer = requests.get(url=sel_url.format(url, user.maddr, job_ids_string, rein.testnet))
-        except:
-            click.echo('Error connecting to server.')
-            log.error('server connect error ' + url)
-            continue
-        results = answer.json()
-        if 'by_job_id' in results.keys():
-            results = results['by_job_id']
+        data = safe_get(sel_url.format(url, user.maddr, job_ids_string, rein.testnet))
+        if 'by_job_id' in data:
+            results = data['by_job_id']
         else:
             continue
         valid_results += filter_and_parse_valid_sigs(rein, results, 'Dispute detail')
@@ -926,10 +892,9 @@ def sync(multi, identity):
         click.echo("No buckets registered. Run 'rein request' to continue.")
         return
 
-    mediators = get_mediators(rein, user, urls, log)
+    mediators = remote_query(rein, user, urls, log, 'mediators', 'Mediator public key')
     for m in mediators:
         from pprint import pprint
-        pprint(m)
         if not Mediator.get(m['Master signing address'], rein.testnet):
             newMediator = Mediator(m, testnet)
             rein.session.add(newMediator)
@@ -1012,31 +977,39 @@ def sync(multi, identity):
         if nonce[url] is None:
             continue
         sel_url = url + 'nonce?address={0}&clear={1}'
-        answer = requests.get(url=sel_url.format(user.maddr, nonce[url]))
+        answer = safe_get(sel_url.format(user.maddr, nonce[url]))
         log.info('nonce cleared for %s' % (url))
 
     click.echo('%s docs checked on %s servers, %s uploads done.' % (len(check), len(urls), str(succeeded)))
 
-def get_mediators(rein, user, urls, log):
-    eligible_mediators = []
-    blocks = []
+def remote_query(rein, user, urls, log, query_type, distinct):
+    '''
+    Sends specific query to registered servers and filters for uniqueness
+    '''
+    res = []
     for url in urls:
-        log.info("Querying %s for mediators..." % url)
-        sel_url = "{0}query?owner={1}&query=mediators&testnet={2}"
-        try:
-            answer = requests.get(url=sel_url.format(url, user.maddr, rein.testnet))
-        except:
-            click.echo('Error connecting to server.')
-            log.error('server connect error ' + url)
-            continue
-        data = answer.json()
-        if len(data['mediators']) == 0:
+        sel_url = "{0}query?owner={1}&query={2}&testnet={3}"
+        data = safe_get(sel_url.format(url, user.maddr, query_type, rein.testnet))
+        if data is None or query_type not in data or len(data[query_type]) == 0:
             click.echo('None found')
-        if data['block_info']:
-            blocks.append(data['block_info'])
-        eligible_mediators += filter_and_parse_valid_sigs(rein, data['mediators'])
-    return unique(eligible_mediators, 'Mediator public key')
-    
+        res += filter_and_parse_valid_sigs(rein, data[query_type])
+    return unique(res, distinct)
+
+def safe_get(url):
+    log.info("Requesting {0}...".format(url))
+    try:
+        answer = requests.get(url=url)
+    except:
+        click.echo('Error connecting to server.')
+        log.error('server connect error ' + url)
+        return None
+
+    try:
+        json = answer.json()
+        return json
+    except:
+        return None
+
 @cli.command()
 @click.option('--multi/--no-multi', default=False, help="prompt for identity to use")
 @click.option('--identity', type=click.Choice(['Alice', 'Bob', 'Charlie', 'Dan']), default=None, help="identity to use")
@@ -1074,15 +1047,8 @@ def status(multi, identity, jobid):
     else:
         remote_documents = []
         for url in urls:    
-            log.info("Querying %s for job id %s..." % (url, jobid))
             sel_url = "{0}query?owner={1}&query=by_job_id&job_ids={2}&testnet={3}"
-            try:
-                answer = requests.get(url=sel_url.format(url, user.maddr, jobid, rein.testnet))
-            except:
-                click.echo('Error connecting to server.')
-                log.error('server connect error ' + url)
-                continue
-            data = answer.json()
+            data = safe_get(sel_url.format(url, user.maddr, jobid, rein.testnet))
             remote_documents += filter_and_parse_valid_sigs(rein, data['by_job_id'])
         unique_documents = unique(remote_documents)
         combined = {}
@@ -1248,16 +1214,9 @@ def start(multi, identity):
     blocks = []
     connected = False
     for url in urls:    
-        log.info("Querying %s for jobs..." % url)
         sel_url = "{0}query?owner={1}&query=jobs&testnet={2}"
-        try:
-            answer = requests.get(url=sel_url.format(url, user.maddr, rein.testnet))
-        except:
-            click.echo('Error connecting to server.')
-            log.error('server connect error ' + url)
-            continue
+        data = safe_get(sel_url.format(url, user.maddr, rein.testnet))
         connected = True
-        data = answer.json()
         if data['block_info']:
             blocks.append(data['block_info'])
         jobs += filter_and_parse_valid_sigs(rein, data['jobs'])
@@ -1334,6 +1293,10 @@ def start(multi, identity):
     @app.route("/offer", methods=['POST', 'GET'])
     def job_offer():
         form = JobOfferForm(request.form)
+
+        # get and store bids on our jobs
+
+
         if request.method == 'POST' and form.validate_on_submit():
             bid = Document.get(form.id.data)[0]
             fields = [
