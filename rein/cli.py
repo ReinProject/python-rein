@@ -157,7 +157,7 @@ def post(multi, identity, defaults, dry_run):
     blocks = []
     for url in urls:
         sel_url = "{0}query?owner={1}&query=mediators&testnet={2}"
-        data = safe_get(sel_url.format(url, user.maddr, rein.testnet))
+        data = safe_get(log, sel_url.format(url, user.maddr, rein.testnet))
         if len(data['mediators']) == 0:
             click.echo('None found')
         if data['block_info']:
@@ -253,7 +253,7 @@ def bid(multi, identity, defaults, dry_run):
     blocks = []
     for url in urls:    
         sel_url = "{0}query?owner={1}&query=jobs&testnet={2}"
-        data = safe_get(sel_url.format(url, user.maddr, rein.testnet))
+        data = safe_get(log, sel_url.format(url, user.maddr, rein.testnet))
         if data['block_info']:
             blocks.append(data['block_info'])
         jobs += filter_and_parse_valid_sigs(rein, data['jobs'])
@@ -338,7 +338,7 @@ def offer(multi, identity, defaults, dry_run):
     bids = []
     for url in urls:
         sel_url = "{0}query?owner={1}&delegate={2}&query=bids&testnet={3}"
-        data = safe_get(sel_url.format(url, user.maddr, user.daddr, rein.testnet))
+        data = safe_get(log, sel_url.format(url, user.maddr, user.daddr, rein.testnet))
         bids += filter_and_parse_valid_sigs(rein, data['bids'])
 
     unique_bids = unique(bids, 'Description')
@@ -712,7 +712,7 @@ def resolve(multi, identity, defaults, dry_run):
     valid_results = []
     for url in urls:
         sel_url = "{0}query?owner={1}&query=review&mediator={2}&testnet={3}"
-        data = safe_get(sel_url.format(url, user.maddr, key, rein.testnet))
+        data = safe_get(log, sel_url.format(url, user.maddr, key, rein.testnet))
         results = data['review']
         valid_results += filter_and_parse_valid_sigs(rein, results)
 
@@ -727,7 +727,7 @@ def resolve(multi, identity, defaults, dry_run):
     valid_results = []
     for url in urls:
         sel_url = "{0}query?owner={1}&job_ids={2}&query=by_job_id&testnet={3}"
-        data = safe_get(sel_url.format(url, user.maddr, job_ids_string, rein.testnet))
+        data = safe_get(log, sel_url.format(url, user.maddr, job_ids_string, rein.testnet))
         if 'by_job_id' in data:
             results = data['by_job_id']
         else:
@@ -977,7 +977,7 @@ def sync(multi, identity):
         if nonce[url] is None:
             continue
         sel_url = url + 'nonce?address={0}&clear={1}'
-        answer = safe_get(sel_url.format(user.maddr, nonce[url]))
+        answer = safe_get(log, sel_url.format(user.maddr, nonce[url]))
         log.info('nonce cleared for %s' % (url))
 
     click.echo('%s docs checked on %s servers, %s uploads done.' % (len(check), len(urls), str(succeeded)))
@@ -989,13 +989,13 @@ def remote_query(rein, user, urls, log, query_type, distinct):
     res = []
     for url in urls:
         sel_url = "{0}query?owner={1}&query={2}&testnet={3}"
-        data = safe_get(sel_url.format(url, user.maddr, query_type, rein.testnet))
+        data = safe_get(log, sel_url.format(url, user.maddr, query_type, rein.testnet))
         if data is None or query_type not in data or len(data[query_type]) == 0:
             click.echo('None found')
         res += filter_and_parse_valid_sigs(rein, data[query_type])
     return unique(res, distinct)
 
-def safe_get(url):
+def safe_get(log, url):
     log.info("Requesting {0}...".format(url))
     try:
         answer = requests.get(url=url)
@@ -1048,7 +1048,7 @@ def status(multi, identity, jobid):
         remote_documents = []
         for url in urls:    
             sel_url = "{0}query?owner={1}&query=by_job_id&job_ids={2}&testnet={3}"
-            data = safe_get(sel_url.format(url, user.maddr, jobid, rein.testnet))
+            data = safe_get(log, sel_url.format(url, user.maddr, jobid, rein.testnet))
             remote_documents += filter_and_parse_valid_sigs(rein, data['by_job_id'])
         unique_documents = unique(remote_documents)
         combined = {}
@@ -1215,7 +1215,7 @@ def start(multi, identity):
     connected = False
     for url in urls:    
         sel_url = "{0}query?owner={1}&query=jobs&testnet={2}"
-        data = safe_get(sel_url.format(url, user.maddr, rein.testnet))
+        data = safe_get(log, sel_url.format(url, user.maddr, rein.testnet))
         connected = True
         if data['block_info']:
             blocks.append(data['block_info'])
