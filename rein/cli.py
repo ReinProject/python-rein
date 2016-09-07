@@ -982,34 +982,6 @@ def sync(multi, identity):
 
     click.echo('%s docs checked on %s servers, %s uploads done.' % (len(check), len(urls), str(succeeded)))
 
-def remote_query(rein, user, urls, log, query_type, distinct):
-    '''
-    Sends specific query to registered servers and filters for uniqueness
-    '''
-    res = []
-    for url in urls:
-        sel_url = "{0}query?owner={1}&query={2}&testnet={3}"
-        data = safe_get(log, sel_url.format(url, user.maddr, query_type, rein.testnet))
-        if data is None or query_type not in data or len(data[query_type]) == 0:
-            click.echo('None found')
-        res += filter_and_parse_valid_sigs(rein, data[query_type])
-    return unique(res, distinct)
-
-def safe_get(log, url):
-    log.info("Requesting {0}...".format(url))
-    try:
-        answer = requests.get(url=url)
-    except:
-        click.echo('Error connecting to server.')
-        log.error('server connect error ' + url)
-        return None
-
-    try:
-        json = answer.json()
-        return json
-    except:
-        return None
-
 @cli.command()
 @click.option('--multi/--no-multi', default=False, help="prompt for identity to use")
 @click.option('--identity', type=click.Choice(['Alice', 'Bob', 'Charlie', 'Dan']), default=None, help="identity to use")

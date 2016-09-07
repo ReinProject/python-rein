@@ -3,6 +3,7 @@ from validate import validate_enrollment, parse_document
 from bucket import Bucket 
 from bitcoinecdsa import sign, verify, pubkey, pubkey_to_address
 from order import Order
+import requests
 import os
 import click
 from ui import shorten, get_choice
@@ -318,3 +319,33 @@ def unique(the_array, key=None):
             if element not in unique:
                 unique.append(element)
     return unique
+
+def remote_query(rein, user, urls, log, query_type, distinct):
+    '''
+    Sends specific query to registered servers and filters for uniqueness
+    '''
+    res = []
+    for url in urls:
+        sel_url = "{0}query?owner={1}&query={2}&testnet={3}"
+        data = safe_get(log, sel_url.format(url, user.maddr, query_type, rein.testnet))
+        if data is None or query_type not in data or len(data[query_type]) == 0:
+            click.echo('None found')
+        res += filter_and_parse_valid_sigs(rein, data[query_type])
+    return unique(res, distinct)
+
+def safe_get(log, url):
+    log.info("GET {0}".format(url))
+
+    try:
+        answer = requests.get(url=url)
+    except:
+        click.echo('Error connecting to server.')
+        log.error('server connect error ' + url)
+        return None
+
+    try:
+        json = answer.json()
+        return json
+    except:
+        log.error('non-json return from http get')
+        return answer
