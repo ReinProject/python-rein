@@ -1,4 +1,4 @@
-from flask import Flask, request
+from flask import Flask
 from flask_wtf import Form
 from wtforms import TextField, TextAreaField, RadioField
 from wtforms.validators import Required
