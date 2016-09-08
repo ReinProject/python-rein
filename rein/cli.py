@@ -1295,7 +1295,8 @@ def start(multi, identity):
                 rein.session.commit()
 
         if request.method == 'POST' and form.validate_on_submit():
-            bid = Document.get(form.id.data)[0]
+            bid_doc = Document.get(rein, form.bid_id.data)
+            bid = parse_document(bid_doc.contents)
             fields = [
                 {'label': 'Job name',                       'value': bid['Job name']},
                 {'label': 'Job ID',                         'value': bid['Job ID']},
@@ -1319,6 +1320,7 @@ def start(multi, identity):
             log.info('posting signed') if document else log.error('posting failed')
             return redirect("/")
         elif request.method == 'POST':
+            print "form data " + str(form)
             flash_errors(form)
             return redirect("/offer")
         else:

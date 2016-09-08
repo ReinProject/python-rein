@@ -52,7 +52,7 @@ class Document(Base):
         self.order_id = id
 
     @staticmethod
-    def get(id):
+    def get(rein, id):
         return rein.session.query(Document).get(id)
 
     @staticmethod

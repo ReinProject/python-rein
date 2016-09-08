@@ -15,6 +15,7 @@ class JobPostForm(Form):
         mediator_maddrs.append((m.maddr, '{}</td><td>{}</td><td>{}'.format(m.username,
                                                            m.mediator_fee,
                                                            m.dpubkey)))
+    print mediator_maddrs
     job_name = TextField('Job name', validators = [Required()])
     description = TextAreaField('Description', validators = [Required()])
     tags = TextField('Tags', validators = [Required()])
@@ -24,10 +25,13 @@ class JobPostForm(Form):
 class JobOfferForm(Form):
     bids = Document.get_by_type(rein, 'bid')
     bid_ids = []
+    bid_html = []
     for b in bids:
-        print b['Job name']
-        bid_ids.append((b['id'], '{}</td><td>{}</td><td>{}</td><td>{}'.format(b['Job name'],
+        #bid_ids.append(b['id'])
+        bid_ids.append((str(b['id']), '{}</td><td>{}</td><td>{}</td><td>{}'.format(b['Job name'],
+
                                                            b['Worker'],
                                                            b['Description'],
                                                            b['Bid amount (BTC)'])))
-    bid_id = RadioField('Choose Bid', choices = bid_ids)
+    print bid_ids
+    bid_id = RadioField('Choose bid', choices = bid_ids)
