@@ -39,6 +39,7 @@
     
 <thead>
     <tr>
+        <th></th>
         <th>Job name</th>
         <th>Worker</th>
         <th>Description</th>
@@ -46,7 +47,7 @@
     </tr>
 </thead>
 <tbody>
-{% for subfield in form.mediator_maddr %}
+{% for subfield in form.bid_id %}
     <tr>
         <td>{{ subfield }}</td>
         <td>{{ subfield.label }}</td>

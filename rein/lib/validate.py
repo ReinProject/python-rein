@@ -140,6 +140,7 @@ def filter_and_parse_valid_sigs(rein, docs, expected_field=None):
     fails = 0
     for m in docs:
         data = verify_sig(m)
+        data['original'] = m
         if expected_field:
             if data['valid'] and expected_field in data:
                 valid.append(data)
@@ -150,7 +151,7 @@ def filter_and_parse_valid_sigs(rein, docs, expected_field=None):
                 valid.append(data)
             else:
                 fails += 1
-    rein.log.info('fapvs spammy fails = %d' % fails)
+    rein.log.info('bad signatures = %d' % fails)
     return valid
 
 

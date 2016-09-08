@@ -62,8 +62,15 @@ class Document(Base):
                                                         Document.testnet == rein.testnet)).all()
 
     @staticmethod
+    def find(rein, doc_hash):
+        res = rein.session.query(Document).filter(and_(Document.doc_hash == doc_hash,
+                                                       Document.source_url == 'remote')).all()
+        return res
+
+    @staticmethod
     def get_by_type(rein, doc_type):
-        docs = rein.session.query(Document).filter(Document.testnet == rein.testnet).all()
+        docs = rein.session.query(Document).filter(and_(Document.testnet == rein.testnet,
+                                                       Document.source_url == 'remote')).all()
 
         # convert doc_type to nice title (bid -> "Rein Bid")
         target = ''

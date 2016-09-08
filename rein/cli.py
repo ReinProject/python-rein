@@ -1267,7 +1267,32 @@ def start(multi, identity):
         form = JobOfferForm(request.form)
 
         # get and store bids on our jobs
+        bids = []
+        for url in urls:
+            sel_url = "{0}query?owner={1}&delegate={2}&query=bids&testnet={3}"
+            data = safe_get(log, sel_url.format(url, user.maddr, user.daddr, rein.testnet))
+            bids += filter_and_parse_valid_sigs(rein, data['bids'])
 
+        unique_bids = unique(bids, 'Description')
+
+        bids = []
+        for bid in unique_bids:
+            order = Order.get_by_job_id(rein, bid['Job ID'])
+            if not order:
+                order = Order(bid['Job ID'], testnet=rein.testnet)
+                rein.session.add(order)
+                rein.session.commit()
+            state = order.get_state(rein, Document)
+            if state in ['bid', 'job_posting']:
+                bids.append(bid)
+
+        # check of bid exists and if not store it
+        for b in bids:
+            doc_hash = Document.calc_hash(b['original'])
+            if not Document.find(rein, doc_hash):
+                d = Document(rein, 'bid', b['original'], source_url='remote', testnet=rein.testnet)
+                rein.session.add(d)
+                rein.session.commit()
 
         if request.method == 'POST' and form.validate_on_submit():
             bid = Document.get(form.id.data)[0]

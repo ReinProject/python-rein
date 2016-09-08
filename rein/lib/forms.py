@@ -25,7 +25,8 @@ class JobOfferForm(Form):
     bids = Document.get_by_type(rein, 'bid')
     bid_ids = []
     for b in bids:
-        bid_ids.append((b['id'], '{}</td><td>{}</td><td>{}'.format(b['Job name'],
+        print b['Job name']
+        bid_ids.append((b['id'], '{}</td><td>{}</td><td>{}</td><td>{}'.format(b['Job name'],
                                                            b['Worker'],
                                                            b['Description'],
                                                            b['Bid amount (BTC)'])))
