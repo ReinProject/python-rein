@@ -35,3 +35,11 @@ class JobOfferForm(Form):
                                                            b['Bid amount (BTC)'])))
     print bid_ids
     bid_id = RadioField('Choose bid', choices = bid_ids)
+
+class AcceptForm(Form):
+    deliveries = Document.get_by_type(rein, 'delivery')
+    deliverables = []
+    for d in deliveries:
+        deliverables.append(d['Deliverables'])
+    signed_primary_payment = TextAreaField('Signed primary payment', validators = [Required()])
+    signed_mediator_payment = TextAreaField('Signed mediator payment', validators = [Required()])

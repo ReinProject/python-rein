@@ -418,27 +418,8 @@ def deliver(multi, identity, defaults, dry_run):
             return click.echo("Input file type: " + form['Title'])
     store = False if dry_run else True
 
-    Order.update_orders(rein, Document, Document.get_user_documents)
 
-    documents = []
-    orders = Order.get_user_orders(rein, Document)
-    for order in orders:
-        state = order.get_state(rein, Document)
-        if state in ['offer', 'delivery']:
-            # get parsed offer for this order and put it in an array
-            documents += order.get_documents(rein, Document, state)
-
-    contents = []
-    for document in documents:
-        contents.append(document.contents)
-
-    offers = filter_and_parse_valid_sigs(rein, contents)
-
-    not_our_orders = []
-    for res in offers:
-        if res['Job creator public key'] != key:
-            not_our_orders.append(res)
-
+    not_our_orders = get_in_process_orders(rein, Document, key, 'Job creator public key', False)
     if len(not_our_orders) == 0:
         click.echo('None found')
         return
@@ -496,29 +477,7 @@ def accept(multi, identity, defaults, dry_run):
             return click.echo("Input file type: " + form['Title'])
     store = False if dry_run else True
 
-    Order.update_orders(rein, Document, Document.get_user_documents)
-
-    documents = []
-    orders = Order.get_user_orders(rein, Document)
-    for order in orders:
-        state = order.get_state(rein, Document)
-        if state in ['offer', 'delivery']:
-            # get parsed offer for this order and put it in an array
-            documents += order.get_documents(rein, Document, state)
-
-    contents = []
-    for document in documents:
-        contents.append(document.contents)
-
-    valid_results = filter_and_parse_valid_sigs(rein, contents)
-
-    our_orders = []
-    for res in valid_results:
-        if res['Job creator public key'] == key:
-            order = Order.get_by_job_id(rein, res['Job ID'])
-            res['state'] = order.get_state(rein, Document)
-            our_orders.append(res)
-
+    our_orders = get_in_process_orders(rein, Document, key, 'Job creator public key', True)
     if len(our_orders) == 0:
         click.echo('None found')
         return
@@ -571,35 +530,15 @@ def creatordispute(multi, identity, defaults, dry_run):
             return click.echo("Input file type: " + form['Title'])
     store = False if dry_run else True
 
-    Order.update_orders(rein, Document, Document.get_user_documents)
-
-    documents = []
-    orders = Order.get_user_orders(rein, Document)
-    for order in orders:
-        state = order.get_state(rein, Document)
-        if state in ['offer', 'delivery']:
-            # get parsed offer for this order and put it in an array
-            documents += order.get_documents(rein, Document, state)
-
-    contents = []
-    for document in documents:
-        contents.append(document.contents)
-
-    valid_results = filter_and_parse_valid_sigs(rein, contents)
-
-    not_our_orders = []
-    for res in valid_results:
-        if res['Job creator public key'] == key:
-            not_our_orders.append(res)
-
-    if len(not_our_orders) == 0:
+    our_orders = get_in_process_orders(rein, Document, key, 'Job creator public key', True)
+    if len(our_orders) == 0:
         click.echo('None found')
         return
 
     if 'Job ID' in form.keys():
-        doc = select_by_form(not_our_orders, 'Job ID', form)
+        doc = select_by_form(our_orders, 'Job ID', form)
     else:
-        doc = dispute_prompt(rein, not_our_orders, "Deliverables")
+        doc = dispute_prompt(rein, our_orders, "Deliverables")
     if not doc:
         return
 
@@ -639,37 +578,15 @@ def workerdispute(multi, identity, defaults, dry_run):
             return click.echo("Input file type: " + form['Title'])
     store = False if dry_run else True
 
-    valid_results = []
-
-    Order.update_orders(rein, Document, Document.get_user_documents)
-
-    documents = []
-    orders = Order.get_user_orders(rein, Document)
-    for order in orders:
-        state = order.get_state(rein, Document)
-        if state in ['offer', 'delivery']:
-            # get parsed offer for this order and put it in an array
-            documents += order.get_documents(rein, Document, state)
-
-    contents = []
-    for document in documents:
-        contents.append(document.contents)
-
-    valid_results = filter_and_parse_valid_sigs(rein, contents)
-    
-    not_our_orders = []
-    for res in valid_results:
-        if res['Worker public key'] == key:
-            not_our_orders.append(res)
-
-    if len(not_our_orders) == 0:
+    our_orders = get_in_process_orders(rein, Document, key, 'Worker public key', True)
+    if len(our_orders) == 0:
         click.echo('None found')
         return
 
     if 'Job ID' in form.keys():
-        doc = select_by_form(not_our_orders, 'Job ID', form)
+        doc = select_by_form(our_orders, 'Job ID', form)
     else:
-        doc = dispute_prompt(rein, not_our_orders, 'Deliverables')
+        doc = dispute_prompt(rein, our_orders, 'Deliverables')
     if not doc:
         return
 
@@ -992,7 +909,7 @@ def status(multi, identity, jobid):
     """
     (log, user, key, urls) = init(multi, identity)
 
-    Order.update_orders(rein, Document, Document.get_user_documents)
+    Order.update_orders(rein, Document)
     documents = Document.get_user_documents(rein)
 
     if jobid is None:
@@ -1162,7 +1079,7 @@ def start(multi, identity):
     """
     import webbrowser
     from flask import Flask, request, redirect, url_for, flash, send_from_directory, render_template
-    from lib.forms import JobPostForm, JobOfferForm
+    from lib.forms import JobPostForm, JobOfferForm, AcceptForm
     from lib.mediator import Mediator
     
     host = '127.0.0.1'
@@ -1315,9 +1232,9 @@ def start(multi, identity):
             store = True
             document = sign_and_store_document(rein, 'offer', document_text, user.daddr, user.dkey, store)
             if document and store:
-                click.echo("Posting created. Run 'rein sync' to push to available servers.")
+                click.echo("Offer created. Run 'rein sync' to push to available servers.")
             assemble_order(rein, document)
-            log.info('posting signed') if document else log.error('posting failed')
+            log.info('offer signed') if document else log.error('offer failed')
             return redirect("/")
         elif request.method == 'POST':
             print "form data " + str(form)
@@ -1332,6 +1249,46 @@ def start(multi, identity):
                             documents=documents,
                             orders=orders,
                             bids=bids,
+                            block_time=str_block_time,
+                            time_offset=time_offset
+                            )
+
+    @app.route("/accept", methods=['POST', 'GET'])
+    def job_accept():
+        form = AcceptForm(request.form)
+
+        our_orders = get_in_process_orders(rein, Document, key, 'Job creator public key', True)
+
+        if request.method == 'POST' and form.validate_on_submit():
+            delivery_doc = Document.get(rein, form.delivery_id.data)
+            delivery = parse_document(delivery_doc.contents)
+            fields = [
+                {'label': 'Job name',                       'value_from': delivery},
+                {'label': 'Job ID',                         'value_from': delivery},
+                {'label': 'Signed primary payment',         'not_null': form.signed_primary_payment.data},
+                {'label': 'Signed mediator payment',        'not_null': form.signed_mediator_payment.data},
+                {'label': 'Primary escrow redeem script',   'value_from': delivery},
+                {'label': 'Mediator escrow redeem script',  'value_from': delivery},
+                     ]
+
+            document_text = assemble_document('Accept', fields)
+            store = True
+            document = sign_and_store_document(rein, 'accept', document_text, user.daddr, user.dkey, store)
+            if document and store:
+                click.echo("Accept created. Run 'rein sync' to push to available servers.")
+            assemble_order(rein, document)
+            log.info('accept signed') if document else log.error('accept failed')
+            return redirect("/")
+        elif request.method == 'POST':
+            print "form data " + str(form)
+            flash_errors(form)
+            return redirect("/accept")
+        else:
+            return render_template("accept.html",
+                            form=form,
+                            user=user,
+                            key=key,
+                            urls=urls,
                             block_time=str_block_time,
                             time_offset=time_offset
                             )

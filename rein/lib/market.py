@@ -349,3 +349,29 @@ def safe_get(log, url):
     except:
         log.error('non-json return from http get')
         return answer
+
+def get_in_process_orders(rein, Document, key, match_field, should_match):
+    Order.update_orders(rein, Document)
+
+    documents = []
+    orders = Order.get_user_orders(rein, Document)
+    for order in orders:
+        state = order.get_state(rein, Document)
+        if state in ['offer', 'delivery']:
+            documents += order.get_documents(rein, Document, state)
+
+    contents = []
+    for document in documents:
+        contents.append(document.contents)
+
+    valid_results = filter_and_parse_valid_sigs(rein, contents)
+
+    target_orders = []
+    for res in valid_results:
+        if (should_match and res[match_field] == key) or \
+           (not should_match and res[match_field] != key):
+            order = Order.get_by_job_id(rein, res['Job ID'])
+            res['state'] = order.get_state(rein, Document)
+            target_orders.append(res)
+
+    return target_orders

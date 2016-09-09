@@ -115,9 +115,9 @@ class Order(Base):
         return None
 
     @classmethod
-    def update_orders(self, rein, Document, get_user_documents):
+    def update_orders(self, rein, Document):
         from market import assemble_order
-        documents = get_user_documents(rein)
+        documents = Document.get_user_documents(rein)
         processed_job_ids = []
         for document in documents:
             job_id = Document.get_job_id(document.contents)
