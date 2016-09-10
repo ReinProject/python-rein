@@ -28,6 +28,7 @@ class Document(Base):
               'Rein Offer':              'offer',
               'Rein Delivery':           'delivery',
               'Rein Accept Delivery':    'accept',
+              'Rein Accept':             'accept',
               'Rein Dispute Delivery':   'creatordispute',
               'Rein Dispute Offer':      'workerdispute',
               'Rein Dispute Resolution': 'resolution',

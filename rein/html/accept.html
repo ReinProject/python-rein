@@ -31,6 +31,9 @@
 {% endif %}
 </p>
 
+<form class="form-horizontal" role="form" method="POST" action="{{ url_for('job_accept') }}">
+    {{ form.csrf_token }}
+
 <table class="table">
 <thead>
     <tr>
@@ -38,16 +41,16 @@
     </tr>
 </thead>
 <tbody>
-{% for entry in form.deliverables %}
+{% for subfield in form.deliverable_id %}
+
     <tr>
-        <td>{{ entry }}</td>
+        <td>{{ subfield }}</td>
+        <td>{{ subfield.label }}</td>
     </tr>
 {% endfor %}
 </tbody>
 </table>
 
-<form class="form-horizontal" role="form" method="POST" action="{{ url_for('job_accept') }}">
-    {{ form.csrf_token }}
     <div class="form-group">
         <label class="col-sm-5 control-label">{{ form.signed_primary_payment.label }}</label>
     </div>

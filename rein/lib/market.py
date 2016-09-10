@@ -275,6 +275,7 @@ def assemble_order(rein, document):
     documents = []
     if job_id:
         for url in urls:
+            # queries remote server for all docs associated with a job_id
             res = Document.get_documents_by_job_id(rein, url, job_id)
             if res:
                 documents += res
@@ -294,15 +295,11 @@ def assemble_order(rein, document):
         if d:
             d.set_order_id(order_id)
         else:
-            new_document = Document(rein, doc_type, document, order_id, 'external', source_key=None, sig_verified=True, testnet=rein.testnet)
+            new_document = Document(rein, doc_type, document, order_id, 'remote', source_key=None, sig_verified=True, testnet=rein.testnet)
             rein.session.add(new_document)
-
-        rein.session.commit()
+            rein.session.commit()
 
     return len(documents)
-    # how do we test this? give it a document, it gets the job id, then does a query for all other docs 
-    # with that job id. if it can figure out the doc type, it sets the order id on it. this allows
-    # Order.get_documents() to provide all documents or to provide just the post or the bid.
 
 def unique(the_array, key=None):
     """

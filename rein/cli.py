@@ -1260,18 +1260,18 @@ def start(multi, identity):
         our_orders = get_in_process_orders(rein, Document, key, 'Job creator public key', True)
 
         if request.method == 'POST' and form.validate_on_submit():
-            delivery_doc = Document.get(rein, form.delivery_id.data)
+            delivery_doc = Document.get(rein, form.deliverable_id.data)
             delivery = parse_document(delivery_doc.contents)
             fields = [
                 {'label': 'Job name',                       'value_from': delivery},
                 {'label': 'Job ID',                         'value_from': delivery},
-                {'label': 'Signed primary payment',         'not_null': form.signed_primary_payment.data},
-                {'label': 'Signed mediator payment',        'not_null': form.signed_mediator_payment.data},
+                {'label': 'Signed primary payment',         'value': form.signed_primary_payment.data},
+                {'label': 'Signed mediator payment',        'value': form.signed_mediator_payment.data},
                 {'label': 'Primary escrow redeem script',   'value_from': delivery},
                 {'label': 'Mediator escrow redeem script',  'value_from': delivery},
                      ]
 
-            document_text = assemble_document('Accept', fields)
+            document_text = assemble_document('Accept Delivery', fields)
             store = True
             document = sign_and_store_document(rein, 'accept', document_text, user.daddr, user.dkey, store)
             if document and store:

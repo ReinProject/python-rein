@@ -5,6 +5,7 @@ from wtforms.validators import Required
 import config
 from mediator import Mediator
 from document import Document
+from order import Order
 
 rein = config.Config()
 
@@ -15,7 +16,6 @@ class JobPostForm(Form):
         mediator_maddrs.append((m.maddr, '{}</td><td>{}</td><td>{}'.format(m.username,
                                                            m.mediator_fee,
                                                            m.dpubkey)))
-    print mediator_maddrs
     job_name = TextField('Job name', validators = [Required()])
     description = TextAreaField('Description', validators = [Required()])
     tags = TextField('Tags', validators = [Required()])
@@ -33,13 +33,15 @@ class JobOfferForm(Form):
                                                            b['Worker'],
                                                            b['Description'],
                                                            b['Bid amount (BTC)'])))
-    print bid_ids
     bid_id = RadioField('Choose bid', choices = bid_ids)
 
 class AcceptForm(Form):
     deliveries = Document.get_by_type(rein, 'delivery')
     deliverables = []
     for d in deliveries:
-        deliverables.append(d['Deliverables'])
+        deliverables.append((str(d['id']), '{}</td><td>{}</td><td>{}'.format(d['Job name'],
+                                                           d['Job ID'],
+                                                           d['Deliverables'])))
     signed_primary_payment = TextAreaField('Signed primary payment', validators = [Required()])
     signed_mediator_payment = TextAreaField('Signed mediator payment', validators = [Required()])
+    deliverable_id = RadioField('Choose deliverable to accept', choices = deliverables)
