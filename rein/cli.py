@@ -1293,7 +1293,32 @@ def start(multi, identity):
                             time_offset=time_offset
                             )
 
+    @app.route('/job/<jobid>')
+    def job_info_page(jobid):
+        remote_documents = []
+        for url in urls:    
+            sel_url = "{0}query?owner={1}&query=by_job_id&job_ids={2}&testnet={3}"
+            data = safe_get(log, sel_url.format(url, user.maddr, jobid, rein.testnet))
+            remote_documents += filter_and_parse_valid_sigs(rein, data['by_job_id'])
+        unique_documents = unique(remote_documents)
+        combined = {}
+        for doc in remote_documents:
+            combined.update(doc)
 
+        cleanup = ['Title', 'signature', 'signature_address', 'valid']
+        for key in cleanup:
+            if key in combined:
+                del combined[key]
+        if len(remote_documents) == 0:
+            found = False
+        else:
+            found = True
+        return render_template('job.html',
+                            user=user,
+                            found=found,
+                            job=combined)
+        
+            
     @app.route('/')
     @app.route('/<path:path>')
     def serve_file(path="index.html"):
