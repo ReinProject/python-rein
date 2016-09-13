@@ -22,7 +22,7 @@ FLOW = {
 
 PAST_TENSE = {
         'job_posting':      'posted',
-        'bid':              'bid(s) submitted',
+        'bid':              'bid submitted',
         'offer':            'job awarded',
         'delivery':         'deliverables submitted',
         'creatordispute':   'disputed by job creator',
