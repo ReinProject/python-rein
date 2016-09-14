@@ -1313,6 +1313,7 @@ def start(multi, identity):
             found = False
         else:
             found = True
+
         return render_template('job.html',
                             user=user,
                             found=found,

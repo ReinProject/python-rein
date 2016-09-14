@@ -15,7 +15,7 @@
 </div>
 <div class="well">
 <div class="row">
-	<div class="col-xs-12 col-sm-6">
+	<div class="col-xs-12">
 <h4>Job Detail</h4>
 {% with messages = get_flashed_messages() %}
   {% if messages %}
@@ -27,9 +27,31 @@
 
 {% if found %}
 
-<p>Found {{ job['Job ID'] }} </p>
+<p>Name: {{ job['Job name'] }} <br />
+Description: {{ job['Description'] }}<br />
+ID: {{ job['Job ID'] }} <br />
+</p>
+<!--
+<p>: {{ job[''] }} </p>
+-->
 
 
+<h5>Participants</h5>
+<p>Job creator: <b>{{ job['Job creator'] }}</b> / <a href="mailto:{{ job['Job creator contact'] }}">{{ job['Job creator contact'] }}</a> / {{ job['Job creator master address'] }}<br />
+Mediator: <b>{{ job['Mediator'] }}</b> / <a href="mailto:{{ job['Mediator contact'] }}">{{ job['Mediator contact'] }}</a> / {{ job['Mediator master address'] }}<br />
+{% if 'Worker' in job  %}
+Worker: <b>{{ job['Worker'] }}</b> / <a href="mailto:{{ job['Worker contact'] }}">{{ job['Worker contact'] }}</a> / {{ job['Worker master address'] }}</p>
+
+<h5>Payments</h5>
+<p>Primary escrow: <b>{{ job['Primary escrow address'] }}</b> should be funded with <b>{{ job['Bid amount (BTC)'] }} BTC</b>.<br />
+Mediator escrow: <b>{{ job['Mediator escrow address'] }}</b> should be funded with <b>{{ job['Mediator fee'] }}%</b> of the above.<br />
+
+{% endif %}<br />
+<br />
+<h5>Misc</h5>
+Random original document:<br />
+<textarea rows="5" cols="80">{{ job['original'] }}</textarea>
+</p>
 {% else %}
 
 <p>Nope.</p>
