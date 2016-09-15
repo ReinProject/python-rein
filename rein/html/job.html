@@ -8,8 +8,8 @@
 			<i class="fa fa-bars"></i>
 		</a>
 		<ol class="breadcrumb pull-left">
-			<li><a href="index.html">General</a></li>
-			<li><a href="job.html">Job Detail</a></li>
+			<li><a href="/">General</a></li>
+			<li><a href="#">Job Detail</a></li>
 		</ol>
     </div>
 </div>
@@ -28,8 +28,12 @@
 {% if found %}
 
 <p>Name: {{ job['Job name'] }} <br />
+Status: {% if state['endpoint'] %}
+<a href="{{ state['endpoint'] }}">{{ state['past_tense'] }}</a><br />
+{% else %}
+{{ state['past_tense'] }}<br />
+{% endif %}
 Description: {{ job['Description'] }}<br />
-ID: {{ job['Job ID'] }} <br />
 </p>
 <!--
 <p>: {{ job[''] }} </p>
@@ -44,13 +48,13 @@ Worker: <b>{{ job['Worker'] }}</b> / <a href="mailto:{{ job['Worker contact'] }}
 
 <h5>Payments</h5>
 <p>Primary escrow: <b>{{ job['Primary escrow address'] }}</b> should be funded with <b>{{ job['Bid amount (BTC)'] }} BTC</b>.<br />
-Mediator escrow: <b>{{ job['Mediator escrow address'] }}</b> should be funded with <b>{{ job['Mediator fee'] }}%</b> of the above.<br />
+Mediator escrow: <b>{{ job['Mediator escrow address'] }}</b> should be funded with <b>{{ job['Mediator fee'] }}</b> of the above.<br />
 
 {% endif %}<br />
-<br />
 <h5>Misc</h5>
-Random original document:<br />
-<textarea rows="5" cols="80">{{ job['original'] }}</textarea>
+ID: {{ job['Job ID'] }} <br />
+Latest original document:<br />
+<textarea rows="25" cols="120">{{ job['original'] }}</textarea>
 </p>
 {% else %}
 

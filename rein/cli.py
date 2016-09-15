@@ -30,7 +30,7 @@ from lib.user import User
 from lib.bucket import Bucket
 from lib.document import Document
 from lib.placement import Placement
-from lib.order import Order
+from lib.order import Order, STATE
 from lib.mediator import Mediator
 
 rein = config.Config()
@@ -1081,7 +1081,7 @@ def start(multi, identity):
     from flask import Flask, request, redirect, url_for, flash, send_from_directory, render_template
     from lib.forms import JobPostForm, JobOfferForm, AcceptForm
     from lib.mediator import Mediator
-    
+
     host = '127.0.0.1'
     port = 5001
 
@@ -1305,10 +1305,14 @@ def start(multi, identity):
         for doc in remote_documents:
             combined.update(doc)
 
+        o = Order.get_by_job_id(rein, jobid)
+        state = STATE[o.get_state(rein, Document)]
+
         cleanup = ['Title', 'signature', 'signature_address', 'valid']
         for key in cleanup:
             if key in combined:
                 del combined[key]
+
         if len(remote_documents) == 0:
             found = False
         else:
@@ -1316,6 +1320,8 @@ def start(multi, identity):
 
         return render_template('job.html',
                             user=user,
+                            order=o,
+                            state=state,
                             found=found,
                             job=combined)
         
