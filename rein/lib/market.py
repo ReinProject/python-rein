@@ -294,10 +294,11 @@ def assemble_order(rein, document):
         d = rein.session.query(Document).filter(Document.doc_hash == doc_hash).first()
         if d:
             d.set_order_id(order_id)
+            rein.session.add(d)
         else:
             new_document = Document(rein, doc_type, document, order_id, 'remote', source_key=None, sig_verified=True, testnet=rein.testnet)
             rein.session.add(new_document)
-            rein.session.commit()
+        rein.session.commit()
 
     return len(documents)
 

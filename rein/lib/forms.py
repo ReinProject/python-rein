@@ -13,7 +13,7 @@ class JobPostForm(Form):
     mediators = Mediator.get(None, rein.testnet)
     mediator_maddrs = []
     for m in mediators:
-        mediator_maddrs.append((m.maddr, '{}</td><td>{}</td><td>{}'.format(m.username,
+        mediator_maddrs.append((m.maddr, '{}</td><td>{}%</td><td>{}'.format(m.username,
                                                            m.mediator_fee,
                                                            m.dpubkey)))
     job_name = TextField('Job name', validators = [Required()])
@@ -30,8 +30,8 @@ class JobOfferForm(Form):
         o = Order.get_by_job_id(rein, b['Job ID'])
         if o.get_state(rein, Document) in ['bid', 'job_posting']:
         #bid_ids.append(b['id'])
-            bid_ids.append((str(b['id']), '{}</td><td>{}</td><td>{}</td><td>{}'.format(b['Job name'],
-
+            job_link = '<a href="/job/%s">%s</a>' % (b['Job ID'], b['Job name'])
+            bid_ids.append((str(b['id']), '{}</td><td>{}</td><td>{}</td><td>{}'.format(job_link,
                                                                b['Worker'],
                                                                b['Description'],
                                                                b['Bid amount (BTC)'])))

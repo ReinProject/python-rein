@@ -29,6 +29,16 @@
 	<div class="clearfix visible-xs"></div>
 </div>
 <!--End Dashboard 1-->
+
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+    {% for message in messages %}
+     <h4 class="txt-success">{{ message }}</h4>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+
+
 <!--Start Rein Dashboard-->
 <div class="well">
     <p>

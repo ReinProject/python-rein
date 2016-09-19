@@ -803,6 +803,10 @@ def sync(multi, identity):
     """
     (log, user, key, urls) = init(multi, identity)
 
+    sync_core(log, user, key, urls)
+
+
+def sync_core(log, user, key, urls):
     click.echo("User: " + user.name)
 
     if len(urls) == 0:
@@ -1159,6 +1163,8 @@ def start(multi, identity):
             document = sign_and_store_document(rein, 'job_posting', document_text, user.daddr, user.dkey, store)
             if document and store:
                 click.echo("Posting created. Run 'rein sync' to push to available servers.")
+                sync_core(log, user, key, urls)
+                flash("Posting created and pushed to available servers.")
             assemble_order(rein, document)
             log.info('posting signed') if document else log.error('posting failed')
             return redirect("/")
@@ -1181,6 +1187,7 @@ def start(multi, identity):
 
     @app.route("/offer", methods=['POST', 'GET'])
     def job_offer():
+        Order.update_orders(rein, Document)
         form = JobOfferForm(request.form)
 
         # get and store bids on our jobs
@@ -1206,7 +1213,7 @@ def start(multi, identity):
         # check of bid exists and if not store it
         for b in bids:
             doc_hash = Document.calc_hash(b['original'])
-            if not Document.find(rein, doc_hash):
+            if not Document.find(rein, doc_hash, 'remote'):
                 d = Document(rein, 'bid', b['original'], source_url='remote', testnet=rein.testnet)
                 rein.session.add(d)
                 rein.session.commit()
@@ -1233,6 +1240,8 @@ def start(multi, identity):
             document = sign_and_store_document(rein, 'offer', document_text, user.daddr, user.dkey, store)
             if document and store:
                 click.echo("Offer created. Run 'rein sync' to push to available servers.")
+                sync_core(log, user, key, urls)
+                flash("Offer created and pushed to available servers.")
             assemble_order(rein, document)
             log.info('offer signed') if document else log.error('offer failed')
             return redirect("/")
@@ -1255,6 +1264,7 @@ def start(multi, identity):
 
     @app.route("/accept", methods=['POST', 'GET'])
     def job_accept():
+        Order.update_orders(rein, Document)
         form = AcceptForm(request.form)
 
         our_orders = get_in_process_orders(rein, Document, key, 'Job creator public key', True)
@@ -1276,6 +1286,8 @@ def start(multi, identity):
             document = sign_and_store_document(rein, 'accept', document_text, user.daddr, user.dkey, store)
             if document and store:
                 click.echo("Accept created. Run 'rein sync' to push to available servers.")
+                sync_core(log, user, key, urls)
+                flash("Accept signed and pushed to available servers.")
             assemble_order(rein, document)
             log.info('accept signed') if document else log.error('accept failed')
             return redirect("/")
@@ -1295,6 +1307,7 @@ def start(multi, identity):
 
     @app.route('/job/<jobid>')
     def job_info_page(jobid):
+        Order.update_orders(rein, Document)
         remote_documents = []
         for url in urls:    
             sel_url = "{0}query?owner={1}&query=by_job_id&job_ids={2}&testnet={3}"
@@ -1329,7 +1342,10 @@ def start(multi, identity):
     @app.route('/')
     @app.route('/<path:path>')
     def serve_file(path="index.html"):
-        if path.find('.html') >= 0:
+        if path.find('.html') >= 0 or path == 'index.html':
+            documents = Document.get_user_documents(rein)
+            Order.update_orders(rein, Document)
+            orders = Order.get_user_orders(rein, Document)
             return render_template(path,
                             user=user,
                             key=key,
