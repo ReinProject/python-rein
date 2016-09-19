@@ -31,7 +31,7 @@
 {% endif %}
 </p>
 
-<form class="form-horizontal" role="form" method="POST" action="{{ url_for('job_accept') }}">
+<form class="form-horizontal" role="form" method="POST" onsubmit="return confirm('This will be sync\'d immediately to available servers. Please confirm.');" action="{{ url_for('job_accept') }}">
     {{ form.csrf_token }}
 
 <table class="table">
