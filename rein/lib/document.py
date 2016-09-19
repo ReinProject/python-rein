@@ -63,15 +63,15 @@ class Document(Base):
                                                         Document.testnet == rein.testnet)).all()
 
     @staticmethod
-    def find(rein, doc_hash):
+    def find(rein, doc_hash, source_url):
         res = rein.session.query(Document).filter(and_(Document.doc_hash == doc_hash,
-                                                       Document.source_url == 'remote')).all()
+                                                       Document.source_url == source_url)).all()
         return res
 
     @staticmethod
     def get_by_type(rein, doc_type):
         docs = rein.session.query(Document).filter(and_(Document.testnet == rein.testnet,
-                                                       Document.source_url == 'remote')).all()
+                                                        Document.source_url == 'remote')).all()
 
         # convert doc_type to nice title (bid -> "Rein Bid")
         target = ''
@@ -79,7 +79,7 @@ class Document(Base):
             if Document.titles[title] == doc_type:
                 target = title
         if not target:
-            raise('Non-existent doc_type requested')
+            Exception('Non-existent doc_type requested')
 
         res = []
         for d in docs:
