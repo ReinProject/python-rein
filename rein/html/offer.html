@@ -33,7 +33,7 @@
 
 <!-- Job name, Worker, Description, Bid amount (BTC) -->
 
-<form class="form-horizontal" role="form" method="POST" action="{{ url_for('job_offer') }}">
+<form class="form-horizontal" role="form" method="POST" onsubmit="return confirm('This will be sync\'d immediately to available servers. Please confirm.');" action="{{ url_for('job_offer') }}">
     {{ form.csrf_token }}
 <table class="table">
     
@@ -55,7 +55,7 @@
 {% endfor %}
 </tbody>
 </table>
-<input type="submit" value="Post!">
+<input type="submit" value="Offer job!">
 </form>
     </div>
 </div>
