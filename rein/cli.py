@@ -1095,21 +1095,49 @@ def start(multi, identity, setup):
     app = Flask(__name__, template_folder=tmpl_dir)
     app.secret_key = ''.join(random.SystemRandom().choice(string.digits) for _ in range(32))
 
+    def flash_errors(form):
+        for field, errors in form.errors.items():
+            for error in errors:
+                 flash(u"Error in the %s field - %s" % (
+                       getattr(form, field).label.text,
+                       error
+                       ))
+
     @app.route("/setup", methods=['POST', 'GET'])
     def start_setup():
         log = rein.get_log()
         form = SetupForm(request.form)
 
         from rein.lib.user import User
-        user = User('Guest','guest@example.com', '', '', '', False, 0, 0)
 
         if request.method == 'POST' and form.validate_on_submit():
-            pass
-        elif request.method == 'POST':
-            pass
+            new_identity = User(name, contact, maddr, daddr, dkey, will_mediate, mediator_fee, rein.testnet)
+            rein.session.add(new_identity)
+            rein.session.commit()
+            data = {'name': name,
+                    'contact': contact,
+                    'maddr': maddr,
+                    'daddr': daddr,
+                    'dkey': dkey,
+                    'will_mediate': will_mediate,
+                    'mediator_fee': mediator_fee,
+                    'testnet': rein.testnet}
+            if not os.path.isfile(rein.backup_filename):
+                 f = open(rein.backup_filename, 'w')
+                 try:
+                     f.write(json.dumps(data))
+                     click.echo("Backup saved successfully to %s" % rein.backup_filename)
+                 except:
+                     raise RuntimeError('Problem writing user details to json backup file.')
+                 f.close()
+            else:
+                 click.echo("Backup file already exists. Please run with --backup to save "
+                            "user details to file.")
+        #elif request.method == 'POST':
+        #    flash_errors(form)
+        #    return redirect("/setup")
         else:
             return render_template("setup.html",
-                                   user=user,
                                    form=form)
 
     @app.route('/<path:path>')
@@ -1142,14 +1170,6 @@ def start(multi, identity, setup):
         (block_hash, block_time) = choose_best_block(blocks)
         str_block_time = datetime.fromtimestamp(block_time).strftime('%Y-%m-%d %H:%M:%S')
         time_offset = abs(block_time - int(time.time() + time.timezone))
-
-    def flash_errors(form):
-        for field, errors in form.errors.items():
-            for error in errors:
-                 flash(u"Error in the %s field - %s" % (
-                       getattr(form, field).label.text,
-                       error
-                       ))
 
     @app.route("/post", methods=['POST', 'GET'])
     def job_post():

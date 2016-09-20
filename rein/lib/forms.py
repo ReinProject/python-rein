@@ -1,13 +1,23 @@
 from flask import Flask
 from flask_wtf import Form
 from wtforms import TextField, TextAreaField, RadioField, PasswordField
-from wtforms.validators import Required
+from wtforms.validators import Required, ValidationError
 import config
 from mediator import Mediator
 from document import Document
 from order import Order
-
+from bitcoinecdsa import privkey_to_address
+from bitcoinaddress import check_bitcoin_address
 rein = config.Config()
+
+
+def validate_privkey(form, field):
+    if not privkey_to_address(field.data):
+        raise ValidationError("Not a valid private key.")
+
+def validate_address(form, field):
+    if not check_bitcoin_address(field.data):
+        raise ValidationError("Invalid address")
 
 class SetupForm(Form):
     mediators = Mediator.get(None, rein.testnet)
@@ -17,11 +27,11 @@ class SetupForm(Form):
                                                            m.mediator_fee,
                                                            m.dpubkey)))
     name = TextField('Name / Handle', validators = [Required()])
-    contact = TextAreaField('Email / Bitmessage', validators = [Required()])
-    maddr = TextField('Master Bitcoin address', validators = [Required()])
-    daddr = TextField('Delegate Bitcoin address', validators = [Required()])
-    dkey = PasswordField('Delegate Bitcoin private Key', validators = [Required()])
-    will_mediate = RadioField('Register as a mediator?', choices = [(1,'Yes'), (0, 'No')])
+    contact = TextField('Email / Bitmessage', validators = [Required()])
+    maddr = TextField('Master Bitcoin address', validators = [Required(), validate_address])
+    daddr = TextField('Delegate Bitcoin address', validators = [Required(), validate_address])
+    dkey = PasswordField('Delegate Bitcoin private Key', validators = [Required(), validate_privkey])
+    will_mediate = RadioField('Register as a mediator?', choices = [('1','Yes'), ('0', 'No')])
     mediator_fee = TextField('Mediator Fee')  # TODO make required only if Yes above
 
 class JobPostForm(Form):
