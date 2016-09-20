@@ -1074,7 +1074,8 @@ def select_by_form(candidates, field, form):
 @cli.command()
 @click.option('--multi/--no-multi', '-m', default=False, help="prompt for identity to use")
 @click.option('--identity', '-i', type=click.Choice(['Alice', 'Bob', 'Charlie', 'Dan']), default=None, help="identity to use")
-def start(multi, identity):
+@click.option('--setup/--no-setup', default=False, help="Setup new user")
+def start(multi, identity, setup):
     """
     Use Rein from the browser.
 
@@ -1083,7 +1084,7 @@ def start(multi, identity):
     """
     import webbrowser
     from flask import Flask, request, redirect, url_for, flash, send_from_directory, render_template
-    from lib.forms import JobPostForm, JobOfferForm, AcceptForm
+    from lib.forms import SetupForm, JobPostForm, JobOfferForm, AcceptForm
     from lib.mediator import Mediator
 
     host = '127.0.0.1'
@@ -1094,32 +1095,53 @@ def start(multi, identity):
     app = Flask(__name__, template_folder=tmpl_dir)
     app.secret_key = ''.join(random.SystemRandom().choice(string.digits) for _ in range(32))
 
-    if rein.has_no_account():
-        print "Going to handle this right."
-        return
+    @app.route("/setup", methods=['POST', 'GET'])
+    def start_setup():
+        log = rein.get_log()
+        form = SetupForm(request.form)
 
-    (log, user, key, urls) = init(multi, identity)
-    documents = Document.get_user_documents(rein)
-    orders = Order.get_user_orders(rein, Document)
-    mediators = Mediator.get(None, rein.testnet)
-    bids = Document.get_by_type(rein, 'bid')
-    jobs = []
-    blocks = []
-    connected = False
-    for url in urls:    
-        sel_url = "{0}query?owner={1}&query=jobs&testnet={2}"
-        data = safe_get(log, sel_url.format(url, user.maddr, rein.testnet))
-        connected = True
-        if data['block_info']:
-            blocks.append(data['block_info'])
-        jobs += filter_and_parse_valid_sigs(rein, data['jobs'])
-    if not connected:
-        click.echo('No servers were available. Please check your internet connection.')
-        log.error('no servers available')
-        return
-    (block_hash, block_time) = choose_best_block(blocks)
-    str_block_time = datetime.fromtimestamp(block_time).strftime('%Y-%m-%d %H:%M:%S')
-    time_offset = abs(block_time - int(time.time() + time.timezone))
+        from rein.lib.user import User
+        user = User('Guest','guest@example.com', '', '', '', False, 0, 0)
+
+        if request.method == 'POST' and form.validate_on_submit():
+            pass
+        elif request.method == 'POST':
+            pass
+        else:
+            return render_template("setup.html",
+                                   user=user,
+                                   form=form)
+
+    @app.route('/<path:path>')
+    def serve_static_file(path):
+            return send_from_directory(tmpl_dir, path)
+
+    if rein.has_no_account() or setup:
+        webbrowser.open('http://'+host+':' + str(port) + '/setup')
+        app.run(host=host, port=port, debug=True)
+    else:
+        (log, user, key, urls) = init(multi, identity)
+        documents = Document.get_user_documents(rein)
+        orders = Order.get_user_orders(rein, Document)
+        mediators = Mediator.get(None, rein.testnet)
+        bids = Document.get_by_type(rein, 'bid')
+        jobs = []
+        blocks = []
+        connected = False
+        for url in urls:
+            sel_url = "{0}query?owner={1}&query=jobs&testnet={2}"
+            data = safe_get(log, sel_url.format(url, user.maddr, rein.testnet))
+            connected = True
+            if data['block_info']:
+                blocks.append(data['block_info'])
+            jobs += filter_and_parse_valid_sigs(rein, data['jobs'])
+        if not connected:
+            click.echo('No servers were available. Please check your internet connection.')
+            log.error('no servers available')
+            return
+        (block_hash, block_time) = choose_best_block(blocks)
+        str_block_time = datetime.fromtimestamp(block_time).strftime('%Y-%m-%d %H:%M:%S')
+        time_offset = abs(block_time - int(time.time() + time.timezone))
 
     def flash_errors(form):
         for field, errors in form.errors.items():
@@ -1262,6 +1284,7 @@ def start(multi, identity):
                             time_offset=time_offset
                             )
 
+
     @app.route("/accept", methods=['POST', 'GET'])
     def job_accept():
         Order.update_orders(rein, Document)
@@ -1340,21 +1363,17 @@ def start(multi, identity):
         
             
     @app.route('/')
-    @app.route('/<path:path>')
-    def serve_file(path="index.html"):
-        if path.find('.html') >= 0 or path == 'index.html':
-            documents = Document.get_user_documents(rein)
-            Order.update_orders(rein, Document)
-            orders = Order.get_user_orders(rein, Document)
-            return render_template(path,
-                            user=user,
-                            key=key,
-                            urls=urls,
-                            documents=documents,
-                            orders=orders)
-        else:
-            return send_from_directory(tmpl_dir, path)
-
+    @app.route('/index.html')
+    def serve_template_file():
+        documents = Document.get_user_documents(rein)
+        Order.update_orders(rein, Document)
+        orders = Order.get_user_orders(rein, Document)
+        return render_template('index.html',
+                        user=user,
+                        key=key,
+                        urls=urls,
+                        documents=documents,
+                        orders=orders)
 
     webbrowser.open('http://'+host+':' + str(port))
     app.run(host=host, port=port, debug=True)

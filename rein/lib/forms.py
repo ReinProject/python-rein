@@ -1,6 +1,6 @@
 from flask import Flask
 from flask_wtf import Form
-from wtforms import TextField, TextAreaField, RadioField
+from wtforms import TextField, TextAreaField, RadioField, PasswordField
 from wtforms.validators import Required
 import config
 from mediator import Mediator
@@ -8,6 +8,21 @@ from document import Document
 from order import Order
 
 rein = config.Config()
+
+class SetupForm(Form):
+    mediators = Mediator.get(None, rein.testnet)
+    mediator_maddrs = []
+    for m in mediators:
+        mediator_maddrs.append((m.maddr, '{}</td><td>{}%</td><td>{}'.format(m.username,
+                                                           m.mediator_fee,
+                                                           m.dpubkey)))
+    name = TextField('Name / Handle', validators = [Required()])
+    contact = TextAreaField('Email / Bitmessage', validators = [Required()])
+    maddr = TextField('Master Bitcoin address', validators = [Required()])
+    daddr = TextField('Delegate Bitcoin address', validators = [Required()])
+    dkey = PasswordField('Delegate Bitcoin private Key', validators = [Required()])
+    will_mediate = RadioField('Register as a mediator?', choices = [(1,'Yes'), (0, 'No')])
+    mediator_fee = TextField('Mediator Fee')  # TODO make required only if Yes above
 
 class JobPostForm(Form):
     mediators = Mediator.get(None, rein.testnet)
