@@ -1157,12 +1157,13 @@ def start(multi, identity, setup):
         from rein.lib.user import User
 
         if request.method == 'POST' and form.validate_on_submit():
-            #testing to see if form will submit right now. also want to link to bitcoin signature tool
-
-            redirect('/done')
+            user = User.get(rein, form.identity_id.data)
+            User.set_enrolled(rein, user)
+            return redirect('/done')
         elif not User.get_newest(rein):
             return redirect("/setup")
         else:
+            form.identity_id.data = User.get_newest(rein).id
             return render_template("sign.html",
                                    form=form)
 

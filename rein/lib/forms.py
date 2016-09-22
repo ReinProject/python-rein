@@ -1,6 +1,6 @@
 from flask import Flask
 from flask_wtf import Form
-from wtforms import TextField, TextAreaField, RadioField, PasswordField
+from wtforms import TextField, TextAreaField, RadioField, PasswordField, HiddenField
 from wtforms.validators import Required, ValidationError
 import config
 from mediator import Mediator
@@ -32,7 +32,7 @@ def validate_en(form, field):
     message = message.replace("\r\n","\n")
     print "r n s: " + str(message.find("\r\n"))
     print "n s: " + str(message.find("\n"))
-    if not validate_enrollment(field.data):
+    if not validate_enrollment(message):
         raise ValidationError("Invalid signature")
 
 class SetupForm(Form):
@@ -56,6 +56,7 @@ class SignForm(Form):
         enrollment = build_enrollment(rein)
     else:
         Exception("No enrollment to sign.")
+    identity_id = HiddenField("identity_id")
     signed = TextAreaField('Signed enrollment', validators = [Required(), validate_en])
 
 class JobPostForm(Form):

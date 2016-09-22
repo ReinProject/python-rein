@@ -42,6 +42,10 @@ class User(Base):
         return rein.session.query(User).filter(User.enrolled == 0).order_by(User.id.desc()).first()
 
     @classmethod
+    def get(self, rein, id):
+        return rein.session.query(User).get(id)
+
+    @classmethod
     def set_enrolled(self, rein, user):
         user.enrolled = True
         rein.session.commit()
