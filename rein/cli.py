@@ -35,8 +35,6 @@ from lib.mediator import Mediator
 
 rein = config.Config()
 
-# TODO: break out store from sign_and_store because dry-run.
-
 @click.group()
 @click.option('--debug/--no-debug', default=False)
 @click.pass_context
@@ -1111,38 +1109,73 @@ def start(multi, identity, setup):
         from rein.lib.user import User
 
         if request.method == 'POST' and form.validate_on_submit():
-            new_identity = User(name, contact, maddr, daddr, dkey, will_mediate, mediator_fee, rein.testnet)
+            new_identity = User(form.name.data,
+                                form.contact.data,
+                                form.maddr.data,
+                                form.daddr.data,
+                                form.dkey.data,
+                                form.will_mediate.data,
+                                form.mediator_fee.data,
+                                rein.testnet)
             rein.session.add(new_identity)
             rein.session.commit()
-            data = {'name': name,
-                    'contact': contact,
-                    'maddr': maddr,
-                    'daddr': daddr,
-                    'dkey': dkey,
-                    'will_mediate': will_mediate,
-                    'mediator_fee': mediator_fee,
+            data = {'name': form.name.data,
+                    'contact': form.contact.data,
+                    'maddr': form.maddr.data,
+                    'daddr': form.daddr.data,
+                    'dkey': form.dkey.data,
+                    'will_mediate': form.will_mediate.data,
+                    'mediator_fee': form.mediator_fee.data,
                     'testnet': rein.testnet}
-            if not os.path.isfile(rein.backup_filename):
-                 f = open(rein.backup_filename, 'w')
-                 try:
-                     f.write(json.dumps(data))
-                     click.echo("Backup saved successfully to %s" % rein.backup_filename)
-                 except:
-                     raise RuntimeError('Problem writing user details to json backup file.')
-                 f.close()
+            filename = rein.backup_filename + '-' + ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(6))
+            if not os.path.isfile(filename):
+                f = open(filename, 'w')
+                try:
+                    f.write(json.dumps(data))
+                    click.echo("Backup saved successfully to %s" % filename)
+                except:
+                    RuntimeError('Problem writing user details to json backup file.')
+                    return render_template("setup.html",
+                                           form=form)
+                f.close()
             else:
-                 click.echo("Backup file already exists. Please run with --backup to save "
+                click.echo("Backup file already exists. Please run with --backup to save "
                             "user details to file.")
-        #elif request.method == 'POST':
-        #    flash_errors(form)
-        #    return redirect("/setup")
+            return redirect('/sign')
         else:
             return render_template("setup.html",
                                    form=form)
 
+
+    @app.route("/sign", methods=['POST', 'GET'])
+    def start_sign():
+        log = rein.get_log()
+
+        from lib.forms import SignForm
+        form = SignForm(request.form)
+
+        from rein.lib.user import User
+
+        if request.method == 'POST' and form.validate_on_submit():
+            #testing to see if form will submit right now. also want to link to bitcoin signature tool
+
+            redirect('/done')
+        elif not User.get_newest(rein):
+            return redirect("/setup")
+        else:
+            return render_template("sign.html",
+                                   form=form)
+
+
+    @app.route("/done", methods=['POST', 'GET'])
+    def start_done():
+        return render_template("done.html")
+
+
     @app.route('/<path:path>')
     def serve_static_file(path):
-            return send_from_directory(tmpl_dir, path)
+        return send_from_directory(tmpl_dir, path)
+
 
     if rein.has_no_account() or setup:
         webbrowser.open('http://'+host+':' + str(port) + '/setup')

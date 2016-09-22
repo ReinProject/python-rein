@@ -6,8 +6,14 @@ import config
 from mediator import Mediator
 from document import Document
 from order import Order
+from user import User
 from bitcoinecdsa import privkey_to_address
 from bitcoinaddress import check_bitcoin_address
+
+from ui import build_enrollment
+from validate import validate_enrollment
+
+
 rein = config.Config()
 
 
@@ -18,6 +24,16 @@ def validate_privkey(form, field):
 def validate_address(form, field):
     if not check_bitcoin_address(field.data):
         raise ValidationError("Invalid address")
+
+def validate_en(form, field):
+    message = field.data
+    print "r n s: " + str(message.find("\r\n"))
+    print "n s: " + str(message.find("\n"))
+    message = message.replace("\r\n","\n")
+    print "r n s: " + str(message.find("\r\n"))
+    print "n s: " + str(message.find("\n"))
+    if not validate_enrollment(field.data):
+        raise ValidationError("Invalid signature")
 
 class SetupForm(Form):
     mediators = Mediator.get(None, rein.testnet)
@@ -33,6 +49,14 @@ class SetupForm(Form):
     dkey = PasswordField('Delegate Bitcoin private Key', validators = [Required(), validate_privkey])
     will_mediate = RadioField('Register as a mediator?', choices = [('1','Yes'), ('0', 'No')])
     mediator_fee = TextField('Mediator Fee')  # TODO make required only if Yes above
+
+class SignForm(Form):
+    rein.user = User.get_newest(rein)
+    if rein.user:
+        enrollment = build_enrollment(rein)
+    else:
+        Exception("No enrollment to sign.")
+    signed = TextAreaField('Signed enrollment', validators = [Required(), validate_en])
 
 class JobPostForm(Form):
     mediators = Mediator.get(None, rein.testnet)

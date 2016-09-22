@@ -163,8 +163,7 @@ def import_account(rein):
     return rein.user
 
 
-def enroll(rein):
-    Base.metadata.create_all(rein.engine)
+def build_enrollment(rein):
     user = rein.user
     mediator_extras = ''
     if user.will_mediate:
@@ -175,6 +174,25 @@ def enroll(rein):
                  (user.name, user.contact, user.maddr, user.daddr, user.will_mediate, mediator_extras)
     if rein.testnet:
         enrollment += '\nTestnet: True'
+    return enrollment
+
+
+def build_enrollment_from_dict(data):
+    mediator_extras = ''
+    if data['will_mediate']:
+        mediator_extras = "\nMediator public key: %s\nMediator fee: %s%%" % \
+                          (pubkey(data['dkey']), data['mediator_fee'])
+    enrollment = "Rein User Enrollment\nUser: %s\nContact: %s\nMaster signing address: %s" \
+                 "\nDelegate signing address: %s\nWilling to mediate: %s%s" % \
+                 (data['name'], data['contact'], data['maddr'], data['daddr'], data['will_mediate'], mediator_extras)
+    if data['testnet']:
+        enrollment += '\nTestnet: True'
+    return enrollment
+
+
+def enroll(rein):
+    Base.metadata.create_all(rein.engine)
+    enrollment = build_enrollment(rein)
     f = open(rein.enroll_filename, 'w')
     f.write(enrollment)
     f.close()
