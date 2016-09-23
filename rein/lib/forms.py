@@ -6,7 +6,6 @@ import config
 from mediator import Mediator
 from document import Document
 from order import Order
-from user import User
 from bitcoinecdsa import privkey_to_address
 from bitcoinaddress import check_bitcoin_address
 
@@ -26,12 +25,7 @@ def validate_address(form, field):
         raise ValidationError("Invalid address")
 
 def validate_en(form, field):
-    message = field.data
-    print "r n s: " + str(message.find("\r\n"))
-    print "n s: " + str(message.find("\n"))
-    message = message.replace("\r\n","\n")
-    print "r n s: " + str(message.find("\r\n"))
-    print "n s: " + str(message.find("\n"))
+    message = field.data.replace("\r\n","\n")
     if not validate_enrollment(message):
         raise ValidationError("Invalid signature")
 
@@ -51,11 +45,6 @@ class SetupForm(Form):
     mediator_fee = TextField('Mediator Fee')  # TODO make required only if Yes above
 
 class SignForm(Form):
-    rein.user = User.get_newest(rein)
-    if rein.user:
-        enrollment = build_enrollment(rein)
-    else:
-        Exception("No enrollment to sign.")
     identity_id = HiddenField("identity_id")
     signed = TextAreaField('Signed enrollment', validators = [Required(), validate_en])
 

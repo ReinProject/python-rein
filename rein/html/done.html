@@ -1,0 +1,21 @@
+{% extends "minimal-layout.html" %}
+{% from "_form_helpers.html" import render_error %}
+{% block body %}
+<br />
+<div class="well">
+    <h3>Congratulations! Setup complete.</h3>
+        
+<div class="row">
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+    {% for message in messages %}
+      <p  class="txt-danger"><b>{{ message }}</b></p>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+	<div class="col-xs-12 col-sm-9">
+        <h4>Please stop with Ctrl-c and continue with 'rein start'.</h4>
+    </div>
+</div>
+</div>
+{% endblock %}
