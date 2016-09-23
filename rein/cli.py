@@ -1151,10 +1151,9 @@ def start(multi, identity, setup):
     def start_sign():
         log = rein.get_log()
 
+        from rein.lib.user import User
         from lib.forms import SignForm
         form = SignForm(request.form)
-
-        from rein.lib.user import User
 
         if request.method == 'POST' and form.validate_on_submit():
             user = User.get(rein, form.identity_id.data)
@@ -1163,7 +1162,9 @@ def start(multi, identity, setup):
         elif not User.get_newest(rein):
             return redirect("/setup")
         else:
-            form.identity_id.data = User.get_newest(rein).id
+            rein.user = User.get_newest(rein)
+            form.identity_id.data = rein.user.id
+            form.enrollment = build_enrollment(rein)
             return render_template("sign.html",
                                    form=form)
 
