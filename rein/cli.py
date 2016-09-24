@@ -195,7 +195,7 @@ def post(multi, identity, defaults, dry_run):
                             'special characters are allowed. Please enter them as a comma-separated list.\n'
                             'Example: software, 3dprinting'},
                 {'label': 'Description',                    'not_null': form},
-                {'label': 'Clock hash',                     'value': block_hash},
+                {'label': 'Block hash',                     'value': block_hash},
                 {'label': 'Time',                           'value': str(block_time)},
                 {'label': 'Expiration (days)',              'validator': is_int},
                 {'label': 'Mediator',                       'value': mediator['User']},
@@ -1202,9 +1202,12 @@ def start(multi, identity, setup):
             click.echo('No servers were available. Please check your internet connection.')
             log.error('no servers available')
             return
+        click.echo(blocks)
         (block_hash, block_time) = choose_best_block(blocks)
-        str_block_time = datetime.fromtimestamp(block_time).strftime('%Y-%m-%d %H:%M:%S')
-        time_offset = abs(block_time - int(time.time() + time.timezone))
+        t = time.localtime()
+        dst_offset = 3600 * t.tm_isdst
+        str_block_time = datetime.fromtimestamp(block_time + time.timezone - dst_offset).strftime('%Y-%m-%d %H:%M:%S %Z')
+        time_offset = abs(block_time + time.timezone - dst_offset - int(time.time()))
 
     @app.route("/post", methods=['POST', 'GET'])
     def job_post():
@@ -1222,7 +1225,7 @@ def start(multi, identity, setup):
                             'special characters are allowed. Please enter them as a comma-separated list.\n'
                             'Example: software, 3dprinting'},
                 {'label': 'Description',                    'value': form.description.data},
-                {'label': 'Clock hash',                     'value': block_hash},
+                {'label': 'Block hash',                     'value': block_hash},
                 {'label': 'Time',                           'value': str(block_time)},
                 {'label': 'Expiration (days)',              'value': form.expire_days.data},
                 {'label': 'Mediator',                       'value': mediator.username},

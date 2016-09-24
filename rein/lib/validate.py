@@ -13,9 +13,9 @@ def filter_out_expired(rein, user, urls, jobs):
     click.echo('Verifying block times...')
     with click.progressbar(jobs) as bar:
         for j in bar:
-            if 'Clock hash' not in j:
+            if 'Block hash' not in j:
                 continue
-            block_hash = j['Clock hash']
+            block_hash = j['Block hash']
             if 'Expiration (days)' not in j:
                 continue
             if Block.get_time(rein, block_hash):
@@ -37,9 +37,9 @@ def filter_out_expired(rein, user, urls, jobs):
                         times[block_hash] = Block.get_time(rein, block_hash)
 
     for j in jobs:
-        if 'Clock hash' not in j:
+        if 'Block hash' not in j:
             continue
-        block_hash = j['Clock hash']
+        block_hash = j['Block hash']
         try:
             expiration = int(j['Expiration (days)'])*86400
         except:
