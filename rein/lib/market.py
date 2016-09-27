@@ -349,8 +349,18 @@ def safe_get(log, url):
         return answer
 
 def get_in_process_orders(rein, Document, key, match_field, should_match):
+    """
+    Get a list of orders in offer or delivery states with parsed metadata 
+    and validated original document
+
+    Optionally filters documents by a matching key:value pair.
+
+    Side effecits: updates orders
+    """
+
     Order.update_orders(rein, Document)
 
+    # get all documents for orders in the right states
     documents = []
     orders = Order.get_user_orders(rein, Document)
     for order in orders:
@@ -358,12 +368,14 @@ def get_in_process_orders(rein, Document, key, match_field, should_match):
         if state in ['offer', 'delivery']:
             documents += order.get_documents(rein, Document, state)
 
+    # attach raw contents of all order's documents
     contents = []
     for document in documents:
         contents.append(document.contents)
 
     valid_results = filter_and_parse_valid_sigs(rein, contents)
 
+    # finally attach state for each document and filter by KV if necessary
     target_orders = []
     for res in valid_results:
         if (should_match and res[match_field] == key) or \

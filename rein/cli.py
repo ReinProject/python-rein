@@ -1158,6 +1158,12 @@ def start(multi, identity, setup):
         if request.method == 'POST' and form.validate_on_submit():
             user = User.get(rein, form.identity_id.data)
             User.set_enrolled(rein, user)
+
+            # insert signed document into documents table as type 'enrollment'
+            signed = form.signed.data.replace("\r\n","\n")
+            document = Document(rein, 'enrollment', signed, sig_verified=True, testnet=rein.testnet)
+            rein.session.add(document)
+            rein.session.commit()
             return redirect('/done')
         elif not User.get_newest(rein):
             return redirect("/setup")
@@ -1202,7 +1208,6 @@ def start(multi, identity, setup):
             click.echo('No servers were available. Please check your internet connection.')
             log.error('no servers available')
             return
-        click.echo(blocks)
         (block_hash, block_time) = choose_best_block(blocks)
         t = time.localtime()
         dst_offset = 3600 * t.tm_isdst
@@ -1269,6 +1274,7 @@ def start(multi, identity, setup):
     def job_offer():
         Order.update_orders(rein, Document)
         form = JobOfferForm(request.form)
+        key = pubkey(rein.user.dkey)
 
         # get and store bids on our jobs
         bids = []
@@ -1281,22 +1287,40 @@ def start(multi, identity, setup):
 
         bids = []
         for bid in unique_bids:
+            if bid['Job creator public key'] != key:
+                continue
+
             order = Order.get_by_job_id(rein, bid['Job ID'])
+
             if not order:
                 order = Order(bid['Job ID'], testnet=rein.testnet)
                 rein.session.add(order)
                 rein.session.commit()
+
             state = order.get_state(rein, Document)
+
             if state in ['bid', 'job_posting']:
                 bids.append(bid)
 
         # check of bid exists and if not store it
+        # build tuple list to populate form.bids
+        bid_choices = []
         for b in bids:
             doc_hash = Document.calc_hash(b['original'])
-            if not Document.find(rein, doc_hash, 'remote'):
+            d = Document.find(rein, doc_hash, 'remote')
+            if not d:
                 d = Document(rein, 'bid', b['original'], source_url='remote', testnet=rein.testnet)
                 rein.session.add(d)
                 rein.session.commit()
+                id = d.id
+            else:
+                id = d[0].id
+            job_link = '<a href="/job/%s">%s</a>' % (b['Job ID'], b['Job name'])
+            bid_choices.append((str(id), '{}</td><td>{}</td><td>{}</td><td>{}'.format(job_link,
+                                                                                           b['Worker'],
+                                                                                           b['Description'],
+                                                                                           b['Bid amount (BTC)'])))
+        form.bid_id.choices = bid_choices
 
         if request.method == 'POST' and form.validate_on_submit():
             bid_doc = Document.get(rein, form.bid_id.data)
@@ -1326,7 +1350,6 @@ def start(multi, identity, setup):
             log.info('offer signed') if document else log.error('offer failed')
             return redirect("/")
         elif request.method == 'POST':
-            print "form data " + str(form)
             flash_errors(form)
             return redirect("/offer")
         else:
@@ -1349,6 +1372,23 @@ def start(multi, identity, setup):
         form = AcceptForm(request.form)
 
         our_orders = get_in_process_orders(rein, Document, key, 'Job creator public key', True)
+
+        deliverables = []
+        for o in our_orders:
+            doc_hash = Document.calc_hash(o['original'])
+            d = Document.find(rein, doc_hash, 'remote')
+            if d:
+                id = d[0].id
+            else:
+                d = Document(rein, 'delivery', o['original'], source_url='remote', testnet=rein.testnet)
+                rein.session.add(d)
+                rein.session.commit()
+                id = d.id
+            if o['state'] in ['offer', 'delivery']:
+                deliverables.append((str(id), '{}</td><td>{}</td><td>{}'.format(o['Job name'],
+                                                                                o['Job ID'],
+                                                                                o['Deliverables'])))
+        form.deliverable_id.choices = deliverables
 
         if request.method == 'POST' and form.validate_on_submit():
             delivery_doc = Document.get(rein, form.deliverable_id.data)
