@@ -25,7 +25,7 @@
   {% endif %}
 {% endwith %}
 
-<p>Block time: {{ block_time }} UTC
+<p>Block time (12 blocks ago): {{ block_time }} UTC
 {% if time_offset > 3600*4 %}
 <span class="txt-danger">Off by more than 4 hours!</span>
 {% endif %}
