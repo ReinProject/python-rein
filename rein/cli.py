@@ -1212,7 +1212,7 @@ def start(multi, identity, setup):
         t = time.localtime()
         dst_offset = 3600 * t.tm_isdst
         str_block_time = datetime.fromtimestamp(block_time + time.timezone - dst_offset).strftime('%Y-%m-%d %H:%M:%S %Z')
-        time_offset = abs(block_time + time.timezone - dst_offset - int(time.time()))
+        time_offset = abs(block_time - int(time.time()))
 
     @app.route("/post", methods=['POST', 'GET'])
     def job_post():
