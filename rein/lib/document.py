@@ -5,6 +5,7 @@ from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, and_
 from sqlalchemy.ext.declarative import declarative_base
 from validate import filter_valid_sigs, parse_document
 from order import Order
+from io import safe_get
 
 Base = declarative_base()
 
@@ -93,14 +94,9 @@ class Document(Base):
     @staticmethod
     def get_documents_by_job_id(rein, url, job_id):
         sel_url = "{0}query?owner={1}&query=by_job_id&job_ids={2}&testnet={3}"
-        try:
-            answer = requests.get(url=sel_url.format(url, rein.user.maddr, job_id, rein.testnet))
-        except requests.exceptions.ConnectionError:
-            rein.log.warning('Could not reach %s.' % url)
-            return None
-        data = answer.json()
-        if len(data['by_job_id']) == 0:
-            rein.log.warning('None found.')
+
+        data = safe_get(rein.log, sel_url.format(url, rein.user.maddr, job_id, rein.testnet))
+
         return filter_valid_sigs(rein, data['by_job_id'])
 
     @staticmethod

@@ -1,10 +1,12 @@
 from sqlalchemy import Column, Integer, String, Float, Boolean, and_
 from sqlalchemy.ext.declarative import declarative_base
+
 import requests
 import click
 import config
+
 from validate import filter_and_parse_valid_sigs
-from market import unique
+from util import unique
 
 Base = declarative_base()
 rein = config.Config()

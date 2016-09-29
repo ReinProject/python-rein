@@ -16,6 +16,8 @@ from lib.ui import *
 from lib.validate import filter_and_parse_valid_sigs, parse_document, choose_best_block, filter_out_expired
 from lib.bitcoinecdsa import sign, pubkey
 from lib.market import * 
+from lib.util import unique
+from lib.io import safe_get
 from lib.script import build_2_of_3, build_mandatory_multisig, check_redeem_scripts
 
 # Import config
@@ -1200,6 +1202,8 @@ def start(multi, identity, setup):
         for url in urls:
             sel_url = "{0}query?owner={1}&query=jobs&testnet={2}"
             data = safe_get(log, sel_url.format(url, user.maddr, rein.testnet))
+            if data is None:
+                continue
             connected = True
             if data['block_info']:
                 blocks.append(data['block_info'])
