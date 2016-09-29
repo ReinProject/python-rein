@@ -294,6 +294,7 @@ def bid(multi, identity, defaults, dry_run):
                 {'label': 'Job name',                       'value_from': job},
                 {'label': 'Worker',                         'value': user.name},
                 {'label': 'Worker contact',                 'value': user.contact},
+                {'label': 'Worker master address',          'value': user.maddr},
                 {'label': 'Description',                    'not_null': form},
                 {'label': 'Bid amount (BTC)',               'not_null': form},
                 {'label': 'Primary escrow address',         'value': primary_addr},
@@ -1440,7 +1441,7 @@ def start(multi, identity, setup):
             remote_documents += filter_and_parse_valid_sigs(rein, data['by_job_id'])
         unique_documents = unique(remote_documents)
         combined = {}
-        for doc in remote_documents:
+        for doc in unique_documents:
             combined.update(doc)
 
         o = Order.get_by_job_id(rein, jobid)
@@ -1461,6 +1462,7 @@ def start(multi, identity, setup):
                             order=o,
                             state=state,
                             found=found,
+                            unique=unique_documents,
                             job=combined)
         
             

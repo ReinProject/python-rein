@@ -40,21 +40,40 @@ Description: {{ job['Description'] }}<br />
 -->
 
 
-<h5>Participants</h5>
-<p>Job creator: <b>{{ job['Job creator'] }}</b> / <a href="mailto:{{ job['Job creator contact'] }}">{{ job['Job creator contact'] }}</a> / {{ job['Job creator master address'] }}<br />
-Mediator: <b>{{ job['Mediator'] }}</b> / <a href="mailto:{{ job['Mediator contact'] }}">{{ job['Mediator contact'] }}</a> / {{ job['Mediator master address'] }}<br />
+<div class="row">
+	<div class="col-xs-3 well" style="margin-right:10px; margin-left:10px;">
+        <h5>Job creator</h5>
+        Name: <b>{{ job['Job creator'] }}</b><br />Contact: <a href="mailto:{{ job['Job creator contact'] }}">{{ job['Job creator contact'] }}</a><br />Master: <span title="{{ job['Job creator master address'] }}">{{ job['Job creator master address'][0:10] }}...{{ job['Job creator master address'][-10:] }}</span><br />
+    </div>
+	<div class="col-xs-3 well" style="margin-right:10px">
+        <h5>Mediator</h5>
+        Name: <b>{{ job['Mediator'] }}</b><br />Contact: <a href="mailto:{{ job['Mediator contact'] }}">{{ job['Mediator contact'] }}</a><br />Master: {{ job['Mediator master address'][0:10] }}...{{ job['Mediator master address'][-10:] }}<br />
 {% if 'Worker' in job  %}
-Worker: <b>{{ job['Worker'] }}</b> / <a href="mailto:{{ job['Worker contact'] }}">{{ job['Worker contact'] }}</a> / {{ job['Worker master address'] }}</p>
+    </div>
+    <div class="col-xs-3 well">
+        <h5>Worker</h5>
+        Name: <b>{{ job['Worker'] }}</b><br />Contact: <a href="mailto:{{ job['Worker contact'] }}">{{ job['Worker contact'] }}</a><br />Master: {{ job['Worker master address'][0:10] }}...{{ job['Worker master address'][-10:] }}
+    </div>
+</div>
 
 <h5>Payments</h5>
-<p>Primary escrow: <b>{{ job['Primary escrow address'] }}</b> should be funded with <b>{{ job['Bid amount (BTC)'] }} BTC</b>.<br />
+
+<p>Before starting work, worker should verify the following:<br /><br />
+Primary escrow: <b>{{ job['Primary escrow address'] }}</b> should be funded with <b>{{ job['Bid amount (BTC)'] }} BTC</b>.<br />
 Mediator escrow: <b>{{ job['Mediator escrow address'] }}</b> should be funded with <b>{{ job['Mediator fee'] }}%</b> of the above.<br />
 
 {% endif %}<br />
+    </div>
+</div>
+
 <h5>Misc</h5>
-ID: {{ job['Job ID'] }} <br />
-Latest original document:<br />
-<textarea rows="25" cols="120">{{ job['original'] }}</textarea>
+ID: {{ job['Job ID'] }}
+
+<h5>Documents:</h5>
+<textarea rows="25" cols="128" readonly>{% for u in unique %}{{u['original']}}
+
+{% endfor %}
+</textarea>
 </p>
 {% else %}
 
