@@ -3,8 +3,9 @@ import re
 import bitcoinecdsa
 import unittest
 import click
-import requests
 import time
+from io import safe_get
+from util import unique
 from block import Block
 
 def filter_out_expired(rein, user, urls, jobs):
@@ -24,12 +25,9 @@ def filter_out_expired(rein, user, urls, jobs):
                 # request block info for the clock hash
                 for url in urls:
                     sel_url = url + 'bitcoin?owner={0}&query=getbyhash&hash={1}'
-                    try:
-                        answer = requests.get(url=sel_url.format(user.maddr, block_hash))
-                    except requests.exceptions.ConnectionError:
-                        click.echo('Could not reach %s.' % url)
-                        return None
-                    data = answer.json()
+
+                    data = safe_get(rein.log, sel_url.format(user.maddr, block_hash))
+
                     if not Block.get_time(rein, block_hash):
                         b = Block(block_hash, data['time'], data['height'])
                         rein.session.add(b)
@@ -153,6 +151,20 @@ def filter_and_parse_valid_sigs(rein, docs, expected_field=None):
                 fails += 1
     rein.log.info('bad signatures = %d' % fails)
     return valid
+
+
+def remote_query(rein, user, urls, log, query_type, distinct):
+    '''
+    Sends specific query to registered servers and filters for uniqueness
+    '''
+    res = []
+    for url in urls:
+        sel_url = "{0}query?owner={1}&query={2}&testnet={3}"
+        data = safe_get(log, sel_url.format(url, user.maddr, query_type, rein.testnet))
+        if data is None or query_type not in data or len(data[query_type]) == 0:
+            click.echo('None found')
+        res += filter_and_parse_valid_sigs(rein, data[query_type])
+    return unique(res, distinct)
 
 
 def verify_sig(sig):

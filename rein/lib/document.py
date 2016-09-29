@@ -1,5 +1,4 @@
 import hashlib
-import requests
 import re
 from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, and_
 from sqlalchemy.ext.declarative import declarative_base

@@ -13,7 +13,7 @@ from sqlalchemy import and_
 
 # Import helper functions
 from lib.ui import *
-from lib.validate import filter_and_parse_valid_sigs, parse_document, choose_best_block, filter_out_expired
+from lib.validate import filter_and_parse_valid_sigs, parse_document, choose_best_block, filter_out_expired, remote_query
 from lib.bitcoinecdsa import sign, pubkey
 from lib.market import * 
 from lib.util import unique
