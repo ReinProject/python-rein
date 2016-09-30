@@ -32,6 +32,10 @@ def hilight(string, status, bold):
     return '\x1b[%sm%s\x1b[0m' % (';'.join(attr), string)
 
 
+def job_link(j):
+    return '<a href="/job/%s">%s</a>' % (j['Job ID'], j['Job name'])
+
+
 def get_choice(choices, name):
     choice = -1
     while(choice >= len(choices) or choice < 0) and choice != 'q':

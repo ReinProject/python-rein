@@ -1085,7 +1085,7 @@ def start(multi, identity, setup):
     """
     import webbrowser
     from flask import Flask, request, redirect, url_for, flash, send_from_directory, render_template
-    from lib.forms import SetupForm, JobPostForm, JobOfferForm, AcceptForm
+    from lib.forms import SetupForm, JobPostForm, JobOfferForm, AcceptForm, DisputeForm
     from lib.mediator import Mediator
 
     host = '127.0.0.1'
@@ -1320,8 +1320,7 @@ def start(multi, identity, setup):
                 id = d.id
             else:
                 id = d[0].id
-            job_link = '<a href="/job/%s">%s</a>' % (b['Job ID'], b['Job name'])
-            bid_choices.append((str(id), '{}</td><td>{}</td><td>{}</td><td>{}'.format(job_link,
+            bid_choices.append((str(id), '{}</td><td>{}</td><td>{}</td><td>{}'.format(job_link(b),
                                                                                            b['Worker'],
                                                                                            b['Description'],
                                                                                            b['Bid amount (BTC)'])))
@@ -1390,9 +1389,13 @@ def start(multi, identity, setup):
                 rein.session.commit()
                 id = d.id
             if o['state'] in ['offer', 'delivery']:
-                deliverables.append((str(id), '{}</td><td>{}</td><td>{}'.format(o['Job name'],
-                                                                                o['Job ID'],
-                                                                                o['Deliverables'])))
+                if 'Deliverables' in o:
+                    delivery = o['Deliverables']
+                else:
+                    delivery = 'No deliveries found.'
+                deliverables.append((str(id), '{}</td><td>{}'.format( job_link(o),
+                                                                      delivery,
+                                                                    )))
         form.deliverable_id.choices = deliverables
 
         if request.method == 'POST' and form.validate_on_submit():
@@ -1465,6 +1468,79 @@ def start(multi, identity, setup):
                             unique=unique_documents,
                             job=combined)
         
+    @app.route("/dispute", methods=['POST', 'GET'])
+    def job_dispute():
+        Order.update_orders(rein, Document)
+        form = DisputeForm(request.form)
+
+        our_orders = get_in_process_orders(rein, Document, key, 'Job creator public key', True) + \
+                     get_in_process_orders(rein, Document, key, 'Worker public key', True)
+
+        orders = []
+        for o in our_orders:
+            doc_hash = Document.calc_hash(o['original'])
+            d = Document.find(rein, doc_hash, 'remote')
+            if d:
+                id = d[0].id
+            else:
+                d = Document(rein, Document.get_document_type(o['original']), o['original'], source_url='remote', testnet=rein.testnet)
+                rein.session.add(d)
+                rein.session.commit()
+                id = d.id
+
+            if o['Job creator public key'] == key:
+                role = 'Job creator'
+            else:
+                role = 'Worker'
+
+            if o['state'] in ['offer', 'delivery']:
+                orders.append((str(id), '{}</td><td>{}'.format( job_link(o),
+                                                                role,
+                                                              )))
+        form.order_id.choices = orders
+
+        if request.method == 'POST' and form.validate_on_submit():
+            latest_doc = Document.get(rein, form.order_id.data)
+            doc = parse_document(latest_doc.contents)
+            fields = [
+                {'label': 'Job name',                       'value_from': doc},
+                {'label': 'Job ID',                         'value_from': doc},
+                {'label': 'Dispute detail',                 'not_null': form.dispute_detail.data},
+                {'label': 'Primary escrow redeem script',   'value_from': doc},
+                {'label': 'Mediator escrow redeem script',  'value_from': doc},
+                     ]
+
+            if key == doc['Job creator public key']:
+                title = 'Dispute Delivery'
+                doc_type = 'creatordispute'
+            else:
+                title = 'Dispute Offer'
+                doc_type = 'workerdispute'
+
+            document_text = assemble_document(title, fields)
+            store = True
+            document = sign_and_store_document(rein, doc_type, document_text, user.daddr, user.dkey, store)
+            if document and store:
+                click.echo("{} created. Run 'rein sync' to push to available servers.".format(title))
+                sync_core(log, user, key, urls)
+                flash("{} signed and pushed to available servers.".format(title))
+            assemble_order(rein, document)
+            log.info(doc_type + ' signed') if document else log.error(doc_type + ' failed')
+            return redirect("/")
+        elif request.method == 'POST':
+            print "form data " + str(form)
+            flash_errors(form)
+            return redirect("/dispute")
+        else:
+            return render_template("dispute.html",
+                            form=form,
+                            user=user,
+                            key=key,
+                            urls=urls,
+                            block_time=str_block_time,
+                            time_offset=time_offset
+                            )
+
             
     @app.route('/')
     @app.route('/index.html')

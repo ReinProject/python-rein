@@ -58,6 +58,10 @@ class JobPostForm(Form):
 class JobOfferForm(Form):
     bid_id = RadioField('Choose bid')
 
+class DisputeForm(Form):
+    dispute_detail = TextAreaField('Dispute detail', validators = [Required()])
+    order_id = RadioField('Choose job')
+
 class AcceptForm(Form):
     signed_primary_payment = TextAreaField('Signed primary payment', validators = [Required()])
     signed_mediator_payment = TextAreaField('Signed mediator payment', validators = [Required()])
