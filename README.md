@@ -1,12 +1,12 @@
 ## Python-Rein
 
-Rein is a new experiment in decentralized markets. The Rein model mirrors that of internet at large through the use of paid microhosting to store data about users and gigs. Since storage and bandwidth requirements are low, a high amount of redundancy and censorship-resistance may be acheived at low cost (on par with the cost of a gourmet coffee for a year of redundant hosting on several servers).
+Rein is designed to help you and others work together with Bitcoin. The Rein model of commerce mirrors that of internet at large through the use of paid microhosting to store data about users, jobs, and payments. Since little storage and bandwidth are needed, a high amount of redundancy and censorship-resistance may be acheived at low cost (on par with the cost of a gourmet coffee for a year of redundant hosting on several servers).
 
-This is very much a minimum viable product. Servers can be paid for their services but they do not communicate with each other, and while the client attempts to validate what it sees, this validation is not complete nor has the software seen a security review. As such, you are advised to limit use of Rein to small jobs where loss of funds or time spent would not present a significant burden.
+Servers can be paid for their services but they do not communicate with each other, and while the client attempts to validate what it sees, this validation is not complete nor has the software seen a security review. As such, you are advised to limit use of Rein to small jobs where loss of funds or time spent would not present a significant burden.
 
 To read more about the project, visit http://reinproject.org
 
-Python-rein is a command-line interface client to the Rein market.
+Python-rein is a command-line and under construction web-interface client to the Rein market.
 
 ## Installation
 
@@ -23,11 +23,11 @@ Production:
 
 ## Getting started
 
-Please see the [setup guide](https://github.com/ReinProject/python-rein/blob/master/doc/HOWTO-setup-rein.md).
+Please see the [setup guide](https://github.com/ReinProject/python-rein/blob/master/doc/HOWTO-setup-rein.md). In a nutshell, run `rein start` to be guided through a web-based setup process.
 
 ### Mediators
 
-Each transaction in Rein requires a job creator, worker, and mediator. Most of the time it is expected that the mediator will do nothing but collect a small fee. In case of dispute, however, the mediator holds a third key so that escrowed funds can be refunded, split or awarded according to their judgement.
+Each transaction in Rein requires a job creator, worker, and mediator. Most of the time it is expected that the mediator will do nothing but collect a small fee. In case of dispute, however, the mediator holds a third key refund, split or award escrowed funds using their best judgement.
 
 ### Workers
 
@@ -37,11 +37,11 @@ This command will query each registered server for jobs that are open for bids, 
 
 ### Job creators
 
-The first step in posting a job is to carefully choose a mediator. At this time there is little in the way of reputation in the system. Your own research should guide your choice.
+You're in luck as we've just optimized Rein for you. Run the following command to get started.
 
-    rein post
+    rein start
 
-Once a mediator is chosen, you will describe what you want done and by when. Once the post is signed, use sync to push it to your registered servers.
+This will guide you through a setup process and provide a simple interface for you to get the work you need done. 
 
 ### The rest of the order flow
 
@@ -49,7 +49,7 @@ After a job posting and bids have been made, the job creator will use _offer_ to
 
 Python-rein currently cannot query for unspent outputs or assemble transactions so it is recommended that you download a copy of [ReinProject's fork of Coinb.in](https://github.com/ReinProject/coinbin) in order to sign (and for the worker and mediator, broadcast) the payment transactions.
 
-If you want detailed information about pending jobs use `rein status`. If run with the --jobid option, all documents associated with a specific gig will be printed to the screen.
+If you want detailed information about pending jobs, click on the job in question after running `rein start`. 
 
 ## Addresses and Payments
 
