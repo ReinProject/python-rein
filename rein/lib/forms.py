@@ -13,9 +13,6 @@ from ui import build_enrollment
 from validate import validate_enrollment
 
 
-rein = config.Config()
-
-
 def validate_privkey(form, field):
     if not privkey_to_address(field.data):
         raise ValidationError("Not a valid private key.")
