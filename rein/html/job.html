@@ -43,16 +43,16 @@ Description: {{ job['Description'] }}<br />
 <div class="row">
 	<div class="col-xs-3 well" style="margin-right:10px; margin-left:10px;">
         <h5>Job creator</h5>
-        Name: <b>{{ job['Job creator'] }}</b><br />Contact: <a href="mailto:{{ job['Job creator contact'] }}">{{ job['Job creator contact'] }}</a><br />Master: <span title="{{ job['Job creator master address'] }}">{{ job['Job creator master address'][0:10] }}...{{ job['Job creator master address'][-10:] }}</span><br />
+        Name: <b>{{ job['Job creator'] }}</b><br />Contact: <a href="mailto:{{ job['Job creator contact'] }}">{{ job['Job creator contact'] }}</a><br />Master: <span title="{{ job['Job creator master address'] }}">{{ job['Job creator master address'][0:10] }}...{{ job['Job creator master address'][-8:] }}</span><br />
     </div>
 	<div class="col-xs-3 well" style="margin-right:10px">
         <h5>Mediator</h5>
-        Name: <b>{{ job['Mediator'] }}</b><br />Contact: <a href="mailto:{{ job['Mediator contact'] }}">{{ job['Mediator contact'] }}</a><br />Master: {{ job['Mediator master address'][0:10] }}...{{ job['Mediator master address'][-10:] }}<br />
+        Name: <b>{{ job['Mediator'] }}</b><br />Contact: <a href="mailto:{{ job['Mediator contact'] }}">{{ job['Mediator contact'] }}</a><br />Master: {{ job['Mediator master address'][0:10] }}...{{ job['Mediator master address'][-8:] }}<br />
 {% if 'Worker' in job  %}
     </div>
     <div class="col-xs-3 well">
         <h5>Worker</h5>
-        Name: <b>{{ job['Worker'] }}</b><br />Contact: <a href="mailto:{{ job['Worker contact'] }}">{{ job['Worker contact'] }}</a><br />Master: {{ job['Worker master address'][0:10] }}...{{ job['Worker master address'][-10:] }}
+        Name: <b>{{ job['Worker'] }}</b><br />Contact: <a href="mailto:{{ job['Worker contact'] }}">{{ job['Worker contact'] }}</a><br />Master: {{ job['Worker master address'][0:10] }}...{{ job['Worker master address'][-8:] }}
     </div>
 </div>
 

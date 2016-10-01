@@ -7,6 +7,7 @@ from bitcoinecdsa import privkey_to_address, pubkey
 from bitcoinaddress import check_bitcoin_address
 from validate import validate_enrollment
 from user import User, Base
+from util import unique
 from document import Document
 
 
@@ -17,7 +18,9 @@ def shorten(text, length=60):
         return text[0:length-1] + '...'
     else:
         return text
-        
+
+def short_addr(text):
+    return text[0:10] + '...' + text[-8:]
 
 def hilight(string, status, bold):
     attr = []

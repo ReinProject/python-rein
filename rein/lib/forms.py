@@ -43,17 +43,11 @@ class SignForm(Form):
     signed = TextAreaField('Signed enrollment', validators = [Required(), validate_en])
 
 class JobPostForm(Form):
-    mediators = Mediator.get(None, rein.testnet)
-    mediator_maddrs = []
-    for m in mediators:
-        mediator_maddrs.append((m.maddr, '{}</td><td>{}%</td><td>{}'.format(m.username,
-                                                           m.mediator_fee,
-                                                           m.dpubkey)))
     job_name = TextField('Job name', validators = [Required()])
     description = TextAreaField('Description', validators = [Required()])
     tags = TextField('Tags', validators = [Required()])
     expire_days = TextField('Expiration (days)', validators = [Required()])
-    mediator_maddr = RadioField('Choose mediator', choices = mediator_maddrs)
+    mediator_maddr = RadioField('Choose mediator')
 
 class JobOfferForm(Form):
     bid_id = RadioField('Choose bid')

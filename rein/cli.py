@@ -1195,7 +1195,6 @@ def start(multi, identity, setup):
         (log, user, key, urls) = init(multi, identity)
         documents = Document.get_user_documents(rein)
         orders = Order.get_user_orders(rein, Document)
-        mediators = Mediator.get(None, rein.testnet)
         bids = Document.get_by_type(rein, 'bid')
         jobs = []
         blocks = []
@@ -1222,6 +1221,14 @@ def start(multi, identity, setup):
     @app.route("/post", methods=['POST', 'GET'])
     def job_post():
         form = JobPostForm(request.form)
+        mediators = Mediator.get(None, rein.testnet)
+        mediator_maddrs = []
+        for m in mediators:
+            if m.dpubkey != key:
+                mediator_maddrs.append((m.maddr, '{}</td><td>{}%</td><td>{}'.format(m.username,
+                                                                                    m.mediator_fee,
+                                                                                    m.dpubkey)))
+        form.mediator_maddr.choices = mediator_maddrs
         if request.method == 'POST' and form.validate_on_submit():
             mediator = Mediator.get(form.mediator_maddr.data, rein.testnet)[0]
             job_guid = ''.join(random.SystemRandom().choice(string.ascii_lowercase + string.digits) for _ in range(20))
