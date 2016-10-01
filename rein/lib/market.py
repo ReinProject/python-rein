@@ -3,7 +3,6 @@ from validate import validate_enrollment, parse_document, filter_and_parse_valid
 from bucket import Bucket 
 from bitcoinecdsa import sign, verify, pubkey, pubkey_to_address
 from order import Order
-import requests
 import os
 import click
 

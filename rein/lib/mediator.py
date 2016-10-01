@@ -1,7 +1,6 @@
 from sqlalchemy import Column, Integer, String, Float, Boolean, and_
 from sqlalchemy.ext.declarative import declarative_base
 
-import requests
 import click
 import config
 
