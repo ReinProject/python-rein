@@ -4,13 +4,14 @@
 
 Rein is a new decentralized labor market that provides a safe and easy way to earn Bitcoin and to obtain services from professionals globally. It simplifies the process of entering into a digitally-signed contract and behaving honestly to get what they want. Currently, as Rein is still in alpha, the process requires use of a command line client. However, the software is easy to install with commands that make sense once you've seen them in action.
 
-In this tutorial, we will show you how to use Rein to earn Bitcoin online. We will also show you how to generate a couple of standalone Bitcoin keys that will form the basis of your user account in Rein.
+In this tutorial, we will show you how to use Rein to earn Bitcoin or get work done online. We will also show you how to generate a couple of standalone Bitcoin keys that will form the basis of your user account in Rein.
 
 ## Time to complete
 
 10-20 minutes
 
 ##Prerequisites
+
 
 Before following this tutorial, you'll need a few things.
 
@@ -67,6 +68,8 @@ To help you make digital signatures the bitcoin-signature-tool and a modified ve
 
 You should now have the bitcoin-signature-tool and Coinbin for Rein to help make signatures with Bitcoin ECDSA private keys.
 
+Note: If you are already familiar with Bitcoin addresses, signatures and wallets, you can skip to Step 3 to setup your Rein identity.
+
 ##Step 2 -- Prepare a Bitcoin Wallet
 
 Rein provides the ability to have as many identities as you would like, though for anything where trust and reputation are important, you will probably want to transact through your main identity. These identities are defined by a Bitcoin ECDSA keypair (i.e. an address) which we call the identity's master address. 
@@ -93,23 +96,21 @@ Make a few backup copies of the wallet to removable media such as flash drives, 
 
 Let's create your Rein user account, also known in the software as an identity.
 
-    $ rein setup
+    $ rein start
     
-Choose to create a new account, fill in your Name or the handle by which you'd to attach to the identity and an email or BitMessage address that can be used to contact you. Note that all of the information in your setup except the private keys will become public so use an email address with good spam protection or BitMessage which has spam protection included.
+You should see a web form to fill out. Note that all of the information in your setup except the private keys will become public and will be available to all users once pushed to a server.
 
 ###Obtain address from Bitcoin-Qt
 
-<img src="http://reinproject.org/img/rein-enroll.png">
-
 Let's obtain the Master Bitcoin address from Bitcoin-Qt. Here you will go to File -> Receiving Addresses... and click new until there are a couple of addresses showing. Copy the first address and paste it here.
 
-Next, we'll get a different address from Bitcoin-Qt and copy and paste it at the Delegate Bitcoin address prompt.
+Next, we'll get a different address from Bitcoin-Qt and copy and paste it in for the Delegate Bitcoin address.
 
-<img src="http://reinproject.org/img/rein-enroll2.png">
+<img src="http://reinproject.org/img/rein-web-enroll.png">
 
 ###Get a private key from Bitcoin-Qt
 
-For the final prompts in rein setup, we will need the private keys for the two above addresses. We'll start by getting the private key from Bitcoin-Qt for the Delegate address.
+We will need the private keys for the two above addresses. We'll start by getting the private key from Bitcoin-Qt for the Delegate address.
 
 Open the Debug Window to the Console tab.
 
@@ -121,19 +122,17 @@ There you will type the following command:
 
 <img src="http://reinproject.org/img/dumpprivkey1.png">
 
-After a second or two, this will print out the private key for the address. 
+After a second or two, this will print out the private key.
 
 <img src="http://reinproject.org/img/dumpprivkey2.png">
 
-Copy the private key (redacted) and paste it in for the Delegate Bitcoin private key. You will repeat this process for the Master address but before we do that, let's answer the prompts around being a mediator.
+Copy this key to the Delegate Bitcoin private key field.
 
-If you choose to be a mediator, you will be prompted for your mediation fee in percent. For example, if you put 5% here, you would earn 0.05 BTC for mediating a 1 BTC transaction, whether you need to resolve a dispute or not.
+Choose whether you want to be a mediator or not and set your fee. For example, if you put 3% here, you would earn 0.003 BTC for mediating a 0.1 BTC transaction, whether you need to resolve a dispute or not. Click next.
 
 ###Sign the enrollment
 
-You should now have a section of text on the screen that starts with "Rein User Enrollment". To finish creating your user account, we'll sign this text using the Bitcoin Signature Tool.
-
-For simplicity the same content is saved in a file called enrollment.txt in your ~/python-rein/ directory.
+Based on the information you entered, a document called an enrollment will be made. To finish creating your user account, we'll sign this text using the Bitcoin Signature Tool.
 
 Open your browser and open the file at ~/Rein/bitcoin-signature-tool/index.html. Click over to the Sign tab and repeat the above procedure to get the private key for your Master Bitcoin address.
 
@@ -155,7 +154,7 @@ We are now ready for the next step, which is to register with some Rein servers.
 
 ##Step 4 -- Enable Tor (optional)
 
-Privacy is an important feature that Rein aims to provide to its users. For users of the [Tor Browser Bundle](https://www.torproject.org), a single command can be run to enable Tor which should cause all traffic to be routed through Tor.
+Privacy is an important feature that Rein aims to provide to its users. For users of the [Tor Browser Bundle](https://www.torproject.org), a single command can be run to enable all traffic to be routed through Tor.
 
     rein tor true
 
