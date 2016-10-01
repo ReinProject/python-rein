@@ -24,10 +24,26 @@ class User(Base):
         self.maddr = maddr
         self.daddr = daddr
         self.dkey = dkey
-        self.will_mediate = will_mediate
-        self.mediator_fee = mediator_fee
         self.enrolled = False
         self.testnet = testnet
+
+        if will_mediate == u'1':
+            self.will_mediate = True
+        else:
+            self.will_mediate = False
+
+        if self.will_mediate:
+            self.mediator_fee = float(mediator_fee)
+        else:
+            self.mediator_fee = 0
+
+    @classmethod
+    def get_newest(self, rein):
+        return rein.session.query(User).filter(User.enrolled == 0).order_by(User.id.desc()).first()
+
+    @classmethod
+    def get(self, rein, id):
+        return rein.session.query(User).get(id)
 
     @classmethod
     def set_enrolled(self, rein, user):

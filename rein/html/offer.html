@@ -1,0 +1,63 @@
+{% extends "layout.html" %}
+{% from "_form_helpers.html" import render_error %}
+{% block body %}
+
+<div class="row">
+	<div id="breadcrumb" class="col-xs-12">
+		<a href="/" class="show-sidebar">
+			<i class="fa fa-bars"></i>
+		</a>
+		<ol class="breadcrumb pull-left">
+			<li><a href="/">Job Creators</a></li>
+			<li><a href="/offer">Offers</a></li>
+		</ol>
+    </div>
+</div>
+<div class="well">
+<div class="row">
+	<div class="col-xs-12">
+<h4>Select winning bid</h4>
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+    {% for message in messages %}
+      <p  class="txt-danger"><b>{{ message }}</b></p>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+
+<p>Block time (12 blocks ago): {{ block_time }} UTC
+{% if time_offset > 3600*4 %}
+<span class="txt-danger">Off by more than 4 hours!</span>
+{% endif %}
+</p>
+
+<!-- Job name, Worker, Description, Bid amount (BTC) -->
+
+<form class="form-horizontal" role="form" method="POST" onsubmit="return confirm('This will be sync\'d immediately to available servers. Please confirm.');" action="{{ url_for('job_offer') }}">
+    {{ form.csrf_token }}
+<table class="table">
+    
+<thead>
+    <tr>
+        <th></th>
+        <th>Job name</th>
+        <th>Worker</th>
+        <th>Description</th>
+        <th>Bid amount (BTC)</th>
+    </tr>
+</thead>
+<tbody>
+{% for subfield in form.bid_id %}
+    <tr>
+        <td>{{ subfield }}</td>
+        <td>{{ subfield.label }}</td>
+    </tr>
+{% endfor %}
+</tbody>
+</table>
+<input type="submit" value="Offer job!">
+</form>
+    </div>
+</div>
+</div>
+{% endblock %}

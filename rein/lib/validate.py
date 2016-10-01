@@ -3,8 +3,9 @@ import re
 import bitcoinecdsa
 import unittest
 import click
-import requests
 import time
+from io import safe_get
+from util import unique
 from block import Block
 
 def filter_out_expired(rein, user, urls, jobs):
@@ -13,9 +14,9 @@ def filter_out_expired(rein, user, urls, jobs):
     click.echo('Verifying block times...')
     with click.progressbar(jobs) as bar:
         for j in bar:
-            if 'Clock hash' not in j:
+            if 'Block hash' not in j:
                 continue
-            block_hash = j['Clock hash']
+            block_hash = j['Block hash']
             if 'Expiration (days)' not in j:
                 continue
             if Block.get_time(rein, block_hash):
@@ -24,21 +25,19 @@ def filter_out_expired(rein, user, urls, jobs):
                 # request block info for the clock hash
                 for url in urls:
                     sel_url = url + 'bitcoin?owner={0}&query=getbyhash&hash={1}'
-                    try:
-                        answer = requests.get(url=sel_url.format(user.maddr, block_hash))
-                    except requests.exceptions.ConnectionError:
-                        click.echo('Could not reach %s.' % url)
-                        return None
-                    data = answer.json()
+
+                    data = safe_get(rein.log, sel_url.format(user.maddr, block_hash))
+
                     if not Block.get_time(rein, block_hash):
                         b = Block(block_hash, data['time'], data['height'])
                         rein.session.add(b)
                         rein.session.commit()
+                        times[block_hash] = Block.get_time(rein, block_hash)
 
     for j in jobs:
-        if 'Clock hash' not in j:
+        if 'Block hash' not in j:
             continue
-        block_hash = j['Clock hash']
+        block_hash = j['Block hash']
         try:
             expiration = int(j['Expiration (days)'])*86400
         except:
@@ -139,6 +138,7 @@ def filter_and_parse_valid_sigs(rein, docs, expected_field=None):
     fails = 0
     for m in docs:
         data = verify_sig(m)
+        data['original'] = m
         if expected_field:
             if data['valid'] and expected_field in data:
                 valid.append(data)
@@ -149,8 +149,22 @@ def filter_and_parse_valid_sigs(rein, docs, expected_field=None):
                 valid.append(data)
             else:
                 fails += 1
-    rein.log.info('fapvs spammy fails = %d' % fails)
+    rein.log.info('bad signatures = %d' % fails)
     return valid
+
+
+def remote_query(rein, user, urls, log, query_type, distinct):
+    '''
+    Sends specific query to registered servers and filters for uniqueness
+    '''
+    res = []
+    for url in urls:
+        sel_url = "{0}query?owner={1}&query={2}&testnet={3}"
+        data = safe_get(log, sel_url.format(url, user.maddr, query_type, rein.testnet))
+        if data is None or query_type not in data or len(data[query_type]) == 0:
+            click.echo('None found')
+        res += filter_and_parse_valid_sigs(rein, data[query_type])
+    return unique(res, distinct)
 
 
 def verify_sig(sig):
@@ -214,13 +228,18 @@ def validate_audit(auditor_text):
 if __name__ == "__main__":
     # enrollment sig
     sig1 = """-----BEGIN BITCOIN SIGNED MESSAGE-----
-Name/handle: Test Person
-Contact: tester@example.com
-Master signing address: 1CptxARjqcfkVwGFSjR82zmPT8YtRMubub
-Delegate signing address: 1Djp4Siv5iLJUgXq5peWCDcHVWV1Mv3opc
+Rein User Enrollment
+User: Test
+Contact: test@example.com
+Master signing address: 1JwocAsCRqCBqwJR7gwpLx5A8WQfBGuNjz
+Delegate signing address: 1P15ptPjhuEHNoWJmnnAodJbC5AWiBfsmH
+Willing to mediate: True
+Mediator public key: 024f7f4700b6d7f97c314dbdefb3197f50aae36f6949fa9e6541e6f20b0bef5bda
+Mediator fee: 2.0%
+Testnet: True
 -----BEGIN SIGNATURE-----
-1CptxARjqcfkVwGFSjR82zmPT8YtRMubub
-H59sadjpiAgK6LaoiLEuZ3sSoFo6S2dSIjmETszVRGI6lccEgCaEgy7na1waF8TxHiVrV6qjha3m2Ih6ynAvGps=
+1JwocAsCRqCBqwJR7gwpLx5A8WQfBGuNjz
+H6wq3jPR+8cpZDu63XKyIFCgk+HQ0fWCzV28oKhyVrtTQ5xM650wmtk7MUnZgRpNowCqbSeTDJUCs5hR9rBsD88=
 -----END BITCOIN SIGNED MESSAGE-----"""
     # review sig
     sig2 = """-----BEGIN BITCOIN SIGNED MESSAGE-----

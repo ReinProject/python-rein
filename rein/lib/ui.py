@@ -7,6 +7,7 @@ from bitcoinecdsa import privkey_to_address, pubkey
 from bitcoinaddress import check_bitcoin_address
 from validate import validate_enrollment
 from user import User, Base
+from util import unique
 from document import Document
 
 
@@ -17,7 +18,9 @@ def shorten(text, length=60):
         return text[0:length-1] + '...'
     else:
         return text
-        
+
+def short_addr(text):
+    return text[0:10] + '...' + text[-8:]
 
 def hilight(string, status, bold):
     attr = []
@@ -30,6 +33,10 @@ def hilight(string, status, bold):
     if bold:
         attr.append('1')
     return '\x1b[%sm%s\x1b[0m' % (';'.join(attr), string)
+
+
+def job_link(j):
+    return '<a href="/job/%s">%s</a>' % (j['Job ID'], j['Job name'])
 
 
 def get_choice(choices, name):
@@ -163,8 +170,7 @@ def import_account(rein):
     return rein.user
 
 
-def enroll(rein):
-    Base.metadata.create_all(rein.engine)
+def build_enrollment(rein):
     user = rein.user
     mediator_extras = ''
     if user.will_mediate:
@@ -175,6 +181,25 @@ def enroll(rein):
                  (user.name, user.contact, user.maddr, user.daddr, user.will_mediate, mediator_extras)
     if rein.testnet:
         enrollment += '\nTestnet: True'
+    return enrollment
+
+
+def build_enrollment_from_dict(data):
+    mediator_extras = ''
+    if data['will_mediate']:
+        mediator_extras = "\nMediator public key: %s\nMediator fee: %s%%" % \
+                          (pubkey(data['dkey']), data['mediator_fee'])
+    enrollment = "Rein User Enrollment\nUser: %s\nContact: %s\nMaster signing address: %s" \
+                 "\nDelegate signing address: %s\nWilling to mediate: %s%s" % \
+                 (data['name'], data['contact'], data['maddr'], data['daddr'], data['will_mediate'], mediator_extras)
+    if data['testnet']:
+        enrollment += '\nTestnet: True'
+    return enrollment
+
+
+def enroll(rein):
+    Base.metadata.create_all(rein.engine)
+    enrollment = build_enrollment(rein)
     f = open(rein.enroll_filename, 'w')
     f.write(enrollment)
     f.close()
@@ -196,3 +221,182 @@ def enroll(rein):
         rein.session.add(document)
         rein.session.commit()
     return res
+
+
+def mediator_prompt(rein, eligible_mediators):
+    mediators = unique(eligible_mediators, 'Mediator public key')
+    key = pubkey(rein.user.dkey)
+    i = 0
+    for m in mediators:
+        if m["Mediator public key"] == key:
+            mediators.remove(m)
+            continue
+        click.echo('%s - %s - Fee: %s - Public key: %s' % (str(i), m['User'], m['Mediator fee'], m['Mediator public key']))
+        i += 1
+    if len(mediators) == 0:
+        click.echo("None found.")
+        return None
+    choice = get_choice(mediators, 'mediator')
+    if choice == 'q':
+        return False
+    return mediators[choice]
+
+
+# called in offer()
+def bid_prompt(rein, bids):
+    """
+    Prompts user to choose a bid on one of their jobs. This means they should be the job creator and
+    not the worker or mediator.
+    """
+    i = 0
+    valid_bids = []
+    key = pubkey(rein.user.dkey)
+    for b in bids:
+        if 'Description' not in b or b['Job creator public key'] != key:
+            continue 
+        click.echo('%s - %s - %s - %s - %s bitcoin' % (str(i), b['Job name'], b["Worker"],
+                                                  shorten(b['Description']), b['Bid amount (BTC)']))
+        valid_bids.append(b)
+        i += 1
+    if len(valid_bids) == 0:
+        click.echo('No bids available.')
+        return None
+    choice = get_choice(valid_bids, 'bid')
+    if choice == 'q':
+        click.echo('None chosen.')
+        return False
+    bid = valid_bids[choice]
+    click.echo('You have chosen %s\'s bid.\n\nFull description: %s\nBid amount (BTC): %s\n\nPlease review carefully before accepting. (Ctrl-c to abort)' % 
+               (bid['Worker'], bid['Description'], bid['Bid amount (BTC)']))
+    return bid
+
+
+def job_prompt(rein, jobs):
+    """
+    Prompt user for jobs they can bid on. Filters out jobs they created or are mediator for.
+    """
+    key = pubkey(rein.user.dkey)
+    valid_jobs = []
+    for j in jobs:
+        if j['Job creator public key'] != key and j['Mediator public key'] != key:
+            valid_jobs.append(j)
+    if len(valid_jobs) == 0:
+        click.echo('None found.')
+        return None
+
+    i = 0
+    for j in valid_jobs:
+        click.echo('%s - %s - %s - %s' % (str(i), j["Job creator"],
+                                          j['Job name'], shorten(j['Description'])))
+        i += 1
+    choice = get_choice(valid_jobs, 'job')
+    if choice == 'q':
+        return False
+    job = valid_jobs[choice]
+    click.echo('You have chosen a Job posted by %s.\n\nFull description: %s\n\nPlease pay attention '
+               'to each requirement and provide a time frame to complete the job. (Ctrl-c to abort)\n' % 
+               (job['Job creator'], job['Description']))
+    return job
+
+
+def delivery_prompt(rein, choices, detail='Description'):
+    choices = unique(choices, 'Job ID')
+    i = 0
+    for c in choices:
+        if 'Bid amount (BTC)' not in c:
+            continue
+        if detail in c:
+            click.echo('%s - %s - %s BTC - %s' % (str(i), c['Job name'], c['Bid amount (BTC)'], shorten(c[detail])))
+        else:
+            click.echo('%s - %s - %s BTC - %s' % (str(i), c['Job name'], c['Bid amount (BTC)'], shorten(c['Description'])))
+        i += 1
+    choice = get_choice(choices, 'job')
+    if choice == 'q':
+        return None
+    chosen = choices[choice]
+    click.echo('You have chosen to post deliverables. The following is from your winning bid.'
+               '\n\nDescription: %s\n\nPlease review carefully before posting deliverables. '
+               'This will be public and reviewed by mediators if disputed. (Ctrl-c to abort)\n' % 
+               (chosen['Description'],))
+    return chosen
+
+
+def accept_prompt(rein, choices, detail='Description'):
+    i = 0
+    click.echo("Offers and Deliveries")
+    click.echo("---------------------")
+    for c in choices:
+        if 'Primary escrow redeem script' not in c:
+            continue
+        if detail in c:
+            click.echo('%s: %s - %s - %s - %s' % (c['state'].title(), str(i),
+                        c['Job name'], c['Job ID'], shorten(c[detail])))
+        else:
+            click.echo('%s: %s - %s - %s - %s' % (c['state'].title(), str(i),
+                        c['Job name'], c['Job ID'], shorten(c['Description'])))
+        i += 1
+    choice = get_choice(choices, 'delivery or offer')
+    if choice == 'q':
+        return None
+    chosen = choices[choice]
+    if detail in chosen:
+        contents = chosen[detail]
+    else:
+        contents = chosen['Description']
+    click.echo('You have chosen to accept the following deliverables. \n\n%s: %s\nAccepted Bid amount (BTC): %s\n'
+               'Primary escrow redeem script: %s\n'
+               'Worker address: %s\n\n'
+               'Mediator escrow redeem script: %s\n'
+               'Mediator address: %s\n'
+               '\nPlease review carefully before accepting. Once you upload your signed statement, the mediator should no '
+               'longer provide a refund. (Ctrl-c to abort)\n' % 
+               (detail,
+                contents, chosen['Bid amount (BTC)'],
+                chosen['Primary escrow redeem script'],
+                pubkey_to_address(chosen['Worker public key']),
+                chosen['Mediator escrow redeem script'],
+                pubkey_to_address(chosen['Mediator public key'])
+               )
+              )
+    return chosen
+
+
+def dispute_prompt(rein, choices, detail='Description'):
+    i = 0
+    for c in choices:
+        if 'Primary escrow redeem script' not in c:
+            continue
+        if detail in c:
+            click.echo('%s - %s - %s - %s' % (str(i), c['Job name'], c['Job ID'], shorten(c[detail])))
+        else:
+            click.echo('%s - %s - %s - %s' % (str(i), c['Job name'], c['Job ID'], shorten(c['Description'])))
+        i += 1
+    choice = get_choice(choices, 'job')
+    if choice == 'q':
+        return None
+    chosen = choices[choice]
+    if detail in chosen:
+        contents = chosen[detail]
+    else:
+        contents = chosen['Description']
+    click.echo('You have chosen to dispute the following deliverables. \n\n%s: %s\n\nPlease provide as much detail as possible. '
+               'For the primary payment, you should build and sign one that refunds you at %s. (Ctrl-c to abort)\n' % 
+               (detail, contents, rein.user.daddr))
+    return chosen
+
+
+def resolve_prompt(rein, choices, detail='Dispute detail'):
+    i = 0
+    for c in choices:
+        if 'Primary escrow redeem script' not in c:
+            continue
+        click.echo('%s - %s - %s - %s' % (str(i), c['Job name'], c['Job ID'], shorten(c[detail])))
+        i += 1
+    choice = get_choice(choices, 'dispute')
+    if choice == 'q':
+        return None
+    chosen = choices[choice]
+    click.echo('You have chosen to resolve this dispute. \n\n%s: %s\n\n'
+               'For the mediator payment, you should build and sign one that pays you at %s. (Ctrl-c to abort)\n' %
+               (detail, chosen[detail], rein.user.daddr))
+    return chosen

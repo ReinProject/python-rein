@@ -47,7 +47,3 @@ class Placement(Base):
             text = text.decode('ascii')
             text = text.encode('utf8')
             return hashlib.sha256(text).hexdigest()
-
-    @staticmethod
-    def create_placements(engine):
-        Base.metadata.create_all(engine)

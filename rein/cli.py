@@ -6,23 +6,18 @@ import string
 import requests
 import hashlib
 import click
+import time
 from pprint import pprint
 from datetime import datetime
 from sqlalchemy import and_
 
-# Import models
-from lib.persistconfig import PersistConfig
-from lib.user import User
-from lib.bucket import Bucket
-from lib.document import Document
-from lib.placement import Placement
-from lib.order import Order
-
 # Import helper functions
 from lib.ui import *
-from lib.validate import filter_and_parse_valid_sigs, parse_document, choose_best_block, filter_out_expired
+from lib.validate import filter_and_parse_valid_sigs, parse_document, choose_best_block, filter_out_expired, remote_query
 from lib.bitcoinecdsa import sign, pubkey
 from lib.market import * 
+from lib.util import unique
+from lib.io import safe_get
 from lib.script import build_2_of_3, build_mandatory_multisig, check_redeem_scripts
 
 # Import config
@@ -31,17 +26,25 @@ import lib.config as config
 # Create tables
 import lib.models
 
-rein = config.Config()
+# Import models
+from lib.persistconfig import PersistConfig
+from lib.user import User
+from lib.bucket import Bucket
+from lib.document import Document
+from lib.placement import Placement
+from lib.order import Order, STATE
+from lib.mediator import Mediator
 
-# TODO: break out store from sign_and_store because dry-run.
+rein = config.Config()
 
 @click.group()
 @click.option('--debug/--no-debug', default=False)
 @click.pass_context
 def cli(ctx, debug):
     """
-    Rein is a decentralized professional services market. Python-rein is a command-line
-interface to Rein. Use this program to create an account, post a job, bid, etc.
+    Rein is a decentralized professional services market and Python-rein is a client
+that provides a user interface. Use this program from your local browser or command 
+line to create an account, post a job, bid, etc.
 
 \b
     Quick start:
@@ -153,15 +156,8 @@ def post(multi, identity, defaults, dry_run):
     eligible_mediators = []
     blocks = []
     for url in urls:
-        log.info("Querying %s for mediators..." % url)
         sel_url = "{0}query?owner={1}&query=mediators&testnet={2}"
-        try:
-            answer = requests.get(url=sel_url.format(url, user.maddr, rein.testnet))
-        except:
-            click.echo('Error connecting to server.')
-            log.error('server connect error ' + url)
-            continue
-        data = answer.json()
+        data = safe_get(log, sel_url.format(url, user.maddr, rein.testnet))
         if len(data['mediators']) == 0:
             click.echo('None found')
         if data['block_info']:
@@ -201,7 +197,7 @@ def post(multi, identity, defaults, dry_run):
                             'special characters are allowed. Please enter them as a comma-separated list.\n'
                             'Example: software, 3dprinting'},
                 {'label': 'Description',                    'not_null': form},
-                {'label': 'Clock hash',                     'value': block_hash},
+                {'label': 'Block hash',                     'value': block_hash},
                 {'label': 'Time',                           'value': str(block_time)},
                 {'label': 'Expiration (days)',              'validator': is_int},
                 {'label': 'Mediator',                       'value': mediator['User']},
@@ -256,15 +252,8 @@ def bid(multi, identity, defaults, dry_run):
     jobs = []
     blocks = []
     for url in urls:    
-        log.info("Querying %s for jobs..." % url)
         sel_url = "{0}query?owner={1}&query=jobs&testnet={2}"
-        try:
-            answer = requests.get(url=sel_url.format(url, user.maddr, rein.testnet))
-        except:
-            click.echo('Error connecting to server.')
-            log.error('server connect error ' + url)
-            continue
-        data = answer.json()
+        data = safe_get(log, sel_url.format(url, user.maddr, rein.testnet))
         if data['block_info']:
             blocks.append(data['block_info'])
         jobs += filter_and_parse_valid_sigs(rein, data['jobs'])
@@ -305,6 +294,7 @@ def bid(multi, identity, defaults, dry_run):
                 {'label': 'Job name',                       'value_from': job},
                 {'label': 'Worker',                         'value': user.name},
                 {'label': 'Worker contact',                 'value': user.contact},
+                {'label': 'Worker master address',          'value': user.maddr},
                 {'label': 'Description',                    'not_null': form},
                 {'label': 'Bid amount (BTC)',               'not_null': form},
                 {'label': 'Primary escrow address',         'value': primary_addr},
@@ -348,15 +338,8 @@ def offer(multi, identity, defaults, dry_run):
 
     bids = []
     for url in urls:
-        log.info("Querying %s for bids on your jobs..." % url)
         sel_url = "{0}query?owner={1}&delegate={2}&query=bids&testnet={3}"
-        try:
-            answer = requests.get(url=sel_url.format(url, user.maddr, user.daddr, rein.testnet))
-        except:
-            click.echo('Error connecting to server.')
-            log.error('server connect error ' + url)
-            continue
-        data = answer.json()
+        data = safe_get(log, sel_url.format(url, user.maddr, user.daddr, rein.testnet))
         bids += filter_and_parse_valid_sigs(rein, data['bids'])
 
     unique_bids = unique(bids, 'Description')
@@ -436,27 +419,8 @@ def deliver(multi, identity, defaults, dry_run):
             return click.echo("Input file type: " + form['Title'])
     store = False if dry_run else True
 
-    Order.update_orders(rein, Document, Document.get_user_documents)
 
-    documents = []
-    orders = Order.get_user_orders(rein, Document)
-    for order in orders:
-        state = order.get_state(rein, Document)
-        if state in ['offer', 'delivery']:
-            # get parsed offer for this order and put it in an array
-            documents += order.get_documents(rein, Document, state)
-
-    contents = []
-    for document in documents:
-        contents.append(document.contents)
-
-    offers = filter_and_parse_valid_sigs(rein, contents)
-
-    not_our_orders = []
-    for res in offers:
-        if res['Job creator public key'] != key:
-            not_our_orders.append(res)
-
+    not_our_orders = get_in_process_orders(rein, Document, key, 'Job creator public key', False)
     if len(not_our_orders) == 0:
         click.echo('None found')
         return
@@ -514,29 +478,7 @@ def accept(multi, identity, defaults, dry_run):
             return click.echo("Input file type: " + form['Title'])
     store = False if dry_run else True
 
-    Order.update_orders(rein, Document, Document.get_user_documents)
-
-    documents = []
-    orders = Order.get_user_orders(rein, Document)
-    for order in orders:
-        state = order.get_state(rein, Document)
-        if state in ['offer', 'delivery']:
-            # get parsed offer for this order and put it in an array
-            documents += order.get_documents(rein, Document, state)
-
-    contents = []
-    for document in documents:
-        contents.append(document.contents)
-
-    valid_results = filter_and_parse_valid_sigs(rein, contents)
-
-    our_orders = []
-    for res in valid_results:
-        if res['Job creator public key'] == key:
-            order = Order.get_by_job_id(rein, res['Job ID'])
-            res['state'] = order.get_state(rein, Document)
-            our_orders.append(res)
-
+    our_orders = get_in_process_orders(rein, Document, key, 'Job creator public key', True)
     if len(our_orders) == 0:
         click.echo('None found')
         return
@@ -589,35 +531,15 @@ def creatordispute(multi, identity, defaults, dry_run):
             return click.echo("Input file type: " + form['Title'])
     store = False if dry_run else True
 
-    Order.update_orders(rein, Document, Document.get_user_documents)
-
-    documents = []
-    orders = Order.get_user_orders(rein, Document)
-    for order in orders:
-        state = order.get_state(rein, Document)
-        if state in ['offer', 'delivery']:
-            # get parsed offer for this order and put it in an array
-            documents += order.get_documents(rein, Document, state)
-
-    contents = []
-    for document in documents:
-        contents.append(document.contents)
-
-    valid_results = filter_and_parse_valid_sigs(rein, contents)
-
-    not_our_orders = []
-    for res in valid_results:
-        if res['Job creator public key'] == key:
-            not_our_orders.append(res)
-
-    if len(not_our_orders) == 0:
+    our_orders = get_in_process_orders(rein, Document, key, 'Job creator public key', True)
+    if len(our_orders) == 0:
         click.echo('None found')
         return
 
     if 'Job ID' in form.keys():
-        doc = select_by_form(not_our_orders, 'Job ID', form)
+        doc = select_by_form(our_orders, 'Job ID', form)
     else:
-        doc = dispute_prompt(rein, not_our_orders, "Deliverables")
+        doc = dispute_prompt(rein, our_orders, "Deliverables")
     if not doc:
         return
 
@@ -657,37 +579,15 @@ def workerdispute(multi, identity, defaults, dry_run):
             return click.echo("Input file type: " + form['Title'])
     store = False if dry_run else True
 
-    valid_results = []
-
-    Order.update_orders(rein, Document, Document.get_user_documents)
-
-    documents = []
-    orders = Order.get_user_orders(rein, Document)
-    for order in orders:
-        state = order.get_state(rein, Document)
-        if state in ['offer', 'delivery']:
-            # get parsed offer for this order and put it in an array
-            documents += order.get_documents(rein, Document, state)
-
-    contents = []
-    for document in documents:
-        contents.append(document.contents)
-
-    valid_results = filter_and_parse_valid_sigs(rein, contents)
-    
-    not_our_orders = []
-    for res in valid_results:
-        if res['Worker public key'] == key:
-            not_our_orders.append(res)
-
-    if len(not_our_orders) == 0:
+    our_orders = get_in_process_orders(rein, Document, key, 'Worker public key', True)
+    if len(our_orders) == 0:
         click.echo('None found')
         return
 
     if 'Job ID' in form.keys():
-        doc = select_by_form(not_our_orders, 'Job ID', form)
+        doc = select_by_form(our_orders, 'Job ID', form)
     else:
-        doc = dispute_prompt(rein, not_our_orders, 'Deliverables')
+        doc = dispute_prompt(rein, our_orders, 'Deliverables')
     if not doc:
         return
 
@@ -729,15 +629,9 @@ def resolve(multi, identity, defaults, dry_run):
 
     valid_results = []
     for url in urls:
-        log.info("Querying %s for jobs we're mediating..." % url)
         sel_url = "{0}query?owner={1}&query=review&mediator={2}&testnet={3}"
-        try:
-            answer = requests.get(url=sel_url.format(url, user.maddr, key, rein.testnet))
-        except:
-            click.echo('Error connecting to server.')
-            log.error('server connect error ' + url)
-            continue
-        results = answer.json()['review']
+        data = safe_get(log, sel_url.format(url, user.maddr, key, rein.testnet))
+        results = data['review']
         valid_results += filter_and_parse_valid_sigs(rein, results)
 
     valid_results = unique(valid_results, 'Job ID')
@@ -750,17 +644,10 @@ def resolve(multi, identity, defaults, dry_run):
     job_ids_string = ','.join(job_ids)
     valid_results = []
     for url in urls:
-        log.info("Querying %s for %s ..." % (url, job_ids_string))
         sel_url = "{0}query?owner={1}&job_ids={2}&query=by_job_id&testnet={3}"
-        try:
-            answer = requests.get(url=sel_url.format(url, user.maddr, job_ids_string, rein.testnet))
-        except:
-            click.echo('Error connecting to server.')
-            log.error('server connect error ' + url)
-            continue
-        results = answer.json()
-        if 'by_job_id' in results.keys():
-            results = results['by_job_id']
+        data = safe_get(log, sel_url.format(url, user.maddr, job_ids_string, rein.testnet))
+        if 'by_job_id' in data:
+            results = data['by_job_id']
         else:
             continue
         valid_results += filter_and_parse_valid_sigs(rein, results, 'Dispute detail')
@@ -917,13 +804,27 @@ def sync(multi, identity):
     """
     (log, user, key, urls) = init(multi, identity)
 
+    sync_core(log, user, key, urls)
+
+
+def sync_core(log, user, key, urls):
     click.echo("User: " + user.name)
 
     if len(urls) == 0:
         click.echo("No buckets registered. Run 'rein request' to continue.")
         return
 
-    Placement.create_placements(rein.engine)
+    mediators = remote_query(rein, user, urls, log, 'mediators', 'Mediator public key')
+    for m in mediators:
+        from pprint import pprint
+        if not Mediator.get(m['Master signing address'], rein.testnet):
+            newMediator = Mediator(m, testnet)
+            rein.session.add(newMediator)
+            rein.session.commit()
+
+    check = Document.get_user_documents(rein)
+    if len(check) == 0:
+        click.echo("Nothing to do.")
 
     upload = []
     nonce = {}
@@ -931,9 +832,6 @@ def sync(multi, identity):
         nonce[url] = get_new_nonce(rein, url)
         if nonce[url] is None:
             continue
-        check = Document.get_user_documents(rein) 
-        if len(check) == 0:
-            click.echo("Nothing to do.")
 
         for doc in check:
             if len(doc.contents) > 8192:
@@ -1001,11 +899,10 @@ def sync(multi, identity):
         if nonce[url] is None:
             continue
         sel_url = url + 'nonce?address={0}&clear={1}'
-        answer = requests.get(url=sel_url.format(user.maddr, nonce[url]))
+        answer = safe_get(log, sel_url.format(user.maddr, nonce[url]))
         log.info('nonce cleared for %s' % (url))
 
     click.echo('%s docs checked on %s servers, %s uploads done.' % (len(check), len(urls), str(succeeded)))
-
 
 @cli.command()
 @click.option('--multi/--no-multi', default=False, help="prompt for identity to use")
@@ -1017,7 +914,7 @@ def status(multi, identity, jobid):
     """
     (log, user, key, urls) = init(multi, identity)
 
-    Order.update_orders(rein, Document, Document.get_user_documents)
+    Order.update_orders(rein, Document)
     documents = Document.get_user_documents(rein)
 
     if jobid is None:
@@ -1044,15 +941,8 @@ def status(multi, identity, jobid):
     else:
         remote_documents = []
         for url in urls:    
-            log.info("Querying %s for job id %s..." % (url, jobid))
             sel_url = "{0}query?owner={1}&query=by_job_id&job_ids={2}&testnet={3}"
-            try:
-                answer = requests.get(url=sel_url.format(url, user.maddr, jobid, rein.testnet))
-            except:
-                click.echo('Error connecting to server.')
-                log.error('server connect error ' + url)
-                continue
-            data = answer.json()
+            data = safe_get(log, sel_url.format(url, user.maddr, jobid, rein.testnet))
             remote_documents += filter_and_parse_valid_sigs(rein, data['by_job_id'])
         unique_documents = unique(remote_documents)
         combined = {}
@@ -1072,6 +962,7 @@ def status(multi, identity, jobid):
                     click.echo("\n" + document.contents)
             else:
                 click.echo("Job id not found")
+
 
 @cli.command()
 @click.argument('testnet', required=True)
@@ -1179,6 +1070,502 @@ def select_by_form(candidates, field, form):
        return None
    else:
        click.echo(field + " is required but not in your defaults file")
+
+
+@cli.command()
+@click.option('--multi/--no-multi', '-m', default=False, help="prompt for identity to use")
+@click.option('--identity', '-i', type=click.Choice(['Alice', 'Bob', 'Charlie', 'Dan']), default=None, help="identity to use")
+@click.option('--setup/--no-setup', default=False, help="Setup new user")
+def start(multi, identity, setup):
+    """
+    Use Rein from the browser.
+
+    Starts a local web server and opens a browser with
+    simple UI to use Rein.
+    """
+    import webbrowser
+    from flask import Flask, request, redirect, url_for, flash, send_from_directory, render_template
+    from lib.forms import SetupForm, JobPostForm, JobOfferForm, AcceptForm, DisputeForm
+    from lib.mediator import Mediator
+
+    host = '127.0.0.1'
+    port = 5001
+
+    tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'html')
+
+    app = Flask(__name__, template_folder=tmpl_dir)
+    app.secret_key = ''.join(random.SystemRandom().choice(string.digits) for _ in range(32))
+
+    def flash_errors(form):
+        for field, errors in form.errors.items():
+            for error in errors:
+                 flash(u"Error in the %s field - %s" % (
+                       getattr(form, field).label.text,
+                       error
+                       ))
+
+    @app.route("/setup", methods=['POST', 'GET'])
+    def start_setup():
+        log = rein.get_log()
+        form = SetupForm(request.form)
+
+        from rein.lib.user import User
+
+        if request.method == 'POST' and form.validate_on_submit():
+            new_identity = User(form.name.data,
+                                form.contact.data,
+                                form.maddr.data,
+                                form.daddr.data,
+                                form.dkey.data,
+                                form.will_mediate.data,
+                                form.mediator_fee.data,
+                                rein.testnet)
+            rein.session.add(new_identity)
+            rein.session.commit()
+            data = {'name': form.name.data,
+                    'contact': form.contact.data,
+                    'maddr': form.maddr.data,
+                    'daddr': form.daddr.data,
+                    'dkey': form.dkey.data,
+                    'will_mediate': form.will_mediate.data,
+                    'mediator_fee': form.mediator_fee.data,
+                    'testnet': rein.testnet}
+            filename = rein.backup_filename + '-' + ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(6))
+            if not os.path.isfile(filename):
+                f = open(filename, 'w')
+                try:
+                    f.write(json.dumps(data))
+                    click.echo("Backup saved successfully to %s" % filename)
+                except:
+                    RuntimeError('Problem writing user details to json backup file.')
+                    return render_template("setup.html",
+                                           form=form)
+                f.close()
+            else:
+                click.echo("Backup file already exists. Please run with --backup to save "
+                            "user details to file.")
+            return redirect('/sign')
+        else:
+            return render_template("setup.html",
+                                   form=form)
+
+
+    @app.route("/sign", methods=['POST', 'GET'])
+    def start_sign():
+        log = rein.get_log()
+
+        from rein.lib.user import User
+        from lib.forms import SignForm
+        form = SignForm(request.form)
+
+        if request.method == 'POST' and form.validate_on_submit():
+            user = User.get(rein, form.identity_id.data)
+            User.set_enrolled(rein, user)
+
+            # insert signed document into documents table as type 'enrollment'
+            signed = form.signed.data.replace("\r\n","\n")
+            document = Document(rein, 'enrollment', signed, sig_verified=True, testnet=rein.testnet)
+            rein.session.add(document)
+            rein.session.commit()
+            return redirect('/done')
+        elif not User.get_newest(rein):
+            return redirect("/setup")
+        else:
+            rein.user = User.get_newest(rein)
+            form.identity_id.data = rein.user.id
+            form.enrollment = build_enrollment(rein)
+            return render_template("sign.html",
+                                   form=form)
+
+
+    @app.route("/done", methods=['POST', 'GET'])
+    def start_done():
+        return render_template("done.html")
+
+
+    @app.route('/<path:path>')
+    def serve_static_file(path):
+        return send_from_directory(tmpl_dir, path)
+
+
+    if rein.has_no_account() or setup:
+        webbrowser.open('http://'+host+':' + str(port) + '/setup')
+        app.run(host=host, port=port, debug=True)
+    else:
+        (log, user, key, urls) = init(multi, identity)
+        documents = Document.get_user_documents(rein)
+        orders = Order.get_user_orders(rein, Document)
+        bids = Document.get_by_type(rein, 'bid')
+        jobs = []
+        blocks = []
+        connected = False
+        for url in urls:
+            sel_url = "{0}query?owner={1}&query=jobs&testnet={2}"
+            data = safe_get(log, sel_url.format(url, user.maddr, rein.testnet))
+            if data is None:
+                continue
+            connected = True
+            if data['block_info']:
+                blocks.append(data['block_info'])
+            jobs += filter_and_parse_valid_sigs(rein, data['jobs'])
+        if not connected:
+            click.echo('No servers were available. Please check your internet connection.')
+            log.error('no servers available')
+            return
+        (block_hash, block_time) = choose_best_block(blocks)
+        t = time.localtime()
+        dst_offset = 3600 * t.tm_isdst
+        str_block_time = datetime.fromtimestamp(block_time + time.timezone - dst_offset).strftime('%Y-%m-%d %H:%M:%S %Z')
+        time_offset = abs(block_time - int(time.time()))
+
+    @app.route("/post", methods=['POST', 'GET'])
+    def job_post():
+        form = JobPostForm(request.form)
+        mediators = Mediator.get(None, rein.testnet)
+        mediator_maddrs = []
+        for m in mediators:
+            if m.dpubkey != key:
+                mediator_maddrs.append((m.maddr, '{}</td><td>{}%</td><td>{}'.format(m.username,
+                                                                                    m.mediator_fee,
+                                                                                    m.dpubkey)))
+        form.mediator_maddr.choices = mediator_maddrs
+        if request.method == 'POST' and form.validate_on_submit():
+            mediator = Mediator.get(form.mediator_maddr.data, rein.testnet)[0]
+            job_guid = ''.join(random.SystemRandom().choice(string.ascii_lowercase + string.digits) for _ in range(20))
+            fields = [
+                {'label': 'Job name',                       'value': form.job_name.data,
+                    'help': 'Choose a brief but descriptive name for the job.'},
+                {'label': 'Job ID',                         'value': job_guid},
+                {'label': 'Tags',                           'value': form.tags.data,
+                    'help': 'Each post can have a set of tags associated with it. Though not implemented yet,\n'
+                            'these tags may be used in searches and filters later. No spaces, dashes, or\n'
+                            'special characters are allowed. Please enter them as a comma-separated list.\n'
+                            'Example: software, 3dprinting'},
+                {'label': 'Description',                    'value': form.description.data},
+                {'label': 'Block hash',                     'value': block_hash},
+                {'label': 'Time',                           'value': str(block_time)},
+                {'label': 'Expiration (days)',              'value': form.expire_days.data},
+                {'label': 'Mediator',                       'value': mediator.username},
+                {'label': 'Mediator contact',               'value': mediator.contact},
+                {'label': 'Mediator fee',                   'value': str(mediator.mediator_fee)},
+                {'label': 'Mediator public key',            'value': mediator.dpubkey},
+                {'label': 'Mediator master address',        'value': mediator.maddr},
+                {'label': 'Job creator',                    'value': user.name},
+                {'label': 'Job creator contact',            'value': user.contact},
+                {'label': 'Job creator public key',         'value': key},
+                {'label': 'Job creator master address',     'value': user.maddr},
+                     ]
+            document_text = assemble_document('Job', fields)
+            store = True
+            document = sign_and_store_document(rein, 'job_posting', document_text, user.daddr, user.dkey, store)
+            if document and store:
+                click.echo("Posting created. Run 'rein sync' to push to available servers.")
+                sync_core(log, user, key, urls)
+                flash("Posting created and pushed to available servers.")
+            assemble_order(rein, document)
+            log.info('posting signed') if document else log.error('posting failed')
+            return redirect("/")
+        elif request.method == 'POST':
+            flash_errors(form)
+            return redirect("/post")
+        else:
+            return render_template("post.html",
+                            form=form,
+                            user=user,
+                            key=key,
+                            urls=urls,
+                            documents=documents,
+                            orders=orders,
+                            mediators=mediators,
+                            block_time=str_block_time,
+                            time_offset=time_offset
+                            )
+
+
+    @app.route("/offer", methods=['POST', 'GET'])
+    def job_offer():
+        Order.update_orders(rein, Document)
+        form = JobOfferForm(request.form)
+        key = pubkey(rein.user.dkey)
+
+        # get and store bids on our jobs
+        bids = []
+        for url in urls:
+            sel_url = "{0}query?owner={1}&delegate={2}&query=bids&testnet={3}"
+            data = safe_get(log, sel_url.format(url, user.maddr, user.daddr, rein.testnet))
+            bids += filter_and_parse_valid_sigs(rein, data['bids'])
+
+        unique_bids = unique(bids, 'Description')
+
+        bids = []
+        for bid in unique_bids:
+            if bid['Job creator public key'] != key:
+                continue
+
+            order = Order.get_by_job_id(rein, bid['Job ID'])
+
+            if not order:
+                order = Order(bid['Job ID'], testnet=rein.testnet)
+                rein.session.add(order)
+                rein.session.commit()
+
+            state = order.get_state(rein, Document)
+
+            if state in ['bid', 'job_posting']:
+                bids.append(bid)
+
+        # check of bid exists and if not store it
+        # build tuple list to populate form.bids
+        bid_choices = []
+        for b in bids:
+            doc_hash = Document.calc_hash(b['original'])
+            d = Document.find(rein, doc_hash, 'remote')
+            if not d:
+                d = Document(rein, 'bid', b['original'], source_url='remote', testnet=rein.testnet)
+                rein.session.add(d)
+                rein.session.commit()
+                id = d.id
+            else:
+                id = d[0].id
+            bid_choices.append((str(id), '{}</td><td>{}</td><td>{}</td><td>{}'.format(job_link(b),
+                                                                                           b['Worker'],
+                                                                                           b['Description'],
+                                                                                           b['Bid amount (BTC)'])))
+        form.bid_id.choices = bid_choices
+
+        if request.method == 'POST' and form.validate_on_submit():
+            bid_doc = Document.get(rein, form.bid_id.data)
+            bid = parse_document(bid_doc.contents)
+            fields = [
+                {'label': 'Job name',                       'value': bid['Job name']},
+                {'label': 'Job ID',                         'value': bid['Job ID']},
+                {'label': 'Description',                    'value': bid['Description']},
+                {'label': 'Bid amount (BTC)',               'value': bid['Bid amount (BTC)']},
+                {'label': 'Primary escrow address',         'value': bid['Primary escrow address']},
+                {'label': 'Mediator escrow address',        'value': bid['Mediator escrow address']},
+                {'label': 'Job creator',                    'value': bid['Job creator']},
+                {'label': 'Job creator public key',         'value': bid['Job creator public key']},
+                {'label': 'Mediator public key',            'value': bid['Mediator public key']},
+                {'label': 'Worker public key',              'value': bid['Worker public key']},
+                {'label': 'Primary escrow redeem script',   'value': bid['Primary escrow redeem script']},
+                {'label': 'Mediator escrow redeem script',  'value': bid['Mediator escrow redeem script']},
+                     ]
+            document_text = assemble_document('Offer', fields)
+            store = True
+            document = sign_and_store_document(rein, 'offer', document_text, user.daddr, user.dkey, store)
+            if document and store:
+                click.echo("Offer created. Run 'rein sync' to push to available servers.")
+                sync_core(log, user, key, urls)
+                flash("Offer created and pushed to available servers.")
+            assemble_order(rein, document)
+            log.info('offer signed') if document else log.error('offer failed')
+            return redirect("/")
+        elif request.method == 'POST':
+            flash_errors(form)
+            return redirect("/offer")
+        else:
+            return render_template("offer.html",
+                            form=form,
+                            user=user,
+                            key=key,
+                            urls=urls,
+                            documents=documents,
+                            orders=orders,
+                            bids=bids,
+                            block_time=str_block_time,
+                            time_offset=time_offset
+                            )
+
+
+    @app.route("/accept", methods=['POST', 'GET'])
+    def job_accept():
+        Order.update_orders(rein, Document)
+        form = AcceptForm(request.form)
+
+        our_orders = get_in_process_orders(rein, Document, key, 'Job creator public key', True)
+
+        deliverables = []
+        for o in our_orders:
+            doc_hash = Document.calc_hash(o['original'])
+            d = Document.find(rein, doc_hash, 'remote')
+            if d:
+                id = d[0].id
+            else:
+                d = Document(rein, 'delivery', o['original'], source_url='remote', testnet=rein.testnet)
+                rein.session.add(d)
+                rein.session.commit()
+                id = d.id
+            if o['state'] in ['offer', 'delivery']:
+                if 'Deliverables' in o:
+                    delivery = o['Deliverables']
+                else:
+                    delivery = 'No deliveries found.'
+                deliverables.append((str(id), '{}</td><td>{}'.format( job_link(o),
+                                                                      delivery,
+                                                                    )))
+        form.deliverable_id.choices = deliverables
+
+        if request.method == 'POST' and form.validate_on_submit():
+            delivery_doc = Document.get(rein, form.deliverable_id.data)
+            delivery = parse_document(delivery_doc.contents)
+            fields = [
+                {'label': 'Job name',                       'value_from': delivery},
+                {'label': 'Job ID',                         'value_from': delivery},
+                {'label': 'Signed primary payment',         'value': form.signed_primary_payment.data},
+                {'label': 'Signed mediator payment',        'value': form.signed_mediator_payment.data},
+                {'label': 'Primary escrow redeem script',   'value_from': delivery},
+                {'label': 'Mediator escrow redeem script',  'value_from': delivery},
+                     ]
+
+            document_text = assemble_document('Accept Delivery', fields)
+            store = True
+            document = sign_and_store_document(rein, 'accept', document_text, user.daddr, user.dkey, store)
+            if document and store:
+                click.echo("Accept created. Run 'rein sync' to push to available servers.")
+                sync_core(log, user, key, urls)
+                flash("Accept signed and pushed to available servers.")
+            assemble_order(rein, document)
+            log.info('accept signed') if document else log.error('accept failed')
+            return redirect("/")
+        elif request.method == 'POST':
+            print "form data " + str(form)
+            flash_errors(form)
+            return redirect("/accept")
+        else:
+            return render_template("accept.html",
+                            form=form,
+                            user=user,
+                            key=key,
+                            urls=urls,
+                            block_time=str_block_time,
+                            time_offset=time_offset
+                            )
+
+    @app.route('/job/<jobid>')
+    def job_info_page(jobid):
+        Order.update_orders(rein, Document)
+        remote_documents = []
+        for url in urls:    
+            sel_url = "{0}query?owner={1}&query=by_job_id&job_ids={2}&testnet={3}"
+            data = safe_get(log, sel_url.format(url, user.maddr, jobid, rein.testnet))
+            remote_documents += filter_and_parse_valid_sigs(rein, data['by_job_id'])
+        unique_documents = unique(remote_documents)
+        combined = {}
+        for doc in unique_documents:
+            combined.update(doc)
+
+        o = Order.get_by_job_id(rein, jobid)
+        state = STATE[o.get_state(rein, Document)]
+
+        cleanup = ['Title', 'signature', 'signature_address', 'valid']
+        for key in cleanup:
+            if key in combined:
+                del combined[key]
+
+        if len(remote_documents) == 0:
+            found = False
+        else:
+            found = True
+
+        return render_template('job.html',
+                            user=user,
+                            order=o,
+                            state=state,
+                            found=found,
+                            unique=unique_documents,
+                            job=combined)
+        
+    @app.route("/dispute", methods=['POST', 'GET'])
+    def job_dispute():
+        Order.update_orders(rein, Document)
+        form = DisputeForm(request.form)
+
+        our_orders = get_in_process_orders(rein, Document, key, 'Job creator public key', True) + \
+                     get_in_process_orders(rein, Document, key, 'Worker public key', True)
+
+        orders = []
+        for o in our_orders:
+            doc_hash = Document.calc_hash(o['original'])
+            d = Document.find(rein, doc_hash, 'remote')
+            if d:
+                id = d[0].id
+            else:
+                d = Document(rein, Document.get_document_type(o['original']), o['original'], source_url='remote', testnet=rein.testnet)
+                rein.session.add(d)
+                rein.session.commit()
+                id = d.id
+
+            if o['Job creator public key'] == key:
+                role = 'Job creator'
+            else:
+                role = 'Worker'
+
+            if o['state'] in ['offer', 'delivery']:
+                orders.append((str(id), '{}</td><td>{}'.format( job_link(o),
+                                                                role,
+                                                              )))
+        form.order_id.choices = orders
+
+        if request.method == 'POST' and form.validate_on_submit():
+            latest_doc = Document.get(rein, form.order_id.data)
+            doc = parse_document(latest_doc.contents)
+            fields = [
+                {'label': 'Job name',                       'value_from': doc},
+                {'label': 'Job ID',                         'value_from': doc},
+                {'label': 'Dispute detail',                 'not_null': form.dispute_detail.data},
+                {'label': 'Primary escrow redeem script',   'value_from': doc},
+                {'label': 'Mediator escrow redeem script',  'value_from': doc},
+                     ]
+
+            if key == doc['Job creator public key']:
+                title = 'Dispute Delivery'
+                doc_type = 'creatordispute'
+            else:
+                title = 'Dispute Offer'
+                doc_type = 'workerdispute'
+
+            document_text = assemble_document(title, fields)
+            store = True
+            document = sign_and_store_document(rein, doc_type, document_text, user.daddr, user.dkey, store)
+            if document and store:
+                click.echo("{} created. Run 'rein sync' to push to available servers.".format(title))
+                sync_core(log, user, key, urls)
+                flash("{} signed and pushed to available servers.".format(title))
+            assemble_order(rein, document)
+            log.info(doc_type + ' signed') if document else log.error(doc_type + ' failed')
+            return redirect("/")
+        elif request.method == 'POST':
+            print "form data " + str(form)
+            flash_errors(form)
+            return redirect("/dispute")
+        else:
+            return render_template("dispute.html",
+                            form=form,
+                            user=user,
+                            key=key,
+                            urls=urls,
+                            block_time=str_block_time,
+                            time_offset=time_offset
+                            )
+
+            
+    @app.route('/')
+    @app.route('/index.html')
+    def serve_template_file():
+        documents = Document.get_user_documents(rein)
+        Order.update_orders(rein, Document)
+        orders = Order.get_user_orders(rein, Document)
+        return render_template('index.html',
+                        user=user,
+                        key=key,
+                        urls=urls,
+                        documents=documents,
+                        orders=orders)
+
+    webbrowser.open('http://'+host+':' + str(port))
+    app.run(host=host, port=port, debug=True)
+
+    # testing steps: Disable tor. Then turn on debug because debug doesn't work when socket is overriden
 
 
 if __name__ == '__main__':

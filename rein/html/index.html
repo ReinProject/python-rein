@@ -1,0 +1,71 @@
+{% extends "layout.html" %}
+{% from "_form_helpers.html" import render_error %}
+{% block body %}
+<!--Start Breadcrumb-->
+<div class="row">
+	<div id="breadcrumb" class="col-xs-12">
+		<a href="#" class="show-sidebar">
+			<i class="fa fa-bars"></i>
+		</a>
+		<ol class="breadcrumb pull-left">
+			<li><a href="index.html">Home</a></li>
+			<li><a href="#">Dashboard</a></li>
+		</ol>
+		<div id="social" class="pull-right">
+			<a href="#"><i class="fa fa-google-plus"></i></a>
+			<a href="#"><i class="fa fa-facebook"></i></a>
+			<a href="#"><i class="fa fa-twitter"></i></a>
+			<a href="#"><i class="fa fa-linkedin"></i></a>
+			<a href="#"><i class="fa fa-youtube"></i></a>
+		</div>
+	</div>
+</div>
+<!--End Breadcrumb-->
+<!--Start Dashboard 1-->
+<div id="dashboard-header" class="row">
+	<div class="col-xs-12 col-sm-4 col-md-5">
+        <h3>Hello, {{ user.name }}!</h3>
+	</div>
+	<div class="clearfix visible-xs"></div>
+</div>
+<!--End Dashboard 1-->
+
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+    {% for message in messages %}
+     <h4 class="txt-success">{{ message }}</h4>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+
+
+<!--Start Rein Dashboard-->
+<div class="well">
+    <p>
+    <b>Master bitcoin address:</b> {{ user.maddr }}<br />
+    <b>Delegate bitcoin address:</b> {{ user.daddr }}<br />
+    <b>Delegate public key:</b> {{ key }}<br />
+    <b>Willing to mediate:</b> {{ user.will_mediate }}<br />
+    {% if user.will_mediate %}
+    <b>Mediator fee:</b> {{ user.mediator_fee }}<br />
+    {% endif %}
+    <b>Registered servers:</b><br />
+    {% for url in urls %}
+    <a href="{{url}}">{{ url }}</a><br />
+    {% endfor %}
+    <table class="table m-table table-bordered table-hover table-heading">
+        <thead>
+            <th>ID</th>
+            <th>Job ID</th>
+        </thead>
+        <tbody>
+            {% for order in orders %}
+            <tr><td>{{ order.id }}</td><td><a href="/job/{{ order.job_id }}">{{ order.job_id }}</a></td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    </p>
+
+</div>
+<div style="height: 40px;"></div>
+{% endblock %}

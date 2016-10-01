@@ -1,0 +1,45 @@
+{% extends "minimal-layout.html" %}
+{% from "_form_helpers.html" import render_error %}
+{% block body %}
+
+<div class="well">
+<div class="row">
+	<div class="col-xs-12 col-sm-9">
+        
+<h3>Step 2 - Sign enrollment</h3>
+<br />
+<p>Sign the statement below with your master Bitcoin address. It is recommended to use the <a href="#">Bitcoin Signature Tool</a> from an offline computer and to keep your master private key secure.</p>
+<br />
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+    {% for message in messages %}
+      <p  class="txt-danger"><b>{{ message }}</b></p>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+
+<form class="form-horizontal" role="form" method="POST" action="{{ url_for('start_sign') }}">
+    {{ form.csrf_token }}
+    {{ form.identity_id }}
+    <div class="form-group">
+        <label class="col-sm-3 control-label">Enrollment to be signed</label>
+        <div class="col-sm-6">
+            <textarea cols="80" rows="11" readonly onClick="this.select();">{{ form.enrollment }}</textarea>
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="col-sm-3 control-label">{{ form.signed.label }}</label>
+        <div class="col-sm-6">{{ form.signed(rows=8, cols=80, class="form-control", data_toggle="tooltip", title="Fill in your signed enrollment.") }}
+            <span class="txt-danger">{{ render_error(form.signed) }}</span>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-sm-3"></div>
+        <div class="col-sm-3"><input type="submit" value="Next"></div>
+    </div>
+</form>
+    </div>
+</div>
+</div>
+{% endblock %}
