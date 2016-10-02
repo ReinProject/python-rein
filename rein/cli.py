@@ -987,14 +987,16 @@ def testnet(testnet):
 @click.argument('tor', required=True)
 def tor(tor):
     """
-    Enter 'true' / 'false' to toggle connection through Tor.
+    Enter 'true' / 'false' etc to toggle connection through Tor.
     """
-    if tor and tor.lower() == 'true':
+    if tor and tor.lower() in ['on', 'true', 'enabled']:
         PersistConfig.set_tor(rein, 'true')
         click.echo("Tor enabled.")
-    else:
+    elif tor and tor.lower() in ['off', 'false', 'disabled']:
         PersistConfig.set_tor(rein, 'false')
         click.echo("Tor disabled.")
+    else:
+        click.echo("Invalid option.")
     return
 
 
