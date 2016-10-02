@@ -709,7 +709,7 @@ def request(multi, identity, url):
     sel_url = "{0}request?owner={1}&delegate={2}&contact={3}"
 
     try:
-        answer = requests.get(url=sel_url.format(url, user.maddr, user.daddr, user.contact))
+        answer = requests.get(url=sel_url.format(url, user.maddr, user.daddr, user.contact), proxies=rein.proxies)
     except:
         click.echo('Error connecting to server.')
         log.error('server connect error ' + url)
@@ -761,7 +761,7 @@ def buy(multi, identity, url):
     sel_url = "{0}buy?owner={1}&delegate={2}&contact={3}"
 
     try:
-        answer = requests.get(url=sel_url.format(url, user.maddr, user.daddr, user.contact))
+        answer = requests.get(url=sel_url.format(url, user.maddr, user.daddr, user.contact), proxies=rein.proxies)
     except:
         click.echo('Error connecting to server.')
         log.error('server connect error ' + url)
@@ -882,7 +882,7 @@ def sync_core(log, user, key, urls):
                     "testnet": rein.testnet}
             body = json.dumps(data)
             headers = {'Content-Type': 'application/json'}
-            answer = requests.post(url='{0}put'.format(url), headers=headers, data=body)
+            answer = requests.post(url='{0}put'.format(url), headers=headers, data=body, proxies=rein.proxies)
             res = answer.json()
             if 'result' not in res or res['result'] != 'success':
                 log.error('upload failed doc=%s plc=%s url=%s res=%s' % (doc.id, plc.id, url, res))
@@ -1051,7 +1051,7 @@ def get_user(rein, identity, enrolled):
 def get_new_nonce(rein, url):
     sel_url = url + 'nonce?address={0}'
     try:
-        answer = requests.get(url=sel_url.format(rein.user.maddr))
+        answer = requests.get(url=sel_url.format(rein.user.maddr), proxies=rein.proxies)
     except requests.exceptions.ConnectionError:
         click.echo('Could not reach %s.' % url)
         return None
@@ -1201,14 +1201,14 @@ def start(multi, identity, setup):
         jobs = []
         blocks = []
         connected = False
+        click.echo('about to try urls')
         for url in urls:
             sel_url = "{0}query?owner={1}&query=jobs&testnet={2}"
             data = safe_get(log, sel_url.format(url, user.maddr, rein.testnet))
-            if data is None:
+            if not data or 'block_info' not in data:
                 continue
             connected = True
-            if data['block_info']:
-                blocks.append(data['block_info'])
+            blocks.append(data['block_info'])
             jobs += filter_and_parse_valid_sigs(rein, data['jobs'])
         if not connected:
             click.echo('No servers were available. Please check your internet connection.')

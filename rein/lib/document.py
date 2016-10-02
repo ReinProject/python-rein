@@ -96,7 +96,10 @@ class Document(Base):
 
         data = safe_get(rein.log, sel_url.format(url, rein.user.maddr, job_id, rein.testnet))
 
-        return filter_valid_sigs(rein, data['by_job_id'])
+        if data and 'by_job_id' in data:
+            return filter_valid_sigs(rein, data['by_job_id'])
+        else:
+            return None
 
     @staticmethod
     def get_job_id(text):

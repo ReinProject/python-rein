@@ -1,5 +1,6 @@
 import os
 import logging
+import click
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
@@ -24,7 +25,9 @@ class Config():
         self.testnet = 1 if PersistConfig.get_testnet(self) else 0
         self.tor = 1 if PersistConfig.get_tor(self) else 0
         if self.tor:
-            self.setup_tor()
+            self.proxies = { 'http': 'socks5://127.0.0.1:9150' }
+        else:
+            self.proxies = {}
         self.log.info('testnet = ' + str(self.testnet))
 
     def setup_logging(self):

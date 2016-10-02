@@ -1,10 +1,12 @@
 from sqlalchemy import Column, Integer, String, Boolean, and_
 from sqlalchemy.ext.declarative import declarative_base
-import requests
 import hashlib
+import requests
+import config
+
+rein = config.Config()
 
 Base = declarative_base()
-
 
 class Placement(Base):
     __tablename__ = 'placement'
@@ -38,7 +40,7 @@ class Placement(Base):
     @staticmethod
     def get_remote_document_hash(rein, plc):
         sel_url = "{0}get?key={1}"
-        answer = requests.get(url=sel_url.format(plc.url, plc.remote_key))
+        answer = requests.get(url=sel_url.format(plc.url, plc.remote_key), proxies=rein.proxies)
         if answer.status_code == 404:
             rein.log.error("%s not found at %s" % (str(plc.doc_id), plc.url))
             return False
