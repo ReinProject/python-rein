@@ -7,7 +7,8 @@ import config
 rein = config.Config()
 
 def safe_get(log, url):
-    log.info("GET {0}".format(url))
+    click.echo('GET {}'.format(url))
+    log.info("GET {}".format(url))
 
     try:
         answer = requests.get(url=url, proxies=rein.proxies)

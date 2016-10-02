@@ -822,8 +822,8 @@ def sync_core(log, user, key, urls):
             rein.session.add(newMediator)
             rein.session.commit()
 
-    check = Document.get_user_documents(rein)
-    if len(check) == 0:
+    documents = Document.get_user_documents(rein)
+    if len(documents) == 0:
         click.echo("Nothing to do.")
 
     upload = []
@@ -833,7 +833,7 @@ def sync_core(log, user, key, urls):
         if nonce[url] is None:
             continue
 
-        for doc in check:
+        for doc in documents:
             if len(doc.contents) > 8192:
                 click.echo('Document is too big. 8192 bytes should be enough for anyone.')
                 log.error("Document oversized %s" % doc.doc_hash)
@@ -902,7 +902,7 @@ def sync_core(log, user, key, urls):
         answer = safe_get(log, sel_url.format(user.maddr, nonce[url]))
         log.info('nonce cleared for %s' % (url))
 
-    click.echo('%s docs checked on %s servers, %s uploads done.' % (len(check), len(urls), str(succeeded)))
+    click.echo('%s docs checked on %s servers, %s uploads done.' % (len(documents), len(urls), str(succeeded)))
 
 @cli.command()
 @click.option('--multi/--no-multi', default=False, help="prompt for identity to use")
@@ -1192,7 +1192,7 @@ def start(multi, identity, setup):
 
     if rein.has_no_account() or setup:
         webbrowser.open('http://'+host+':' + str(port) + '/setup')
-        app.run(host=host, port=port, debug=True)
+        app.run(host=host, port=port, debug=False)
     else:
         (log, user, key, urls) = init(multi, identity)
         documents = Document.get_user_documents(rein)
@@ -1201,7 +1201,6 @@ def start(multi, identity, setup):
         jobs = []
         blocks = []
         connected = False
-        click.echo('about to try urls')
         for url in urls:
             sel_url = "{0}query?owner={1}&query=jobs&testnet={2}"
             data = safe_get(log, sel_url.format(url, user.maddr, rein.testnet))
@@ -1565,7 +1564,7 @@ def start(multi, identity, setup):
                         orders=orders)
 
     webbrowser.open('http://'+host+':' + str(port))
-    app.run(host=host, port=port, debug=True)
+    app.run(host=host, port=port, debug=False)
 
     # testing steps: Disable tor. Then turn on debug because debug doesn't work when socket is overriden
 
