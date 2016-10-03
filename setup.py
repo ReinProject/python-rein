@@ -3,16 +3,16 @@ A decentralized professional services marketplace.
 """
 from setuptools import find_packages, setup
 
-dependencies = ['click', 'requests', 'python-bitcoinlib', 'sqlalchemy', 'pysocks']
+dependencies = ['click', 'requests>=2.10', 'python-bitcoinlib', 'sqlalchemy', 'pysocks']
 
 setup(
     name='rein',
-    version='0.1.0',
+    version='0.2.0',
     url='https://github.com/ReinProject/python-rein',
     license='BSD',
     author='David Sterry',
     author_email='davids@exchb.com',
-    description='A decentralized professional services market.',
+    description='Decentralized freelance market',
     long_description=__doc__,
     packages=find_packages(exclude=['tests']),
     include_package_data=True,

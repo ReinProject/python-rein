@@ -7,29 +7,65 @@ except:
 
 Base = declarative_base()
 
-FLOW = {
-        'job_posting':    {'pre': [],                                   'next': ['bid']},
-        'bid':            {'pre': ['job_posting'],                      'next': ['offer']},
-        'offer':          {'pre': ['bid'],                              'next': ['delivery', 'creatordispute',
-                                                                                 'workerdispute']},
-        'delivery':       {'pre': ['offer'],                            'next': ['accept', 'creatordispute',
-                                                                                 'workerdispute']},
-        'creatordispute': {'pre': ['offer', 'delivery'],                'next': ['resolution', 'workerdispute']},
-        'workerdispute':  {'pre': ['offer', 'delivery', 'accept'],      'next': ['resolution', 'creatordispute']},
-        'accept':         {'pre': ['delivery'],                         'next': ['workerdispute', 'complete']},
-        'resolution':     {'pre': ['creatordispute', 'workerdispute'],  'next': ['complete']},
+STATE = {
+        'job_posting': {
+                    'pre': [],
+                    'next': ['bid'],
+                    'endpoint': '/post',
+                    'past_tense': 'posted',
+                    'description':  "Funds for each job in Rein are stored in two multisig addresses. One address\n" \
+                                    "is for the primary payment that will go to the worker on completion. The\n" \
+                                    "second address pays the mediator to be available to resolve a dispute\n" \
+                                    "if necessary. The second address should be funded according to the percentage\n" \
+                                    "specified by the mediator and is in addition to the primary payment. The\n" \
+                                    "listing below shows available mediators and the fee they charge. You should\n" \
+                                    "consider the fee as well as any reputational data you are able to find when\n" \
+                                    "choosing a mediator. Your choice may affect the number and quality of bids\n"
+                        },
+        'bid':          {
+                    'pre': ['job_posting'],
+                    'next': ['offer'],
+                    'endpoint': None,
+                    'past_tense': 'bid submitted'
+                        },
+        'offer':        {
+                    'pre': ['bid'],
+                    'next': ['delivery', 'creatordispute', 'workerdispute'],
+                    'endpoint': '/offer',
+                    'past_tense': 'job awarded',
+                        },
+        'delivery':     {
+                    'pre': ['offer'],
+                    'next': ['accept', 'creatordispute', 'workerdispute'],
+                    'endpoint': '/delivery',
+                    'past_tense':  'deliverables submitted'
+                        },
+        'creatordispute': {
+                    'pre': ['offer', 'delivery'],
+                    'next': ['resolution', 'workerdispute'],
+                    'endpoint': '/creatordispute',
+                    'past_tense':'disputed by job creator'
+                        },
+        'workerdispute': {
+                    'pre': ['offer', 'delivery', 'accept'],
+                    'next': ['resolution', 'creatordispute'],
+                    'endpoint': None,
+                    'past_tense': 'disputed by worker'
+                        },
+        'accept':       {
+                    'pre': ['delivery'],
+                    'next': ['workerdispute', 'complete'],
+                    'endpoint': '/accept',
+                    'past_tense': 'complete, work accepted',
+                        },
+        'resolution':   {
+                    'pre': ['creatordispute', 'workerdispute'],
+                    'next': ['complete'],
+                    'endpoint': '/resolve',
+                    'past_tense': 'complete, dispute resolved'
+                        },
        }
 
-PAST_TENSE = {
-        'job_posting':      'posted',
-        'bid':              'bid(s) submitted',
-        'offer':            'job awarded',
-        'delivery':         'deliverables submitted',
-        'creatordispute':   'disputed by job creator',
-        'workerdispute':    'disputed by worker',
-        'accept':           'complete, work accepted',
-        'resolution':       'complete, dispute resolved'
-        }
 
 class Order(Base):
     __tablename__ = 'order'
@@ -73,7 +109,7 @@ class Order(Base):
         while 1:
             moved = False
             for document in documents:
-                if document.doc_type in FLOW[current]['next']:
+                if document.doc_type in STATE[current]['next']:
                     current = document.doc_type
                     moved = True
             if not moved:
@@ -87,7 +123,7 @@ class Order(Base):
 
     @classmethod
     def get_past_tense(self, state):
-        return PAST_TENSE[state]
+        return STATE[state]['past_tense']
 
     @classmethod
     def get_user_orders(self, rein, Document):
@@ -115,9 +151,9 @@ class Order(Base):
         return None
 
     @classmethod
-    def update_orders(self, rein, Document, get_user_documents):
+    def update_orders(self, rein, Document):
         from market import assemble_order
-        documents = get_user_documents(rein)
+        documents = Document.get_user_documents(rein)
         processed_job_ids = []
         for document in documents:
             job_id = Document.get_job_id(document.contents)

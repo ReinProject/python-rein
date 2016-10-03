@@ -1,0 +1,91 @@
+{% extends "layout.html" %}
+{% from "_form_helpers.html" import render_error %}
+{% block body %}
+
+<div class="row">
+	<div id="breadcrumb" class="col-xs-12">
+		<a href="#" class="show-sidebar">
+			<i class="fa fa-bars"></i>
+		</a>
+		<ol class="breadcrumb pull-left">
+			<li><a href="/">General</a></li>
+			<li><a href="#">Job Detail</a></li>
+		</ol>
+    </div>
+</div>
+<div class="well">
+<div class="row">
+	<div class="col-xs-12">
+<h4>Job Detail</h4>
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+    {% for message in messages %}
+      <p  class="txt-danger"><b>{{ message }}</b></p>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+
+{% if found %}
+
+<p>Name: {{ job['Job name'] }} <br />
+Status: {% if state['endpoint'] %}
+<a href="{{ state['endpoint'] }}">{{ state['past_tense'] }}</a><br />
+{% else %}
+{{ state['past_tense'] }}<br />
+{% endif %}
+Description: {{ job['Description'] }}<br />
+</p>
+<!--
+<p>: {{ job[''] }} </p>
+-->
+
+
+<div class="row">
+	<div class="col-xs-3 well" style="margin-right:10px; margin-left:10px;">
+        <h5>Job creator</h5>
+        Name: <b>{{ job['Job creator'] }}</b><br />Contact: <a href="mailto:{{ job['Job creator contact'] }}">{{ job['Job creator contact'] }}</a><br />Master: <span title="{{ job['Job creator master address'] }}">{{ job['Job creator master address'][0:10] }}...{{ job['Job creator master address'][-8:] }}</span><br />
+    </div>
+	<div class="col-xs-3 well" style="margin-right:10px">
+        <h5>Mediator</h5>
+        Name: <b>{{ job['Mediator'] }}</b><br />Contact: <a href="mailto:{{ job['Mediator contact'] }}">{{ job['Mediator contact'] }}</a><br />Master: {{ job['Mediator master address'][0:10] }}...{{ job['Mediator master address'][-8:] }}<br />
+{% if 'Worker' in job  %}
+    </div>
+    <div class="col-xs-3 well">
+        <h5>Worker</h5>
+        Name: <b>{{ job['Worker'] }}</b><br />Contact: <a href="mailto:{{ job['Worker contact'] }}">{{ job['Worker contact'] }}</a><br />Master: {{ job['Worker master address'][0:10] }}...{{ job['Worker master address'][-8:] }}
+    </div>
+</div>
+
+<h5>Payments</h5>
+
+<p>Before starting work, worker should verify the following:<br /><br />
+Primary escrow: <b>{{ job['Primary escrow address'] }}</b> should be funded with <b>{{ job['Bid amount (BTC)'] }} BTC</b>.<br />
+Mediator escrow: <b>{{ job['Mediator escrow address'] }}</b> should be funded with <b>{{ job['Mediator fee'] }}%</b> of the above.<br />
+
+{% endif %}<br />
+    </div>
+</div>
+
+<h5>Misc</h5>
+ID: {{ job['Job ID'] }}
+
+<h5>Documents:</h5>
+<textarea rows="25" cols="128" readonly>{% for u in unique %}{{u['original']}}
+
+{% endfor %}
+</textarea>
+</p>
+{% else %}
+
+<p>Nope.</p>
+
+
+
+{% endif %}
+
+
+
+    </div>
+</div>
+</div>
+{% endblock %}

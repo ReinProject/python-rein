@@ -1,9 +1,12 @@
 import os
 import logging
+import click
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.declarative import declarative_base
 from user import User, Base
 from persistconfig import PersistConfig
+
 
 class Config():
     def __init__(self):
@@ -22,16 +25,22 @@ class Config():
         self.testnet = 1 if PersistConfig.get_testnet(self) else 0
         self.tor = 1 if PersistConfig.get_tor(self) else 0
         if self.tor:
-            self.setup_tor()
+            self.proxies = { 'http': 'socks5://127.0.0.1:9150' }
+        else:
+            self.proxies = {}
         self.log.info('testnet = ' + str(self.testnet))
 
     def setup_logging(self):
         self.log = logging.getLogger('python-rein')
-        logging.basicConfig(filename=os.path.join(os.path.expanduser('~'), '.rein', "rein.log"), filemode="a")
         self.log.setLevel(logging.INFO)
+        handler = logging.FileHandler(os.path.join(os.path.expanduser('~'), '.rein', "rein.log"))
+        handler.setLevel(logging.INFO)
+        formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+        handler.setFormatter(formatter)
+        self.log.addHandler(handler)
 
     def setup_db(self):
-        self.engine = create_engine("sqlite:///%s" % os.path.join(self.config_dir, self.db_filename))
+        self.engine = create_engine("sqlite:///%s" % os.path.join(self.config_dir, self.db_filename), connect_args = {'check_same_thread':False})
         Base.metadata.bind = self.engine
         DBSession = sessionmaker(bind=self.engine)
         self.session = DBSession()

@@ -1,14 +1,12 @@
 import hashlib
-import requests
-import click
 import re
 from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, and_
 from sqlalchemy.ext.declarative import declarative_base
 from validate import filter_valid_sigs, parse_document
 from order import Order
+from io import safe_get
 
 Base = declarative_base()
-
 
 class Document(Base):
     __tablename__ = 'document'
@@ -23,6 +21,18 @@ class Document(Base):
     sig_verified = Column(Integer, default=False)
     order_id = Column(Integer, ForeignKey(Order.id))
     testnet = Column(Boolean, nullable=False)
+
+    titles = {'Rein User Enrollment':    'enrollment',
+              'Rein Job':                'job_posting',
+              'Rein Bid':                'bid',
+              'Rein Offer':              'offer',
+              'Rein Delivery':           'delivery',
+              'Rein Accept Delivery':    'accept',
+              'Rein Accept':             'accept',
+              'Rein Dispute Delivery':   'creatordispute',
+              'Rein Dispute Offer':      'workerdispute',
+              'Rein Dispute Resolution': 'resolution',
+             }
 
     def __init__(self, rein, doc_type, contents, order_id = None,
             source_url='local', source_key=None, sig_verified=False, testnet=True):
@@ -43,24 +53,53 @@ class Document(Base):
         self.order_id = id
 
     @staticmethod
+    def get(rein, id):
+        return rein.session.query(Document).get(id)
+
+    @staticmethod
     def get_user_documents(rein):
         return rein.session.query(Document).filter(and_(Document.identity == rein.user.id,
                                                         Document.source_url == 'local',
                                                         Document.testnet == rein.testnet)).all()
 
     @staticmethod
+    def find(rein, doc_hash, source_url):
+        res = rein.session.query(Document).filter(and_(Document.doc_hash == doc_hash,
+                                                       Document.source_url == source_url)).all()
+        return res
+
+    @staticmethod
+    def get_by_type(rein, doc_type):
+        docs = rein.session.query(Document).filter(and_(Document.testnet == rein.testnet,
+                                                        Document.source_url == 'remote')).all()
+
+        # convert doc_type to nice title (bid -> "Rein Bid")
+        target = ''
+        for title in Document.titles:
+            if Document.titles[title] == doc_type:
+                target = title
+        if not target:
+            Exception('Non-existent doc_type requested')
+
+        res = []
+        for d in docs:
+            parsed = parse_document(d.contents)
+            if 'Title' in parsed:
+                if parsed['Title'] == target:
+                    parsed['id'] = d.id
+                    res.append(parsed)
+        return res
+
+    @staticmethod
     def get_documents_by_job_id(rein, url, job_id):
-        # click.echo("Querying %s for job_id %s ..." % (url, job_id))
         sel_url = "{0}query?owner={1}&query=by_job_id&job_ids={2}&testnet={3}"
-        try:
-            answer = requests.get(url=sel_url.format(url, rein.user.maddr, job_id, rein.testnet))
-        except requests.exceptions.ConnectionError:
-            rein.log.warning('Could not reach %s.' % url)
+
+        data = safe_get(rein.log, sel_url.format(url, rein.user.maddr, job_id, rein.testnet))
+
+        if data and 'by_job_id' in data:
+            return filter_valid_sigs(rein, data['by_job_id'])
+        else:
             return None
-        data = answer.json()
-        if len(data['by_job_id']) == 0:
-            rein.log.warning('None found.')
-        return filter_valid_sigs(rein, data['by_job_id'])
 
     @staticmethod
     def get_job_id(text):
@@ -73,18 +112,8 @@ class Document(Base):
     @staticmethod
     def get_document_type(document):
         parsed = parse_document(document)
-        titles = {'Rein User Enrollment':    'enrollment',
-                  'Rein Job':                'job_posting',
-                  'Rein Bid':                'bid',
-                  'Rein Offer':              'offer',
-                  'Rein Delivery':           'delivery',
-                  'Rein Accept Delivery':    'accept',
-                  'Rein Dispute Delivery':   'creatordispute',
-                  'Rein Dispute Offer':      'workerdispute',
-                  'Rein Dispute Resolution': 'resolution',
-                 }
         if 'Title' in parsed:
-            return titles[parsed['Title']]
+            return Document.titles[parsed['Title']]
         return None
 
     @staticmethod
