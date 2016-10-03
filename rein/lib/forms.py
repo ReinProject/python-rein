@@ -46,6 +46,11 @@ class JobPostForm(Form):
     expire_days = TextField('Expiration (days)', validators = [Required()])
     mediator_maddr = RadioField('Choose mediator')
 
+class BidForm(Form):
+    description = TextAreaField('Description', validators = [Required()])
+    bid_amount = TextAreaField('Bid amount', validators = [Required()])
+    job_id = RadioField('Choose Job to bid on')
+
 class JobOfferForm(Form):
     bid_id = RadioField('Choose bid')
 
