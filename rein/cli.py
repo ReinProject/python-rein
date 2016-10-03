@@ -37,6 +37,8 @@ from lib.mediator import Mediator
 
 rein = config.Config()
 
+DEBUG=True
+
 @click.group()
 @click.option('--debug/--no-debug', default=False)
 @click.pass_context
@@ -1192,7 +1194,7 @@ def start(multi, identity, setup):
 
     if rein.has_no_account() or setup:
         webbrowser.open('http://'+host+':' + str(port) + '/setup')
-        app.run(host=host, port=port, debug=False)
+        app.run(host=host, port=port, debug=DEBUG)
     else:
         (log, user, key, urls) = init(multi, identity)
         documents = Document.get_user_documents(rein)
@@ -1513,7 +1515,7 @@ def start(multi, identity, setup):
             fields = [
                 {'label': 'Job name',                       'value_from': doc},
                 {'label': 'Job ID',                         'value_from': doc},
-                {'label': 'Dispute detail',                 'not_null': form.dispute_detail.data},
+                {'label': 'Dispute detail',                 'value': form.dispute_detail.data},
                 {'label': 'Primary escrow redeem script',   'value_from': doc},
                 {'label': 'Mediator escrow redeem script',  'value_from': doc},
                      ]
@@ -1564,7 +1566,7 @@ def start(multi, identity, setup):
                         orders=orders)
 
     webbrowser.open('http://'+host+':' + str(port))
-    app.run(host=host, port=port, debug=False)
+    app.run(host=host, port=port, debug=DEBUG)
 
     # testing steps: Disable tor. Then turn on debug because debug doesn't work when socket is overriden
 
