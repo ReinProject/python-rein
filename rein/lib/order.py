@@ -37,7 +37,7 @@ STATE = {
         'delivery':     {
                     'pre': ['offer'],
                     'next': ['accept', 'creatordispute', 'workerdispute'],
-                    'endpoint': '/delivery',
+                    'endpoint': '/deliver',
                     'past_tense':  'deliverables submitted'
                         },
         'creatordispute': {
