@@ -54,6 +54,10 @@ class BidForm(Form):
 class JobOfferForm(Form):
     bid_id = RadioField('Choose bid')
 
+class DeliverForm(Form):
+    deliverable = TextAreaField('Deliverables', validators = [Required()])
+    job_id = RadioField('Choose job associated with deliverables')
+
 class DisputeForm(Form):
     dispute_detail = TextAreaField('Dispute detail', validators = [Required()])
     order_id = RadioField('Choose job')

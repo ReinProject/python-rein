@@ -163,6 +163,7 @@ def remote_query(rein, user, urls, log, query_type, distinct):
         data = safe_get(log, sel_url.format(url, user.maddr, query_type, rein.testnet))
         if data is None or query_type not in data or len(data[query_type]) == 0:
             click.echo('None found')
+            continue
         res += filter_and_parse_valid_sigs(rein, data[query_type])
     return unique(res, distinct)
 
