@@ -1767,7 +1767,7 @@ def start(multi, identity, setup):
 
             state = order.get_state(rein, Document)
 
-            if state in ['offer', 'deliver', 'accept']:
+            if state in ['offer', 'deliver', 'accept', 'creatordispute', 'workerdispute']:
                 job_ids.append((str(j['Job ID']), job_link(j)))
 
         form.job_id.choices = job_ids
