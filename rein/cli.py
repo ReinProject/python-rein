@@ -1081,7 +1081,7 @@ def start(multi, identity, setup):
     """
     import webbrowser
     from flask import Flask, request, redirect, url_for, flash, send_from_directory, render_template
-    from lib.forms import SetupForm, JobPostForm, BidForm, JobOfferForm, DeliverForm, AcceptForm, DisputeForm
+    from lib.forms import SetupForm, JobPostForm, BidForm, JobOfferForm, DeliverForm, AcceptForm, DisputeForm, ResolveForm
     from lib.mediator import Mediator
 
     host = '127.0.0.1'
@@ -1387,7 +1387,8 @@ def start(multi, identity, setup):
             if d:
                 id = d[0].id
             else:
-                d = Document(rein, 'delivery', o['original'], source_url='remote', testnet=rein.testnet)
+                doc_type = Document.get_document_type(o['original'])
+                d = Document(rein, doc_type, o['original'], source_url='remote', testnet=rein.testnet)
                 rein.session.add(d)
                 rein.session.commit()
                 id = d.id
@@ -1437,6 +1438,98 @@ def start(multi, identity, setup):
                             time_offset=time_offset
                             )
 
+
+    @app.route("/resolve", methods=['POST', 'GET'])
+    def job_resolve():
+        form = ResolveForm(request.form)
+
+        # ask servers for jobs user is mediator for
+        # this won't return disputes since they don't have mediator pubkey
+        review = []
+        for url in urls:
+            sel_url = "{}query?owner={}&delegate={}&mediator={}&query=review&testnet={}"
+            data = safe_get(log, sel_url.format(url, user.maddr, user.daddr, key, rein.testnet))
+            if data and 'review' in data:
+                review += filter_and_parse_valid_sigs(rein, data['review'])
+
+        jobs_mediating = unique(review, 'Description')
+        print len(jobs_mediating)
+
+        # store doc if we don't have it
+        updated_jobs = []
+        for u in jobs_mediating:
+            doc_hash = Document.calc_hash(u['original'])
+            d = Document.find(rein, doc_hash, 'remote')
+            if not d:
+                doc_type = Document.get_document_type(u['original'])
+                d = Document(rein, doc_type, u['original'], source_url='remote', testnet=rein.testnet)
+                rein.session.add(d)
+                rein.session.commit()
+                updated_jobs.append(u)
+
+        Order.update_orders(rein, Document)
+
+        # pull all docs for the new ones so we can figure out which need resolution
+        disputes = []
+        for u in jobs_mediating:
+            order = Order.get_by_job_id(rein, u['Job ID'])
+
+            if not order:
+                order = Order(u['Job ID'], testnet=rein.testnet)
+                rein.session.add(order)
+                rein.session.commit()
+
+            state = order.get_state(rein, Document)
+
+            # add ones that need resolution to the choices
+            if state in ['workerdispute', 'creatordispute']:
+                dispute_docs = order.get_documents(rein, Document, state)
+                if len(dispute_docs) > 0:
+                    d = dispute_docs[0]
+                    doc = parse_document(d.contents)
+                    disputes.append((str(d.id), '{}</td><td>{}'.format( job_link(doc),
+                                                                        doc['Dispute detail']
+                                                                        )))
+        no_choices = len(disputes) == 0
+
+        form.dispute_id.choices = unique(disputes)
+
+        if request.method == 'POST' and form.validate_on_submit():
+            dispute_doc = Document.get(rein, form.dispute_id.data)
+            dispute = parse_document(dispute_doc.contents)
+            fields = [
+                {'label': 'Job name',                       'value_from': dispute},
+                {'label': 'Job ID',                         'value_from': dispute},
+                {'label': 'Resolution',                     'value': form.resolution.data},
+                {'label': 'Signed primary payment',         'value': form.signed_primary_payment.data},
+                {'label': 'Signed mediator payment',        'value': form.signed_mediator_payment.data},
+                     ]
+
+            document_text = assemble_document('Dispute Resolution', fields)
+            store = True
+            document = sign_and_store_document(rein, 'resolve', document_text, user.daddr, user.dkey, store)
+            if document and store:
+                click.echo("Dispute resolution created.")
+                sync_core(log, user, key, urls)
+                flash("Dispute resolution signed and pushed to available servers.")
+            assemble_order(rein, document)
+            log.info('resolve signed') if document else log.error('resolve failed')
+            return redirect("/")
+        elif request.method == 'POST':
+            print "form data " + str(form)
+            flash_errors(form)
+            return redirect("/resolve")
+        else:
+            return render_template("resolve.html",
+                            form=form,
+                            user=user,
+                            key=key,
+                            urls=urls,
+                            no_choices=no_choices,
+                            block_time=str_block_time,
+                            time_offset=time_offset
+                            )
+
     @app.route('/job/<jobid>')
     def job_info_page(jobid):
         Order.update_orders(rein, Document)
@@ -1471,7 +1564,8 @@ def start(multi, identity, setup):
                             found=found,
                             unique=unique_documents,
                             job=combined)
-        
+
+
     @app.route("/dispute", methods=['POST', 'GET'])
     def job_dispute():
         Order.update_orders(rein, Document)
@@ -1673,7 +1767,7 @@ def start(multi, identity, setup):
 
             state = order.get_state(rein, Document)
 
-            if state in ['offer', 'deliver', 'accept']:
+            if state in ['offer', 'deliver', 'accept', 'creatordispute', 'workerdispute']:
                 job_ids.append((str(j['Job ID']), job_link(j)))
 
         form.job_id.choices = job_ids
