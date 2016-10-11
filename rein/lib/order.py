@@ -42,14 +42,14 @@ STATE = {
                         },
         'creatordispute': {
                     'pre': ['offer', 'delivery'],
-                    'next': ['resolution', 'workerdispute'],
-                    'endpoint': '/creatordispute',
+                    'next': ['resolve', 'workerdispute'],
+                    'endpoint': '/dispute',
                     'past_tense':'disputed by job creator'
                         },
         'workerdispute': {
                     'pre': ['offer', 'delivery', 'accept'],
-                    'next': ['resolution', 'creatordispute'],
-                    'endpoint': None,
+                    'next': ['resolve', 'creatordispute'],
+                    'endpoint': '/dispute',
                     'past_tense': 'disputed by worker'
                         },
         'accept':       {
@@ -58,7 +58,7 @@ STATE = {
                     'endpoint': '/accept',
                     'past_tense': 'complete, work accepted',
                         },
-        'resolution':   {
+        'resolve':   {
                     'pre': ['creatordispute', 'workerdispute'],
                     'next': ['complete'],
                     'endpoint': '/resolve',
