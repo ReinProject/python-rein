@@ -1174,10 +1174,21 @@ def start(multi, identity, setup):
                                    form=form)
 
 
+    def shutdown_server():
+        func = request.environ.get('werkzeug.server.shutdown')
+        if func is None:
+            raise RuntimeError('Not running with the Werkzeug Server')
+        func()
+
     @app.route("/done", methods=['POST', 'GET'])
     def start_done():
+        shutdown_server()
         return render_template("done.html")
 
+    @app.route('/exit')
+    def make_like_a_tree():
+        shutdown_server()
+        return "Server shutting down... Thank you for using Rein."
 
     @app.route('/<path:path>')
     def serve_static_file(path):
@@ -1187,6 +1198,7 @@ def start(multi, identity, setup):
     if rein.has_no_account() or setup:
         webbrowser.open('http://'+host+':' + str(port) + '/setup')
         app.run(host=host, port=port, debug=DEBUG)
+        return
     else:
         (log, user, key, urls) = init(multi, identity)
         documents = Document.get_user_documents(rein)
