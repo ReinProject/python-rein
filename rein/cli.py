@@ -37,7 +37,7 @@ from lib.mediator import Mediator
 
 rein = config.Config()
 
-DEBUG=True
+DEBUG=False
 
 @click.group()
 @click.option('--debug/--no-debug', default=False)
