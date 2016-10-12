@@ -1834,6 +1834,8 @@ def start(multi, identity, setup):
         documents = Document.get_user_documents(rein)
         Order.update_orders(rein, Document)
         orders = Order.get_user_orders(rein, Document)
+        for o in orders:
+            setattr(o,'state',STATE[o.get_state(rein, Document)]['past_tense'])
         return render_template('index.html',
                         user=user,
                         key=key,
