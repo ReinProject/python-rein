@@ -7,9 +7,14 @@ import requests
 import hashlib
 import click
 import time
+import os
 from pprint import pprint
 from datetime import datetime
 from sqlalchemy import and_
+
+config_dir = os.path.join(os.path.expanduser('~'), '.rein')
+if not os.path.isdir(config_dir):
+    os.mkdir(config_dir)
 
 # Import helper functions
 from lib.ui import *
