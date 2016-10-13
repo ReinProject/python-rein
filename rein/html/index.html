@@ -56,11 +56,16 @@
     <table class="table m-table table-bordered table-hover table-heading">
         <thead>
             <th>ID</th>
+            <th>Status</th>
             <th>Job ID</th>
         </thead>
         <tbody>
             {% for order in orders %}
-            <tr><td>{{ order.id }}</td><td><a href="/job/{{ order.job_id }}">{{ order.job_id }}</a></td></tr>
+            <tr>
+                <td>{{ order.id }}</td>
+                <td>{{ order.state }}</td>
+                <td><a href="/job/{{ order.job_id }}">{{ order.job_id }}</a></td>
+            </tr>
             {% endfor %}
         </tbody>
     </table>

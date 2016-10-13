@@ -8,15 +8,15 @@
 			<i class="fa fa-bars"></i>
 		</a>
 		<ol class="breadcrumb pull-left">
-			<li><a href="/">Job Creators</a></li>
-			<li><a href="/accept">Accept Delivery</a></li>
+			<li><a href="/">Mediators</a></li>
+			<li><a href="/resolve">Resolve Dispute</a></li>
 		</ol>
     </div>
 </div>
 <div class="well">
 <div class="row">
 	<div class="col-xs-12">
-<h4>Accept Delivery</h4>
+<h4>Resolve Dispute</h4>
 {% with messages = get_flashed_messages() %}
   {% if messages %}
     {% for message in messages %}
@@ -25,13 +25,16 @@
   {% endif %}
 {% endwith %}
 
+{% if no_choices %}
+<h5>None found.</h5>
+{% else %}
 <p>Block time (12 blocks ago): {{ block_time }} UTC
 {% if time_offset > 3600*4 %}
 <span class="txt-danger">Off by more than 4 hours!</span>
 {% endif %}
 </p>
 
-<form class="form-horizontal" role="form" method="POST" onsubmit="return confirm('This will be sync\'d immediately to available servers. Please confirm.');" action="{{ url_for('job_accept') }}">
+<form class="form-horizontal" role="form" method="POST" onsubmit="return confirm('This will be sync\'d immediately to available servers. Please confirm.');" action="{{ url_for('job_resolve') }}">
     {{ form.csrf_token }}
 
 <table class="table">
@@ -43,16 +46,20 @@
     </tr>
 </thead>
 <tbody>
-{% for subfield in form.deliverable_id %}
-
+    {% for subfield in form.dispute_id %}
     <tr>
         <td>{{ subfield }}</td>
         <td>{{ subfield.label }}</td>
     </tr>
-{% endfor %}
+    {% endfor %}
 </tbody>
 </table>
 
+    <div class="form-group">
+        <label class="col-sm-4 control-label">{{ form.resolution.label }}</label>
+        <div class="col-sm-8">{{ form.resolution(rows=5, cols=80, class="form-control", title="Provide details of how the decision.") }}</div>
+        {{ render_error(form.resolution) }}
+    </div>
     <div class="form-group">
         <label class="col-sm-3 control-label">{{ form.signed_primary_payment.label }}</label>
         <div class="col-sm-7">{{ form.signed_primary_payment(rows=6, cols=80, class="form-control", data_toggle="tooltip", title="Use the primary redeem script and sign a payment including the full amount to the worker's address.") }}</div>
@@ -64,8 +71,9 @@
         {{ render_error(form.signed_mediator_payment) }}
     </div>
     
-<input type="submit" value="Accept!">
+<input type="submit" value="Resolve!">
 </form>
+{% endif %}
     </div>
 </div>
 </div>

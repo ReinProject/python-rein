@@ -46,8 +46,17 @@ class JobPostForm(Form):
     expire_days = TextField('Expiration (days)', validators = [Required()])
     mediator_maddr = RadioField('Choose mediator')
 
+class BidForm(Form):
+    description = TextAreaField('Description', validators = [Required()])
+    bid_amount = TextAreaField('Bid amount', validators = [Required()])
+    job_id = RadioField('Choose Job to bid on')
+
 class JobOfferForm(Form):
     bid_id = RadioField('Choose bid')
+
+class DeliverForm(Form):
+    deliverable = TextAreaField('Deliverables', validators = [Required()])
+    job_id = RadioField('Choose job associated with deliverables')
 
 class DisputeForm(Form):
     dispute_detail = TextAreaField('Dispute detail', validators = [Required()])
@@ -57,3 +66,9 @@ class AcceptForm(Form):
     signed_primary_payment = TextAreaField('Signed primary payment', validators = [Required()])
     signed_mediator_payment = TextAreaField('Signed mediator payment', validators = [Required()])
     deliverable_id = RadioField('Deliverables')
+
+class ResolveForm(Form):
+    signed_primary_payment = TextAreaField('Signed primary payment', validators = [Required()])
+    signed_mediator_payment = TextAreaField('Signed mediator payment', validators = [Required()])
+    resolution = TextAreaField('Resolution', validators = [Required()])
+    dispute_id = RadioField('Disputes')
