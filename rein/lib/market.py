@@ -101,7 +101,7 @@ def assemble_order(rein, document):
         order_id = Order.get_order_id(rein, job_id)
         if not order_id:
             o = Order(job_id, testnet=rein.testnet)
-            rein.session.add(o)        
+            rein.session.add(o)
             rein.session.commit()
 
     for document in documents:
@@ -159,3 +159,48 @@ def get_in_process_orders(rein, Document, key, match_field, should_match):
             target_orders.append(res)
 
     return target_orders
+
+def assemble_orders(rein, job_ids):
+    """
+    Take a list of job_ids and build their entire orders. The idea here is that one Job ID should
+    allow us to query each available server for each document type that is associated with it, then
+    filter out cruft by focusing on who's signed correctly.
+
+    TODO: look for attempted changes in foundational info like participants public keys and redeem scripts.
+    """
+    urls = Bucket.get_urls(rein)
+    documents = []
+    arg_job_ids = ','.join(job_ids)
+    for url in urls:
+        # queries remote server for all docs associated with a job_id
+        res = Document.get_documents_by_job_id(rein, url, arg_job_ids)
+        if res:
+            documents += res
+
+    order_ids = {}
+    for job_id in job_ids:
+        order_id = Order.get_order_id(rein, job_id)
+        if not order_id:
+            o = Order(job_id, testnet=rein.testnet)
+            rein.session.add(o)
+            rein.session.commit()
+        order_id = Order.get_order_id(rein, job_id)
+        order_ids[job_id] = order_id
+
+    for document in documents:
+        doc_type = Document.get_document_type(document)
+        if not doc_type:
+            rein.log.info('doc_type not detected')
+            continue
+        doc_hash = Document.calc_hash(document)
+        job_id = Document.get_job_id(document)
+        d = rein.session.query(Document).filter(Document.doc_hash == doc_hash).first()
+        if d:
+            d.set_order_id(order_ids[job_id])
+            rein.session.add(d)
+        else:
+            new_document = Document(rein, doc_type, document, order_id, 'remote', source_key=None, sig_verified=True, testnet=rein.testnet)
+            rein.session.add(new_document)
+        rein.session.commit()
+
+    return len(documents)
