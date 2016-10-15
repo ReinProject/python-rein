@@ -3,7 +3,7 @@
 {% block body %}
 <br />
 <div class="well">
-    <h3>Congratulations! Setup complete.</h3>
+    <h3>Congratulations! Enrollment complete.</h3>
         
 <div class="row">
 {% with messages = get_flashed_messages() %}
@@ -14,11 +14,12 @@
   {% endif %}
 {% endwith %}
 	<div class="col-xs-12 col-sm-9">
-        <h4>Server shutting down. Please complete your setup with 'rein buy'.</h4>
-        <p>Look for servers on the sidebar at https://reddit.com/r/Rein or add one of the following:
+        <h4>Please complete your setup by running these commands at the terminal.</h4>
+            <pre>rein request http://rein1-sfo.reinproject.org:2016<br />
+            rein request http://rein2-ams.reinproject.org:2016</pre>
+        <p><br />Look for more servers on <a href="https://reddit.com/r/Rein">Reddit</a></p>
 
-            <pre>rein1-sfo.reinproject.org:2016<br />
-            rein2-ams.reinproject.org:2016</pre>
+        <p>Rein's resistance to censorship relies upon your using multiple independently run servers. Please consider running one, a service for which you can charge. The free software server inclues basic payment processing using a local Bitcoin Core node. For more info, checkout the <a href="https://github.com/ReinProject/causeway/blob/master/doc/server_setup.md">server setup HOWTO</a>.</p>
         </h4>
     </div>
 </div>
