@@ -29,19 +29,13 @@ Please see the [setup guide](https://github.com/ReinProject/python-rein/blob/mas
 
 Each transaction in Rein requires a job creator, worker, and mediator. Most of the time it is expected that the mediator will do nothing but collect a small fee. In case of dispute, however, the mediator holds a third key refund, split or award escrowed funds using their best judgement.
 
-### Workers
+### Job creators and workers
 
-    rein bid
-
-This command will query each registered server for jobs that are open for bids, and help you build and sign a bid document.
-
-### Job creators
-
-You're in luck as we've just optimized Rein for you. Run the following command to get started.
+Run the following command to get started.
 
     rein start
 
-This will guide you through a setup process and provide a simple interface for you to get the work you need done. 
+This will guide you through a setup process and provide a simple interface for you to use Rein. 
 
 ### The rest of the order flow
 
