@@ -152,12 +152,13 @@ class Order(Base):
 
     @classmethod
     def update_orders(self, rein, Document):
-        from market import assemble_order
+        from market import assemble_orders
         documents = Document.get_user_documents(rein)
-        processed_job_ids = []
+        job_ids = []
         for document in documents:
             job_id = Document.get_job_id(document.contents)
-            if job_id not in processed_job_ids:
+            if job_id not in job_ids:
                 if document.source_url == 'local' and document.doc_type != 'enrollment':
-                    assemble_order(rein, document)
-                processed_job_ids.append(job_id)
+                    job_ids.append(job_id)
+
+        assemble_orders(rein, job_ids)

@@ -12,6 +12,8 @@ from pprint import pprint
 from datetime import datetime
 from sqlalchemy import and_
 
+DEBUG=True
+
 config_dir = os.path.join(os.path.expanduser('~'), '.rein')
 if not os.path.isdir(config_dir):
     os.mkdir(config_dir)
@@ -42,7 +44,6 @@ from lib.mediator import Mediator
 
 rein = config.Config()
 
-DEBUG=False
 
 @click.group()
 @click.option('--debug/--no-debug', default=False)
@@ -1665,7 +1666,8 @@ def start(multi, identity, setup):
         for url in urls:
             sel_url = "{0}query?owner={1}&delegate={2}&query=jobs&testnet={3}"
             data = safe_get(log, sel_url.format(url, user.maddr, user.daddr, rein.testnet))
-            jobs += filter_and_parse_valid_sigs(rein, data['jobs'])
+            if data and 'jobs' in data:
+                jobs += filter_and_parse_valid_sigs(rein, data['jobs'])
 
         live_jobs = filter_out_expired(rein, user, urls, jobs)
         unique_jobs = unique(live_jobs, 'Job ID')
