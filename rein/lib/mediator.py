@@ -36,10 +36,11 @@ class Mediator(Base):
     @classmethod
     def get(self, maddr, testnet):
         if maddr is None:
-            res = rein.session.query(Mediator).all()
+            res = rein.session.query(Mediator).filter(Mediator.testnet == testnet).all()
             ret = []
             for r in res:
                 ret.append(r)
             return ret
         else:
-            return rein.session.query(Mediator).filter(Mediator.maddr == maddr).all()
+            return rein.session.query(Mediator).filter(Mediator.maddr == maddr,
+                                                       Mediator.testnet == testnet).all()
