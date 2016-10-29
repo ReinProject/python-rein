@@ -1234,13 +1234,30 @@ def start(multi, identity, setup):
     @app.route("/post", methods=['POST', 'GET'])
     def job_post():
         form = JobPostForm(request.form)
+
+        eligible_mediators = []
+        for url in urls:
+            sel_url = "{0}query?owner={1}&query=mediators&testnet={2}"
+            data = safe_get(log, sel_url.format(url, user.maddr, rein.testnet))
+            if data:
+                eligible_mediators += filter_and_parse_valid_sigs(rein, data['mediators'])
+
+        for e in eligible_mediators:
+            if not Mediator.get(e['Master signing address'], rein.testnet):
+                m = Mediator(e, rein.testnet)
+                rein.session.add(m)
+                rein.session.commit()
+
         mediators = Mediator.get(None, rein.testnet)
         mediator_maddrs = []
         for m in mediators:
             if m.dpubkey != key:
-                mediator_maddrs.append((m.maddr, '{}</td><td>{}%</td><td>{}'.format(m.username,
-                                                                                    m.mediator_fee,
-                                                                                    m.dpubkey)))
+                mediator_maddrs.append((m.maddr, '{}</td><td>{}%</td><td><a href="mailto:{}" target="_blank">{}</a></td><td>{}'.\
+                        format(m.username,
+                               m.mediator_fee,
+                               m.contact,
+                               m.contact,
+                               m.dpubkey)))
         form.mediator_maddr.choices = mediator_maddrs
         if request.method == 'POST' and form.validate_on_submit():
             mediator = Mediator.get(form.mediator_maddr.data, rein.testnet)[0]

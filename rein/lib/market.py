@@ -178,6 +178,7 @@ def assemble_orders(rein, job_ids):
             documents += res
 
     order_ids = {}
+    order_id = None
     for job_id in job_ids:
         order_id = Order.get_order_id(rein, job_id)
         if not order_id:
@@ -186,6 +187,9 @@ def assemble_orders(rein, job_ids):
             rein.session.commit()
         order_id = Order.get_order_id(rein, job_id)
         order_ids[job_id] = order_id
+
+    if not order_id:
+        return 0
 
     for document in documents:
         doc_type = Document.get_document_type(document)
