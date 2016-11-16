@@ -25,6 +25,11 @@
   {% endif %}
 {% endwith %}
 
+
+{% if no_choices %}
+<h5>None found.</h5>
+<p>It looks like you haven't awarded a job to anyone. Possible next steps: <a href="/offer">Review bids</a> or <a href="/post">Post a job</a>.</p>
+{% else %}
 <p>Block time (12 blocks ago): {{ block_time }} UTC
 {% if time_offset > 3600*4 %}
 <span class="txt-danger">Off by more than 4 hours!</span>
@@ -66,6 +71,7 @@
     
 <input type="submit" value="Accept!">
 </form>
+{% endif %}
     </div>
 </div>
 </div>

@@ -25,6 +25,10 @@
   {% endif %}
 {% endwith %}
 
+{% if no_choices %}
+<h5>None found.</h5>
+<p>In order to enter into a dispute, you've got to be in a job first. If you're a client have you <a href="/offer">offered</a> someone a job? Or for freelancers, have you been <a href="/bid">bidding</a>?</p>
+{% else %}
 <p>Block time (12 blocks ago): {{ block_time }} UTC
 {% if time_offset > 3600 * 4  %}
 <span class="txt-danger">Off by more than 4 hours!</span>
@@ -58,6 +62,7 @@
     </div>
 <input type="submit" value="Dispute!">
 </form>
+{% endif %}
     </div>
 </div>
 </div>
