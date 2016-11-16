@@ -25,6 +25,15 @@
   {% endif %}
 {% endwith %}
 
+{% if no_choices %}
+<h5>None found.</h5>
+<p>Sorry, but no bids have come in. To help get bids:</p>
+<ul>
+    <li>Share details of your jobs on forums, social media or at meetups.</li>
+    <li>Repost with more detail about  timing and/or budget.</li>
+    <li>Choose a different mediator.</li>
+</ul>
+{% else %}
 <p>Block time (12 blocks ago): {{ block_time }} UTC
 {% if time_offset > 3600*4 %}
 <span class="txt-danger">Off by more than 4 hours!</span>
@@ -57,6 +66,7 @@
 </table>
 <input type="submit" value="Offer job!">
 </form>
+{% endif %}
     </div>
 </div>
 </div>

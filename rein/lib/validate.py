@@ -28,11 +28,14 @@ def filter_out_expired(rein, user, urls, jobs):
 
                     data = safe_get(rein.log, sel_url.format(user.maddr, block_hash))
 
-                    if not Block.get_time(rein, block_hash):
+                    if not Block.get_time(rein, block_hash) and data:
                         b = Block(block_hash, data['time'], data['height'])
                         rein.session.add(b)
                         rein.session.commit()
                         times[block_hash] = Block.get_time(rein, block_hash)
+
+    if len(times) == 0:
+        return live
 
     for j in jobs:
         if 'Block hash' not in j:

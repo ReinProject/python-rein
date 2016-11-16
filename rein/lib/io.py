@@ -22,4 +22,4 @@ def safe_get(log, url):
         return json
     except:
         log.error('non-json return from http get')
-        return answer
+        return None

@@ -1258,7 +1258,11 @@ def start(multi, identity, setup):
                                m.contact,
                                m.contact,
                                m.dpubkey)))
+
         form.mediator_maddr.choices = mediator_maddrs
+
+        no_choices = len(mediator_maddrs) == 0
+
         if request.method == 'POST' and form.validate_on_submit():
             mediator = Mediator.get(form.mediator_maddr.data, rein.testnet)[0]
             job_guid = ''.join(random.SystemRandom().choice(string.ascii_lowercase + string.digits) for _ in range(20))
@@ -1308,6 +1312,7 @@ def start(multi, identity, setup):
                             orders=orders,
                             mediators=mediators,
                             block_time=str_block_time,
+                            no_choices=no_choices,
                             time_offset=time_offset
                             )
 
@@ -1362,7 +1367,10 @@ def start(multi, identity, setup):
                                                                                            b['Worker'],
                                                                                            b['Description'],
                                                                                            b['Bid amount (BTC)'])))
+
         form.bid_id.choices = bid_choices
+
+        no_choices = len(bid_choices) == 0
 
         if request.method == 'POST' and form.validate_on_submit():
             bid_doc = Document.get(rein, form.bid_id.data)
@@ -1404,6 +1412,7 @@ def start(multi, identity, setup):
                             orders=orders,
                             bids=bids,
                             block_time=str_block_time,
+                            no_choices=no_choices,
                             time_offset=time_offset
                             )
 
@@ -1435,6 +1444,8 @@ def start(multi, identity, setup):
                 deliverables.append((str(id), '{}</td><td>{}'.format( job_link(o),
                                                                       delivery,
                                                                     )))
+        no_choices = len(deliverables) == 0
+
         form.deliverable_id.choices = deliverables
 
         if request.method == 'POST' and form.validate_on_submit():
@@ -1470,6 +1481,7 @@ def start(multi, identity, setup):
                             key=key,
                             urls=urls,
                             block_time=str_block_time,
+                            no_choices=no_choices,
                             time_offset=time_offset
                             )
 
@@ -1560,8 +1572,8 @@ def start(multi, identity, setup):
                             user=user,
                             key=key,
                             urls=urls,
-                            no_choices=no_choices,
                             block_time=str_block_time,
+                            no_choices=no_choices,
                             time_offset=time_offset
                             )
 
@@ -1630,6 +1642,9 @@ def start(multi, identity, setup):
                 orders.append((str(id), '{}</td><td>{}'.format( job_link(o),
                                                                 role,
                                                               )))
+
+        no_choices = len(orders) == 0
+
         form.order_id.choices = orders
 
         if request.method == 'POST' and form.validate_on_submit():
@@ -1671,6 +1686,7 @@ def start(multi, identity, setup):
                             key=key,
                             urls=urls,
                             block_time=str_block_time,
+                            no_choices=no_choices,
                             time_offset=time_offset
                             )
 
@@ -1710,6 +1726,9 @@ def start(multi, identity, setup):
                                                         time_left,
                                                         j['Mediator public key'],
                                                         j['Mediator'])))
+
+        no_choices = len(job_ids) == 0
+
         form.job_id.choices = job_ids
 
         job = None
@@ -1770,6 +1789,7 @@ def start(multi, identity, setup):
                             orders=orders,
                             jobs=jobs,
                             block_time=str_block_time,
+                            no_choices=no_choices,
                             time_offset=time_offset
                             )
 
@@ -1805,6 +1825,8 @@ def start(multi, identity, setup):
 
             if state in ['offer', 'deliver', 'accept', 'creatordispute', 'workerdispute']:
                 job_ids.append((str(j['Job ID']), job_link(j)))
+
+        no_choices = len(job_ids) == 0
 
         form.job_id.choices = job_ids
 
@@ -1848,6 +1870,7 @@ def start(multi, identity, setup):
                             orders=orders,
                             bids=bids,
                             block_time=str_block_time,
+                            no_choices=no_choices,
                             time_offset=time_offset
                             )
 
