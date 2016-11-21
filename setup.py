@@ -3,7 +3,7 @@ A decentralized professional services marketplace.
 """
 from setuptools import find_packages, setup
 
-dependencies = ['click', 'requests>=2.10', 'flask-wtf', 'python-bitcoinlib', 'sqlalchemy', 'pysocks']
+dependencies = ['click', 'requests>=2.10', 'flask', 'flask-wtf', 'python-bitcoinlib', 'sqlalchemy', 'pysocks']
 
 setup(
     name='rein',
