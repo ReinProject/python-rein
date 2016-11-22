@@ -12,7 +12,6 @@ from pprint import pprint
 from datetime import datetime
 from sqlalchemy import and_
 
-DEBUG=True
 
 config_dir = os.path.join(os.path.expanduser('~'), '.rein')
 if not os.path.isdir(config_dir):
@@ -43,7 +42,6 @@ from lib.order import Order, STATE
 from lib.mediator import Mediator
 
 rein = config.Config()
-
 
 @click.group()
 @click.option('--debug/--no-debug', default=False)
@@ -999,6 +997,22 @@ def tor(tor):
         click.echo("Invalid option.")
     return
 
+@cli.command()
+@click.argument('debug', required=True)
+def debug(debug):
+    """
+    Enter 'true' / 'false' etc to toggle debug mode on startup.
+    """
+    if debug and debug.lower() in ['on', 'true', 'enabled']:
+        PersistConfig.set_debug(rein, 'true')
+        click.echo("Debug enabled.")
+    elif debug and debug.lower() in ['off', 'false', 'disabled']:
+        PersistConfig.set_debug(rein, 'false')
+        click.echo("Debug disabled.")
+    else:
+        click.echo("Invalid option.")
+    return
+
 
 def init(multi, identity):
     log = rein.get_log()
@@ -1203,7 +1217,7 @@ def start(multi, identity, setup):
 
     if rein.has_no_account() or setup:
         webbrowser.open('http://'+host+':' + str(port) + '/setup')
-        app.run(host=host, port=port, debug=DEBUG)
+        app.run(host=host, port=port, debug=rein.debug)
         return
     else:
         (log, user, key, urls) = init(multi, identity)
@@ -1891,7 +1905,7 @@ def start(multi, identity, setup):
                         orders=orders)
 
     webbrowser.open('http://'+host+':' + str(port))
-    app.run(host=host, port=port, debug=DEBUG)
+    app.run(host=host, port=port, debug=rein.debug)
 
     # testing steps: Disable tor. Then turn on debug because debug doesn't work when socket is overriden
 
