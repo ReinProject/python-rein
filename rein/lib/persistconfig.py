@@ -57,3 +57,21 @@ class PersistConfig(Base):
             return True
         else:
             return False
+
+    @classmethod
+    def set_debug(self, rein, value):
+        res = rein.session.query(PersistConfig).filter(PersistConfig.key == 'debug').first()
+        if res:
+            res.value = value
+        else:
+            p = PersistConfig(rein.session, 'debug', value)
+            rein.session.add(p)
+        rein.session.commit()
+
+    @classmethod
+    def get_debug(self, rein):
+        res = rein.session.query(PersistConfig).filter(PersistConfig.key == 'debug').first()
+        if res and res.value == 'true':
+            return True
+        else:
+            return False

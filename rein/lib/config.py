@@ -24,6 +24,7 @@ class Config():
         self.log.info('database connected')
         self.testnet = 1 if PersistConfig.get_testnet(self) else 0
         self.tor = 1 if PersistConfig.get_tor(self) else 0
+        self.debug = 1 if PersistConfig.get_debug(self) else 0
         if self.tor:
             self.proxies = { 'http': 'socks5://127.0.0.1:9150' }
         else:
