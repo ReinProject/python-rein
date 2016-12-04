@@ -76,4 +76,14 @@ Then run using nose:
 
     OK
 
+There are also some tests that run via unittest2:
+
+    $ make test
+    python -m unittest2 rein/lib/*.py
+    ....
+    ----------------------------------------------------------------------
+    Ran 4 tests in 0.001s
+    
+    OK
+
 Tox fails right now but does run flake so will be helpful for cleanup.
