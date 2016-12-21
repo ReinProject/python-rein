@@ -25,6 +25,7 @@ from lib.market import *
 from lib.util import unique
 from lib.io import safe_get
 from lib.script import build_2_of_3, build_mandatory_multisig, check_redeem_scripts
+from lib.localization import init_localization
 
 # Import config
 import lib.config as config
@@ -42,12 +43,13 @@ from lib.order import Order, STATE
 from lib.mediator import Mediator
 
 rein = config.Config()
+init_localization()
 
 @click.group()
 @click.option('--debug/--no-debug', default=False)
 @click.pass_context
 def cli(ctx, debug):
-    """
+    _("""
     Rein is a decentralized professional services market and Python-rein is a client
 that provides a user interface. Use this program from your local browser or command 
 line to create an account, post a job, bid, etc.
@@ -71,7 +73,7 @@ line to create an account, post a job, bid, etc.
         $ rein resolve          - mediator posts decision
 
     For more info and the setup guide visit: http://reinproject.org
-    """
+    """)
     if debug:
         click.echo("Debuggin'")
     pass
@@ -80,22 +82,22 @@ line to create an account, post a job, bid, etc.
 @cli.command()
 @click.option('--multi/--no-multi', default=False, help="add even if an identity exists")
 def setup(multi):
-    """
+    _("""
     Setup or import an identity.
 
     You will choose a name or handle for your account, include public contact information, 
     and a delegate Bitcoin address/private key that the program will use to sign documents
     on your behalf. An enrollment document will be created and you will need to sign it
     with your master Bitcoin private key.
-    """
+    """)
     log = rein.get_log()
     if multi:
         rein.set_multiuser()
     log.info('entering setup')
     if multi or rein.has_no_account():
-        click.echo("\n" + hilight("Welcome to Rein.", True, True) + "\n\n"
-                   "Do you want to import a backup or create a new account?\n\n"
-                   "1 - Create new account\n2 - Import backup\n")
+        click.echo("\n" + hilight(_("Welcome to Rein."), True, True) + "\n\n" +
+                   _("Do you want to import a backup or create a new account?\n\n") +
+                   _("1 - Create new account\n2 - Import backup\n"))
         choice = click.prompt(hilight("Choice", True, True), type=int, default=1)
         if choice == 1:
             create_account(rein)
