@@ -63,6 +63,12 @@ For the mediator payment, a mandatory multisig address is created. To spend the 
 
 Like with the primary payment, a user is prompted for a signed mediator payment if they are a job creator accepting a delivery or they are the mediator resolving a dispute.
 
+## Developer Notes
+
+To generate or update pot files for translation, run the following from the root of the repo:
+
+    xgettext.pl rein/cli.py rein/lib/*.py
+
 ## Testing
 
 To help test, download and run [a server](https://github.com/ReinProject/causeway) locally. Run `rein testnet true`, then `rein setup`. You can use the address/key pairs on [this sheet](https://docs.google.com/spreadsheets/d/1IRDvu-24LCDOTM1B3lwW9cfQM-zSCK1eds5Sb4QhpWY/edit#gid=691104568) for convenience to setup Alice, Bob, and Charlie with the right keys/identities. 

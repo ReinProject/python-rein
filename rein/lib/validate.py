@@ -11,7 +11,7 @@ from block import Block
 def filter_out_expired(rein, user, urls, jobs):
     live = []
     times = {}
-    click.echo('Verifying block times...')
+    click.echo(_('Verifying block times...'))
     with click.progressbar(jobs) as bar:
         for j in bar:
             if 'Block hash' not in j:
@@ -165,7 +165,7 @@ def remote_query(rein, user, urls, log, query_type, distinct):
         sel_url = "{0}query?owner={1}&query={2}&testnet={3}"
         data = safe_get(log, sel_url.format(url, user.maddr, query_type, rein.testnet))
         if data is None or query_type not in data or len(data[query_type]) == 0:
-            click.echo('None found')
+            click.echo(_('None found'))
             continue
         res += filter_and_parse_valid_sigs(rein, data[query_type])
     return unique(res, distinct)
