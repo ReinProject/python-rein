@@ -1216,7 +1216,7 @@ def start(multi, identity, setup):
 
 
     if rein.has_no_account() or setup:
-        webbrowser.open('http://'+host+':' + str(port) + '/setup')
+        print('Open your browser to http://'+host+':' + str(port) + '/setup')
         app.run(host=host, port=port, debug=rein.debug)
         return
     else:
@@ -1904,7 +1904,7 @@ def start(multi, identity, setup):
                         documents=documents,
                         orders=orders)
 
-    webbrowser.open('http://'+host+':' + str(port))
+    print('Open your browser to http://'+host+':' + str(port))
     app.run(host=host, port=port, debug=rein.debug)
 
     # testing steps: Disable tor. Then turn on debug because debug doesn't work when socket is overriden
