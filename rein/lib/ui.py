@@ -3,12 +3,12 @@ import sys
 import json
 import click
 import getpass
-from bitcoinecdsa import privkey_to_address, pubkey
-from bitcoinaddress import check_bitcoin_address
-from validate import validate_enrollment
-from user import User, Base
-from util import unique
-from document import Document
+from .bitcoinecdsa import privkey_to_address, pubkey
+from .bitcoinaddress import check_bitcoin_address
+from .validate import validate_enrollment
+from .user import User, Base
+from .util import unique
+from .document import Document
 
 
 def shorten(text, length=60):

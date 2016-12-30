@@ -18,30 +18,32 @@ if not os.path.isdir(config_dir):
     os.mkdir(config_dir)
 
 # Import helper functions
-from lib.ui import *
-from lib.validate import filter_and_parse_valid_sigs, parse_document, choose_best_block, filter_out_expired, remote_query
-from lib.bitcoinecdsa import sign, pubkey
-from lib.market import * 
-from lib.util import unique
-from lib.io import safe_get
-from lib.script import build_2_of_3, build_mandatory_multisig, check_redeem_scripts
+from .lib.ui import *
+from .lib.validate import filter_and_parse_valid_sigs, parse_document, choose_best_block, filter_out_expired, remote_query
+from .lib.bitcoinecdsa import sign, pubkey
+from .lib.market import * 
+from .lib.util import unique
+from .lib.io import safe_get
+from .lib.script import build_2_of_3, build_mandatory_multisig, check_redeem_scripts
 
 # Import config
-import lib.config as config
+import rein.lib.config as config
 
 # Create tables
-import lib.models
+import rein.lib.models
 
 # Import models
-from lib.persistconfig import PersistConfig
-from lib.user import User
-from lib.bucket import Bucket
-from lib.document import Document
-from lib.placement import Placement
-from lib.order import Order, STATE
-from lib.mediator import Mediator
+from .lib.persistconfig import PersistConfig
+from .lib.user import User
+from .lib.bucket import Bucket
+from .lib.document import Document
+from .lib.placement import Placement
+from .lib.order import Order, STATE
+from .lib.mediator import Mediator
 
 rein = config.Config()
+import bitcoin
+if (rein.testnet): bitcoin.SelectParams('testnet')
 
 @click.group()
 @click.option('--debug/--no-debug', default=False)
@@ -1101,8 +1103,8 @@ def start(multi, identity, setup):
     """
     import webbrowser
     from flask import Flask, request, redirect, url_for, flash, send_from_directory, render_template
-    from lib.forms import SetupForm, JobPostForm, BidForm, JobOfferForm, DeliverForm, AcceptForm, DisputeForm, ResolveForm
-    from lib.mediator import Mediator
+    from .lib.forms import SetupForm, JobPostForm, BidForm, JobOfferForm, DeliverForm, AcceptForm, DisputeForm, ResolveForm
+    from .lib.mediator import Mediator
 
     host = '127.0.0.1'
     port = 5001
@@ -1171,7 +1173,7 @@ def start(multi, identity, setup):
         log = rein.get_log()
 
         from rein.lib.user import User
-        from lib.forms import SignForm
+        from .lib.forms import SignForm
         form = SignForm(request.form)
 
         if request.method == 'POST' and form.validate_on_submit():

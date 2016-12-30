@@ -2,15 +2,15 @@ from flask import Flask
 from flask_wtf import Form
 from wtforms import TextField, TextAreaField, RadioField, PasswordField, HiddenField
 from wtforms.validators import Required, ValidationError
-import config
-from mediator import Mediator
-from document import Document
-from order import Order
-from bitcoinecdsa import privkey_to_address
-from bitcoinaddress import check_bitcoin_address
+import rein.lib.config as config
+from .mediator import Mediator
+from .document import Document
+from .order import Order
+from .bitcoinecdsa import privkey_to_address
+from .bitcoinaddress import check_bitcoin_address
 
-from ui import build_enrollment
-from validate import validate_enrollment
+from .ui import build_enrollment
+from .validate import validate_enrollment
 
 
 def validate_privkey(form, field):

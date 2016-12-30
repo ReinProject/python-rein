@@ -2,10 +2,10 @@ from sqlalchemy import Column, Integer, String, Float, Boolean, and_
 from sqlalchemy.ext.declarative import declarative_base
 
 import click
-import config
+import rein.lib.config as config
 
-from validate import filter_and_parse_valid_sigs
-from util import unique
+from .validate import filter_and_parse_valid_sigs
+from .util import unique
 
 Base = declarative_base()
 rein = config.Config()
