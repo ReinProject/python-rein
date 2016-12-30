@@ -1485,7 +1485,7 @@ def start(multi, identity, setup):
             log.info('accept signed') if document else log.error('accept failed')
             return redirect("/")
         elif request.method == 'POST':
-            print "form data " + str(form)
+            print("form data " + str(form))
             flash_errors(form)
             return redirect("/accept")
         else:
@@ -1514,7 +1514,7 @@ def start(multi, identity, setup):
                 review += filter_and_parse_valid_sigs(rein, data['review'])
 
         jobs_mediating = unique(review, 'Description')
-        print len(jobs_mediating)
+        print(len(jobs_mediating))
 
         # store doc if we don't have it
         updated_jobs = []
@@ -1577,7 +1577,7 @@ def start(multi, identity, setup):
             log.info('resolve signed') if document else log.error('resolve failed')
             return redirect("/")
         elif request.method == 'POST':
-            print "form data " + str(form)
+            print("form data " + str(form))
             flash_errors(form)
             return redirect("/resolve")
         else:
@@ -1690,7 +1690,7 @@ def start(multi, identity, setup):
             log.info(doc_type + ' signed') if document else log.error(doc_type + ' failed')
             return redirect("/")
         elif request.method == 'POST':
-            print "form data " + str(form)
+            print("form data " + str(form))
             flash_errors(form)
             return redirect("/dispute")
         else:
