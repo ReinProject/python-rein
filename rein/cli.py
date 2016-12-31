@@ -1850,6 +1850,8 @@ def start(multi, identity, setup):
             order = Order.get_by_job_id(rein, form.job_id.data)
             offer = order.get_documents(rein, Document, doc_type='offer')
             doc = parse_document(offer[0].contents)
+            redeemScript = doc['Primary escrow redeem script']
+            (payment_txins,payment_amount,payment_address,payment_sig) = partial_spend_p2sh(redeemScript,user.daddr,user.dkey)
             fields = [
                 {'label': 'Job name',                       'value_from': doc},
                 {'label': 'Job ID',                         'value_from': doc},
@@ -1862,6 +1864,10 @@ def start(multi, identity, setup):
                 {'label': 'Worker public key',              'value_from': doc},
                 {'label': 'Mediator public key',            'value_from': doc},
                 {'label': 'Job creator public key',         'value_from': doc},
+                {'label':'Primary payment inputs','value':payment_txins},
+                {'label':'Primary payment amount','value':payment_amount},
+                {'label':'Primary payment address','value':payment_address},
+                {'label':'Primary payment signature','value':payment_sig}
                     ]
             document_text = assemble_document('Delivery', fields)
             store = True
