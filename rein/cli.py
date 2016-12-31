@@ -1467,6 +1467,12 @@ def start(multi, identity, setup):
         if request.method == 'POST' and form.validate_on_submit():
             delivery_doc = Document.get(rein, form.deliverable_id.data)
             delivery = parse_document(delivery_doc.contents)
+            redeemScript = delivery['Primary escrow redeem script']
+            txins = delivery['Primary payment inputs']
+            amount = delivery['Primary payment amount']
+            daddr = delivery['Primary payment address']
+            worker_sig = delivery['Primary payment signature']
+            payment_txid = spend_p2sh(redeemScript,txins,amount,daddr,worker_sig,user.dkey)
             fields = [
                 {'label': 'Job name',                       'value_from': delivery},
                 {'label': 'Job ID',                         'value_from': delivery},
@@ -1474,6 +1480,11 @@ def start(multi, identity, setup):
                 {'label': 'Signed mediator payment',        'value': form.signed_mediator_payment.data},
                 {'label': 'Primary escrow redeem script',   'value_from': delivery},
                 {'label': 'Mediator escrow redeem script',  'value_from': delivery},
+                {'label':'Primary payment inputs','value_from':delivery},
+                {'label':'Primary payment amount','value_from':delivery},
+                {'label':'Primary payment address','value_from':delivery},
+                {'label':'Primary payment signature','value_from':delivery},
+                {'label':'Primary payment txid','value':payment_txid}
                      ]
 
             document_text = assemble_document('Accept Delivery', fields)
