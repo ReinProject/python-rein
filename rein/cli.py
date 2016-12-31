@@ -1477,8 +1477,6 @@ def start(multi, identity, setup):
             fields = [
                 {'label': 'Job name',                       'value_from': delivery},
                 {'label': 'Job ID',                         'value_from': delivery},
-                {'label': 'Signed primary payment',         'value': form.signed_primary_payment.data},
-                {'label': 'Signed mediator payment',        'value': form.signed_mediator_payment.data},
                 {'label': 'Primary escrow redeem script',   'value_from': delivery},
                 {'label': 'Mediator escrow redeem script',  'value_from': delivery},
                 {'label':'Primary payment inputs','value_from':delivery},

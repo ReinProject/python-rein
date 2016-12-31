@@ -68,7 +68,7 @@ class AcceptForm(Form):
     deliverable_id = RadioField('Deliverables')
 
 class ResolveForm(Form):
-    signed_primary_payment = TextAreaField('Signed primary payment', validators = [Required()])
-    signed_mediator_payment = TextAreaField('Signed mediator payment', validators = [Required()])
+    signed_primary_payment = TextAreaField('Signed primary payment')
+    signed_mediator_payment = TextAreaField('Signed mediator payment')
     resolution = TextAreaField('Resolution', validators = [Required()])
     dispute_id = RadioField('Disputes')
