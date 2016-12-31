@@ -118,5 +118,6 @@ class Document(Base):
 
     @staticmethod
     def calc_hash(text):
+        text = text.decode('ascii')
         text = text.encode('utf8')
         return hashlib.sha256(text).hexdigest()
