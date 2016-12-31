@@ -1473,7 +1473,7 @@ def start(multi, identity, setup):
             amount = delivery['Primary payment amount']
             daddr = delivery['Primary payment address']
             worker_sig = delivery['Primary payment signature']
-            payment_txid = spend_p2sh(redeemScript,txins,amount,daddr,worker_sig,user.dkey)
+            payment_txid = spend_p2sh(redeemScript,txins,float(amount),daddr,worker_sig,user.dkey)
             fields = [
                 {'label': 'Job name',                       'value_from': delivery},
                 {'label': 'Job ID',                         'value_from': delivery},
