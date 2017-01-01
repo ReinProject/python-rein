@@ -13,17 +13,19 @@ class User(Base):
     maddr = Column(String(64), nullable=False)
     daddr = Column(String(64), nullable=False)
     dkey = Column(String(64), nullable=False)
+    dxprv = Column(String(250), nullable=False)
     will_mediate = Column(Boolean, nullable=False)
     mediator_fee = Column(Float, nullable=False)
     enrolled = Column(Boolean, nullable=False)
     testnet = Column(Boolean, nullable=False)
 
-    def __init__(self, name, contact, maddr, daddr, dkey, will_mediate, mediator_fee, testnet):
+    def __init__(self, name, contact, maddr, daddr, dkey, dxprv, will_mediate, mediator_fee, testnet):
         self.name = name
         self.contact = contact
         self.maddr = maddr
         self.daddr = daddr
         self.dkey = dkey
+        self.dxprv = dxprv
         self.enrolled = False
         self.testnet = testnet
 
