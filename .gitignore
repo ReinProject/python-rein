@@ -1,6 +1,8 @@
 build/
 dist/
 c/
+venv/
+.idea/
 *.txt
 *.sig
 *.log
