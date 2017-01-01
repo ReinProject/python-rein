@@ -6,7 +6,6 @@ venv/
 *.txt
 *.sig
 *.log
-*.json
 *.db
 *.pyc
 rein.egg-info
