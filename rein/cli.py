@@ -1473,7 +1473,12 @@ def start(multi, identity, setup):
             amount = delivery['Primary payment amount']
             daddr = delivery['Primary payment address']
             worker_sig = delivery['Primary payment signature']
+            redeemScript_mediator = delivery['Mediator escrow redeem script']
+            txins_mediator = delivery['Mediator payment inputs']
+            amount_mediator = delivery['Mediator payment amount']
+            daddr_mediator = delivery['Mediator payment address']
             (payment_txid,client_sig) = spend_p2sh(redeemScript,txins,float(amount),daddr,worker_sig,rein)
+            client_sig_for_mediator = partial_spend_p2sh_mediator_2(redeemScript_mediator,txins_mediator,float(amount_mediator),daddr_mediator,rein)
             fields = [
                 {'label': 'Job name',                       'value_from': delivery},
                 {'label': 'Job ID',                         'value_from': delivery},
@@ -1484,7 +1489,11 @@ def start(multi, identity, setup):
                 {'label':'Primary payment address','value_from':delivery},
                 {'label':'Primary payment signature','value_from':delivery},
                 {'label':'Primary payment txid','value':payment_txid},
-                {'label':'Primary payment client signature','value':client_sig}
+                {'label':'Primary payment client signature','value':client_sig},
+                {'label':'Mediator payment inputs','value_from':delivery},
+                {'label':'Mediator payment amount','value_from':delivery},
+                {'label':'Mediator payment address','value_from':delivery},
+                {'label':'Mediator payment client signature','value':client_sig_for_mediator}
                      ]
 
             document_text = assemble_document('Accept Delivery', fields)
@@ -1862,7 +1871,10 @@ def start(multi, identity, setup):
             offer = order.get_documents(rein, Document, doc_type='offer')
             doc = parse_document(offer[0].contents)
             redeemScript = doc['Primary escrow redeem script']
+            mediatorRedeemScript = doc['Mediator escrow redeem script']
+            mediator_pubkey = doc['Mediator public key']
             (payment_txins,payment_amount,payment_address,payment_sig) = partial_spend_p2sh(redeemScript,rein)
+            (mediator_payment_txins,mediator_payment_amount,mediator_payment_address) = partial_spend_p2sh_mediator(mediatorRedeemScript,rein,mediator_pubkey)
             fields = [
                 {'label': 'Job name',                       'value_from': doc},
                 {'label': 'Job ID',                         'value_from': doc},
@@ -1878,7 +1890,10 @@ def start(multi, identity, setup):
                 {'label':'Primary payment inputs','value':payment_txins},
                 {'label':'Primary payment amount','value':payment_amount},
                 {'label':'Primary payment address','value':payment_address},
-                {'label':'Primary payment signature','value':payment_sig}
+                {'label':'Primary payment signature','value':payment_sig},
+                {'label':'Mediator payment inputs','value':mediator_payment_txins},
+                {'label':'Mediator payment amount','value':mediator_payment_amount},
+                {'label':'Mediator payment address','value':mediator_payment_address},
                     ]
             document_text = assemble_document('Delivery', fields)
             store = True

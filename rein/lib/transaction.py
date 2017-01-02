@@ -2,7 +2,7 @@ from bitcoin import SelectParams
 from bitcoin.core import b2x, lx, COIN, COutPoint, CMutableTxOut, CMutableTxIn, CMutableTransaction, Hash160, x
 from bitcoin.core.script import CScript, OP_DUP, OP_HASH160, OP_EQUALVERIFY, OP_CHECKSIG, SignatureHash, SIGHASH_ALL, OP_2, OP_3, OP_CHECKMULTISIG, OP_0
 from bitcoin.core.scripteval import VerifyScript, SCRIPT_VERIFY_P2SH
-from bitcoin.wallet import CBitcoinAddress, CBitcoinSecret
+from bitcoin.wallet import CBitcoinAddress, CBitcoinSecret, P2PKHBitcoinAddress
 import urllib2, urllib
 import json
 from hashlib import sha256
@@ -84,7 +84,47 @@ def partial_spend_p2sh (redeemScript,rein):
     for i in range(0,ntxins):
         sighash = SignatureHash(txin_redeemScript, tx, i, SIGHASH_ALL)
         sig += " "+b2x(seckey.sign(sighash))+"01"
-    return (txins_str[1:],str(amount),daddr,sig)
+    return (txins_str[1:],str(amount),daddr,sig[1:])
+
+def partial_spend_p2sh_mediator (redeemScript,rein,mediator_pubkey):
+    mediator_address = P2PKHBitcoinAddress.from_pubkey(x(mediator_pubkey))
+    txin_redeemScript = CScript(x(redeemScript))
+    txin_scriptPubKey = txin_redeemScript.to_p2sh_scriptPubKey()
+    txin_p2sh_address = CBitcoinAddress.from_scriptPubKey(txin_scriptPubKey)
+    (txins,total_value) = unspent_txins(txin_p2sh_address,rein.testnet)
+    if len(txins)==0:
+        raise ValueError('No unspent txins found')
+    txins_str = ""
+    txins_obj = []
+    for txid,vout in txins:
+        txins_str += " "+txid+"-"+str(vout)
+        txins_obj.append(CMutableTxIn(COutPoint(lx(txid),vout)))
+    fee = 0.0005
+    amount = total_value-fee
+    if amount<=0:
+        raise ValueError('Not enough value in the inputs')
+    return (txins_str[1:],str(amount),str(mediator_address))
+
+def partial_spend_p2sh_mediator_2 (redeemScript,txins_str,amount,daddr,rein):
+    txin_redeemScript = CScript(x(redeemScript))
+    txin_scriptPubKey = txin_redeemScript.to_p2sh_scriptPubKey()
+    txins_obj = []
+    for txin_str in txins_str.split():
+        txin_list = txin_str.split("-")
+        txins_obj.append(CMutableTxIn(COutPoint(lx(txin_list[0]),int(txin_list[1]))))
+    txout = CMutableTxOut(amount*COIN,CBitcoinAddress(daddr).to_scriptPubKey())
+    tx = CMutableTransaction(txins_obj,[txout])
+    seckey = CBitcoinSecret(rein.user.dkey)
+    ntxins = len(txins_obj)
+    sig_list = []
+    sig_str = ""
+    for i in range(0,ntxins):
+        sighash = SignatureHash(txin_redeemScript,tx,i,SIGHASH_ALL)
+        sig = seckey.sign(sighash)+x("01")
+        sig_str += " "+b2x(sig)
+        txins_obj[i].scriptSig = CScript([sig, txin_redeemScript])
+        VerifyScript(txins_obj[i].scriptSig, txin_scriptPubKey, tx, i, (SCRIPT_VERIFY_P2SH,))
+    return sig_str[1:]
 
 def spend_p2sh (redeemScript,txins_str,amount,daddr,sig,rein):
     txin_redeemScript = CScript(x(redeemScript))
@@ -100,16 +140,18 @@ def spend_p2sh (redeemScript,txins_str,amount,daddr,sig,rein):
     sig_list = []
     for s in sig.split():
         sig_list.append(x(s))
+    sig2_str = ""
     for i in range(0,ntxins):
         sighash = SignatureHash(txin_redeemScript,tx,i,SIGHASH_ALL)
         sig2 = seckey.sign(sighash)+x("01")
+        sig2_str += " "+b2x(sig2)
         txins_obj[i].scriptSig = CScript([OP_0, sig2, sig_list[i], txin_redeemScript])
         VerifyScript(txins_obj[i].scriptSig, txin_scriptPubKey, tx, i, (SCRIPT_VERIFY_P2SH,))
     tx_bytes = tx.serialize()
     hash = sha256(sha256(tx_bytes).digest()).digest()
     txid = b2x(hash[::-1])
     txid_causeway = broadcast_tx(b2x(tx_bytes),rein)
-    return (txid,sig)
+    return (txid,sig2_str[1:])
 
 #redeemScript = "522103220d8573c2d9bdea5d60d3ad8a892c94da4a1850445fe3b83b17307a8d655fb1210342b976a71a5aa2daa65512da45f1d44579c1d3fc364d085e398fc771c23fe2622102ba974cf1e3853814e0e05e7e36266e3d5d324eb48a31694d4969bed390535a6053ae"
 
