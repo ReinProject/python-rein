@@ -10,7 +10,7 @@ from hashlib import sha256
 api = "blocktrail"
 import rein.lib.config as config
 rein = config.Config()
-urls = Bucket.get_urls(rein)
+from .bucket import Bucket
 from .io import safe_get
 
 def unspent_txins(address):
@@ -47,6 +47,7 @@ def unspent_txins(address):
 
 def broadcast_tx (tx_hex):
 
+    urls = Bucket.get_urls(rein)
     sel_url = "{0}query?owner={1}&query=sendrawtransaction&tx={2}&testnet={3}"
     
     for url in urls:
