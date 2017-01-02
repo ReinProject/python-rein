@@ -46,12 +46,22 @@ def unspent_txins(address):
 def broadcast_tx (tx_hex,rein):
 
     urls = Bucket.get_urls(rein)
-    sel_url = "{0}query?owner={1}&query=sendrawtransaction&tx={2}&testnet={3}"
+    sel_url = "{0}bitcoin?owner={1}&query=sendrawtransaction&tx={2}&testnet={3}"
     
     for url in urls:
+        print("get url: "+url)
         data = safe_get(rein.log, sel_url.format(url,rein.user.maddr,tx_hex,rein.testnet))
+        print("got url")
         if data and 'txid' in data:
+            print("got data and txid")
             return data['txid']
+        elif data and 'message' in data:
+            print("no txid")
+            print("message: "+data['message'])
+        elif data:
+            print("yes data")
+        else:
+            print("no data")
     
 def partial_spend_p2sh (redeemScript,rein):
     daddr = rein.user.daddr
@@ -109,7 +119,7 @@ def spend_p2sh (redeemScript,txins_str,amount,daddr,sig,rein):
     txid_causeway = broadcast_tx(b2x(tx_bytes),rein)
     if (txid != txid_causeway):
         print("txids don't match")    
-    return txid
+    return txid_causeway
 
 #redeemScript = "522103220d8573c2d9bdea5d60d3ad8a892c94da4a1850445fe3b83b17307a8d655fb1210342b976a71a5aa2daa65512da45f1d44579c1d3fc364d085e398fc771c23fe2622102ba974cf1e3853814e0e05e7e36266e3d5d324eb48a31694d4969bed390535a6053ae"
 
