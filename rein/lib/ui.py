@@ -109,7 +109,7 @@ def create_account(rein):
         mxprv = crypto.bip32.mnemonic_to_key(mnemonic)
         maddr = crypto.bip32.get_master_address(mxprv)
         daddr = crypto.bip32.get_delegate_address(mxprv)
-        dkey = crypto.bip32.get_delegate_key(mxprv)
+        dkey = crypto.bip32.get_delegate_private_key(mxprv)
         dxprv = crypto.bip32.get_delegate_extended_key(mxprv)
     else:
         click.echo(highlight('\nTo sign up for Rein you have to put down the mnemonic. Aborting.', False, True))
@@ -140,7 +140,7 @@ def create_account(rein):
     # ---- Signing enrollment document ----
     # No signature verification necessary as enrollment is signed by a Rein-generated key.
 
-    enrollment = build_enrollment(rein)
+    enrollment = build_enrollment_from_dict(user_data)
     signed_enrollment = sign(mxprv, enrollment)
 
     User.set_enrolled(rein, new_identity)
