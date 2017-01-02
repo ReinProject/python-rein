@@ -55,6 +55,11 @@ def get_master_address(mxprv):
     return master_key.Address()
 
 
+def get_master_private_key(mxprv):
+    master_key = get_child_key(mxprv, 0)
+    return master_key.WalletImportFormat()
+
+
 def get_delegate_address(mxprv):
     delegate_key = get_delegate_key(mxprv)
     delegate_key.SetPublic()

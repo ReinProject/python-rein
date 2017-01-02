@@ -106,11 +106,13 @@ def create_account(rein):
     if confirm_mnemonic:
         click.echo(highlight('\nGenerating BIP32 data...\n', True, True))
         # TODO - Transform it into a class with all the properties
-        mxprv = crypto.bip32.mnemonic_to_key(mnemonic)
-        maddr = crypto.bip32.get_master_address(mxprv)
-        daddr = crypto.bip32.get_delegate_address(mxprv)
-        dkey = crypto.bip32.get_delegate_private_key(mxprv)
-        dxprv = crypto.bip32.get_delegate_extended_key(mxprv)
+        key = crypto.bip32.mnemonic_to_key(mnemonic)
+        mprv = crypto.bip32.get_master_private_key(key)
+        print(mprv)
+        maddr = crypto.bip32.get_master_address(key)
+        daddr = crypto.bip32.get_delegate_address(key)
+        dkey = crypto.bip32.get_delegate_private_key(key)
+        dxprv = crypto.bip32.get_delegate_extended_key(key)
     else:
         click.echo(highlight('\nTo sign up for Rein you have to put down the mnemonic. Aborting.', False, True))
         quit()
@@ -140,11 +142,15 @@ def create_account(rein):
     # ---- Signing enrollment document ----
     # No signature verification necessary as enrollment is signed by a Rein-generated key.
 
+    rein.user = new_identity
     enrollment = build_enrollment_from_dict(user_data)
-    signed_enrollment = sign(mxprv, enrollment)
-
+    signed_enrollment = '-----BEGIN BITCOIN SIGNED MESSAGE-----\n' + \
+                        enrollment + \
+                        '\n-----BEGIN SIGNATURE-----\n' + \
+                        maddr + '\n' + \
+                        sign(mprv, enrollment) + \
+                        '\n-----END BITCOIN SIGNED MESSAGE-----\n'
     User.set_enrolled(rein, new_identity)
-    # insert signed document into documents table as type 'enrollment'
     document = Document(rein, 'enrollment', signed_enrollment, sig_verified=True, testnet=rein.testnet)
     rein.session.add(document)
     rein.session.commit()
@@ -162,7 +168,6 @@ def create_account(rein):
     else:
         click.echo("Backup file already exists. Please run with --backup to save "
                    "user details to file.")
-    rein.user = new_identity
     return rein.user
 
 
