@@ -1473,7 +1473,7 @@ def start(multi, identity, setup):
             amount = delivery['Primary payment amount']
             daddr = delivery['Primary payment address']
             worker_sig = delivery['Primary payment signature']
-            payment_txid = spend_p2sh(redeemScript,txins,float(amount),daddr,worker_sig,rein)
+            (payment_txid,client_sig) = spend_p2sh(redeemScript,txins,float(amount),daddr,worker_sig,rein)
             fields = [
                 {'label': 'Job name',                       'value_from': delivery},
                 {'label': 'Job ID',                         'value_from': delivery},
@@ -1483,7 +1483,8 @@ def start(multi, identity, setup):
                 {'label':'Primary payment amount','value_from':delivery},
                 {'label':'Primary payment address','value_from':delivery},
                 {'label':'Primary payment signature','value_from':delivery},
-                {'label':'Primary payment txid','value':payment_txid}
+                {'label':'Primary payment txid','value':payment_txid},
+                {'label':'Primary payment client signature','value':client_sig}
                      ]
 
             document_text = assemble_document('Accept Delivery', fields)
