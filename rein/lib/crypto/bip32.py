@@ -63,7 +63,7 @@ def get_delegate_address(mxprv):
 
 def get_delegate_private_key(mxprv):
     delegate_key = get_delegate_key(mxprv)
-    return delegate_key.PrivateKey()
+    return delegate_key.WalletImportFormat()
 
 
 def get_delegate_extended_key(mxprv):
