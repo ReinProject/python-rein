@@ -43,29 +43,29 @@ def get_child_key(parent, depth):
     return parent.ChildKey(depth)
 
 
-def get_delegate_key(xprv):
-    master_key = get_child_key(xprv, 1 + 0x80000000)
+def get_delegate_key(mxprv):
+    master_key = get_child_key(mxprv, 1 + 0x80000000)
     delegate_key = get_child_key(master_key, 0)
-    return delegate_key()
+    return delegate_key
 
 
-def get_master_address(xprv):
-    master_key = get_child_key(xprv, 0)
+def get_master_address(mxprv):
+    master_key = get_child_key(mxprv, 0)
     master_key.SetPublic()
-    return master_key.Address(0)
+    return master_key.Address()
 
 
-def get_delegate_address(xprv):
-    delegate_key = get_delegate_key(xprv)
+def get_delegate_address(mxprv):
+    delegate_key = get_delegate_key(mxprv)
     delegate_key.SetPublic()
     return delegate_key.Address()
 
 
-def get_delegate_private_key(xprv):
-    delegate_key = get_delegate_key(xprv)
+def get_delegate_private_key(mxprv):
+    delegate_key = get_delegate_key(mxprv)
     return delegate_key.PrivateKey()
 
 
-def get_delegate_extended_key(xprv):
-    delegate_key = get_delegate_key(xprv)
+def get_delegate_extended_key(mxprv):
+    delegate_key = get_delegate_key(mxprv)
     return delegate_key.ExtendedKey()

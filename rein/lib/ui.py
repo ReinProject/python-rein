@@ -9,18 +9,20 @@ from .validate import validate_enrollment
 from .user import User, Base
 from .util import unique
 from .document import Document
-
+import rein.lib.crypto.bip32 as crypto.bip32
 
 def shorten(text, length=60):
-    if len(text) > length - 3 and len(text) < length:
+    if length - 3 < len(text) < length:
         return text[0:length-1]
     elif len(text) > length - 3:
         return text[0:length-1] + '...'
     else:
         return text
 
+
 def short_addr(text):
     return text[0:10] + '...' + text[-8:]
+
 
 def hilight(string, status, bold):
     attr = []
@@ -50,24 +52,24 @@ def get_choice(choices, name):
     return choice
 
 
-def btc_addr_prompt(name):
-    title = hilight(name.capitalize() + " Bitcoin address", True, True)
-    addr = click.prompt(title, type=str)
-    while not check_bitcoin_address(addr.strip()):
-        addr = click.prompt("Invalid.\n" + title, type=str)
-    return addr
+# def btc_addr_prompt(name):
+#     title = hilight(name.capitalize() + " Bitcoin address", True, True)
+#     addr = click.prompt(title, type=str)
+#     while not check_bitcoin_address(addr.strip()):
+#         addr = click.prompt("Invalid.\n" + title, type=str)
+#     return addr
 
 
-def btc_privkey_prompt(name, addr=None):
-    title = hilight(name.capitalize() + " Bitcoin private key: ", True, True)
-    privkey = getpass.getpass(title)
-    if addr:
-        while privkey_to_address(privkey.strip()) != addr:
-            privkey = getpass.getpass("Not valid or corresponding to target address.\n" + title)
-    else:
-        while not privkey_to_address(privkey.strip()):
-            privkey = getpass.getpass("Invalid private key.\n" + title)
-    return privkey.strip()
+# def btc_privkey_prompt(name, addr=None):
+#     title = hilight(name.capitalize() + " Bitcoin private key: ", True, True)
+#     privkey = getpass.getpass(title)
+#     if addr:
+#         while privkey_to_address(privkey.strip()) != addr:
+#             privkey = getpass.getpass("Not valid or corresponding to target address.\n" + title)
+#     else:
+#         while not privkey_to_address(privkey.strip()):
+#             privkey = getpass.getpass("Invalid private key.\n" + title)
+#     return privkey.strip()
 
 
 def identity_prompt(rein):
@@ -85,38 +87,52 @@ def identity_prompt(rein):
     return rein.user
 
 
+def yes_no(message):
+    confirmation = click.prompt(message)
+    if confirmation in ['y', 'yes']:
+        return True
+    elif confirmation in ['n', 'no']:
+        return False
+    else:
+        click.echo('\nInput not recognized, please try again.\n')
+        yes_no(message)
+
+
 def create_account(rein):
     Base.metadata.create_all(rein.engine)
+    # ---- Contact data ----
     name = click.prompt(hilight("\nEnter name or handle", True, True), type=str)
     contact = click.prompt(hilight("Email or BitMessage address", True, True), type=str)
-    click.echo('\nIn Rein, all activity - including setting contact info, creating\n'
-               'a job, or getting paid - is linked to a master Bitcoin address.\n\n'
-               'You should keep the private key that corresponds to this address\n'
-               'offline unless you need to update your main user record.\n')
-    maddr = btc_addr_prompt('Master')
-
-    click.echo('\nInstead of the Master address, python-rein uses another address\n'
-               'that you authorize for day-to-day activities. The private key for\n'
-               'this address will be stored locally to sign documents and auth to\n'
-               'microhosting servers.\n\n'
-               'If this computer or its local database are lost or stolen, you\n'
-               'will use the private key for your master address to revoke and\n'
-               'replace the delegate address.\n')
-    daddr = btc_addr_prompt('Delegate')
-    click.echo('\nIn order for python-rein to authenticate on your behalf, it\n'
-               'will store the delegate\'s private key in the local database.\n')
-    dkey = btc_privkey_prompt('Delegate', daddr)
-    click.echo('\nRein requires three parties to every transaction: a job creator,\n'
-               'mediator and worker. Mediators are called upon to resolve disputes\n'
-               'and may use their delegate key to do so.\n\n'
-               'In exchange, mediators may charge a fee, the funds for which  are\n'
-               'sent to an address that ensures those funds will go only to the\n'
-               'mediator.\n')
+    # ---- Mnemonic ----
+    click.echo(hilight('\nHere is your 12 word mnemonic. Keep it secure - it is the key to\n'
+               'accessing your Rein account and will only be showed once.\n', True, True))
+    mnemonic = crypto.bip32.generate_mnemonic(128)
+    click.echo(' '.join(mnemonic))
+    # TODO - Replace with click.confirm()
+    confirm_mnemonic = click.confirm(hilight('\nConfirm that you put down the mnemonic.\n', True, True),
+                                     default=False)
+    if confirm_mnemonic:
+        click.echo(hilight('\nGenerating BIP32 data...\n', True, True))
+        # TODO - Transform it into a class with all the properties
+        mxprv = crypto.bip32.mnemonic_to_key(mnemonic)
+        maddr = crypto.bip32.get_master_address(mxprv)
+        daddr = crypto.bip32.get_delegate_address(mxprv)
+        dkey = crypto.bip32.get_delegate_key(mxprv)
+        dxprv = crypto.bip32.get_delegate_extended_key(mxprv)
+        # DEBUG
+        click.echo(hilight('Simulation finished successfully!', True, True))
+        quit()
+    else:
+        click.echo(hilight('\nTo sign up for Rein you have to put down the mnemonic. Aborting.', False, True))
+        quit()
+    # ---- Mediator ----
     will_mediate = click.confirm(hilight('Are you willing to mediate?', True, True), default=False)
     mediator_fee = 1
     if will_mediate:
         mediator_fee = click.prompt(hilight("Mediator fee (%)", True, True), default=1.0)
-    new_identity = User(name, contact, maddr, daddr, dkey, will_mediate, mediator_fee, rein.testnet)
+    # ---- Registering user ----
+    # TODO - Make User use a dictionary
+    new_identity = User(name, contact, maddr, daddr, dkey, dxprv, will_mediate, mediator_fee, rein.testnet)
     rein.session.add(new_identity)
     rein.session.commit()
     data = {'name': name,
@@ -124,6 +140,7 @@ def create_account(rein):
             'maddr': maddr,
             'daddr': daddr,
             'dkey': dkey,
+            'dxprv': dxprv,
             'will_mediate': will_mediate,
             'mediator_fee': mediator_fee,
             'testnet': rein.testnet}
@@ -154,13 +171,14 @@ def import_account(rein):
         click.echo("Invalid Bitcoin address(es) in backup file.")
         sys.exit()
     if 'testnet' not in data:
-        click.echo("Warning: testnet not set in backup. Setting to "+ str(rein.testnet))
+        click.echo("Warning: testnet not set in backup. Setting to " + str(rein.testnet))
         data['testnet'] = rein.testnet
     new_identity = User(data['name'],
                         data['contact'],
                         data['maddr'],
                         data['daddr'],
                         data['dkey'],
+                        data['dxprv'],
                         data['will_mediate'],
                         data['mediator_fee'],
                         data['testnet'])
@@ -198,6 +216,7 @@ def build_enrollment_from_dict(data):
 
 
 def enroll(rein):
+    user = rein.user
     Base.metadata.create_all(rein.engine)
     enrollment = build_enrollment(rein)
     f = open(rein.enroll_filename, 'w')
