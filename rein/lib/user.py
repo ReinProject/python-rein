@@ -19,23 +19,23 @@ class User(Base):
     enrolled = Column(Boolean, nullable=False)
     testnet = Column(Boolean, nullable=False)
 
-    def __init__(self, name, contact, maddr, daddr, dkey, dxprv, will_mediate, mediator_fee, testnet):
-        self.name = name
-        self.contact = contact
-        self.maddr = maddr
-        self.daddr = daddr
-        self.dkey = dkey
-        self.dxprv = dxprv
+    def __init__(self, user_data):
+        self.name = user_data['name']
+        self.contact = user_data['contact']
+        self.maddr = user_data['maddr']
+        self.daddr = user_data['daddr']
+        self.dkey = user_data['dkey']
+        self.dxprv = user_data['dxprv']
         self.enrolled = False
-        self.testnet = testnet
+        self.testnet = user_data['testnet']
 
-        if will_mediate == u'1':
+        if user_data['will_mediate'] == u'1':
             self.will_mediate = True
         else:
             self.will_mediate = False
 
         if self.will_mediate:
-            self.mediator_fee = float(mediator_fee)
+            self.mediator_fee = float(user_data['mediator_fee'])
         else:
             self.mediator_fee = 0
 

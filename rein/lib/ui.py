@@ -24,7 +24,7 @@ def short_addr(text):
     return text[0:10] + '...' + text[-8:]
 
 
-def hilight(string, status, bold):
+def highlight(string, status, bold):
     attr = []
     if status:
         # green
@@ -87,67 +87,62 @@ def identity_prompt(rein):
     return rein.user
 
 
-def yes_no(message):
-    confirmation = click.prompt(message)
-    if confirmation in ['y', 'yes']:
-        return True
-    elif confirmation in ['n', 'no']:
-        return False
-    else:
-        click.echo('\nInput not recognized, please try again.\n')
-        yes_no(message)
-
-
 def create_account(rein):
     Base.metadata.create_all(rein.engine)
+
     # ---- Contact data ----
-    name = click.prompt(hilight("\nEnter name or handle", True, True), type=str)
-    contact = click.prompt(hilight("Email or BitMessage address", True, True), type=str)
+
+    name = click.prompt(highlight("\nEnter name or handle", True, True), type=str)
+    contact = click.prompt(highlight("Email or BitMessage address", True, True), type=str)
+
     # ---- Mnemonic ----
-    click.echo(hilight('\nHere is your 12 word mnemonic. Keep it secure - it is the key to\n'
-               'accessing your Rein account and will only be showed once.\n', True, True))
+
+    click.echo(highlight('\nHere is your 12 word mnemonic. Keep it secure - it is the key to\n'
+               'accessing your Rein account, and is only showed once.\n', True, True))
     mnemonic = crypto.bip32.generate_mnemonic(128)
     click.echo(' '.join(mnemonic))
-    # TODO - Replace with click.confirm()
-    confirm_mnemonic = click.confirm(hilight('\nConfirm that you put down the mnemonic.\n', True, True),
+    confirm_mnemonic = click.confirm(highlight('\nConfirm that you put down the mnemonic.\n', True, True),
                                      default=False)
     if confirm_mnemonic:
-        click.echo(hilight('\nGenerating BIP32 data...\n', True, True))
+        click.echo(highlight('\nGenerating BIP32 data...\n', True, True))
         # TODO - Transform it into a class with all the properties
         mxprv = crypto.bip32.mnemonic_to_key(mnemonic)
         maddr = crypto.bip32.get_master_address(mxprv)
         daddr = crypto.bip32.get_delegate_address(mxprv)
         dkey = crypto.bip32.get_delegate_key(mxprv)
         dxprv = crypto.bip32.get_delegate_extended_key(mxprv)
-        # DEBUG
-        click.echo(hilight('Simulation finished successfully!', True, True))
-        quit()
     else:
-        click.echo(hilight('\nTo sign up for Rein you have to put down the mnemonic. Aborting.', False, True))
+        click.echo(highlight('\nTo sign up for Rein you have to put down the mnemonic. Aborting.', False, True))
         quit()
+
     # ---- Mediator ----
-    will_mediate = click.confirm(hilight('Are you willing to mediate?', True, True), default=False)
+
+    will_mediate = click.confirm(highlight('Are you willing to mediate?', True, True), default=False)
     mediator_fee = 1
     if will_mediate:
-        mediator_fee = click.prompt(hilight("Mediator fee (%)", True, True), default=1.0)
+        mediator_fee = click.prompt(highlight("Mediator fee (%)", True, True), default=1.0)
+
     # ---- Registering user ----
-    # TODO - Make User use a dictionary
-    new_identity = User(name, contact, maddr, daddr, dkey, dxprv, will_mediate, mediator_fee, rein.testnet)
+
+    user_data = {'name': name,
+                 'contact': contact,
+                 'maddr': maddr,
+                 'daddr': daddr,
+                 'dkey': dkey,
+                 'dxprv': dxprv,
+                 'will_mediate': will_mediate,
+                 'mediator_fee': mediator_fee,
+                 'testnet': rein.testnet}
+    new_identity = User(user_data)
     rein.session.add(new_identity)
     rein.session.commit()
-    data = {'name': name,
-            'contact': contact,
-            'maddr': maddr,
-            'daddr': daddr,
-            'dkey': dkey,
-            'dxprv': dxprv,
-            'will_mediate': will_mediate,
-            'mediator_fee': mediator_fee,
-            'testnet': rein.testnet}
+
+    # ---- Writing to backup file ----
+
     if not os.path.isfile(rein.backup_filename):
         f = open(rein.backup_filename, 'w')
         try:
-            f.write(json.dumps(data))
+            f.write(json.dumps(user_data))
             click.echo("Backup saved successfully to %s" % rein.backup_filename)
         except:
             raise RuntimeError('Problem writing user details to json backup file.')
@@ -164,24 +159,16 @@ def import_account(rein):
     backup_filename = click.prompt("Enter backup file name", type=str, default=rein.backup_filename)
     f = open(backup_filename, 'r')
     try:
-        data = json.loads(f.read())
+        user_data = json.loads(f.read())
     except:
         raise RuntimeError('Backup file %s not valid json.' % backup_filename)
-    if not check_bitcoin_address(data['maddr']) or not check_bitcoin_address(data['daddr']):
+    if not check_bitcoin_address(user_data['maddr']) or not check_bitcoin_address(user_data['daddr']):
         click.echo("Invalid Bitcoin address(es) in backup file.")
         sys.exit()
-    if 'testnet' not in data:
+    if 'testnet' not in user_data:
         click.echo("Warning: testnet not set in backup. Setting to " + str(rein.testnet))
-        data['testnet'] = rein.testnet
-    new_identity = User(data['name'],
-                        data['contact'],
-                        data['maddr'],
-                        data['daddr'],
-                        data['dkey'],
-                        data['dxprv'],
-                        data['will_mediate'],
-                        data['mediator_fee'],
-                        data['testnet'])
+        user_data['testnet'] = rein.testnet
+    new_identity = User(user_data)
     rein.session.add(new_identity)
     rein.session.commit()
     rein.user = new_identity
@@ -202,15 +189,15 @@ def build_enrollment(rein):
     return enrollment
 
 
-def build_enrollment_from_dict(data):
+def build_enrollment_from_dict(user_data):
     mediator_extras = ''
-    if data['will_mediate']:
+    if user_data['will_mediate']:
         mediator_extras = "\nMediator public key: %s\nMediator fee: %s%%" % \
-                          (pubkey(data['dkey']), data['mediator_fee'])
+                          (pubkey(user_data['dkey']), user_data['mediator_fee'])
     enrollment = "Rein User Enrollment\nUser: %s\nContact: %s\nMaster signing address: %s" \
                  "\nDelegate signing address: %s\nWilling to mediate: %s%s" % \
-                 (data['name'], data['contact'], data['maddr'], data['daddr'], data['will_mediate'], mediator_extras)
-    if data['testnet']:
+                 (user_data['name'], user_data['contact'], user_data['maddr'], user_data['daddr'], user_data['will_mediate'], mediator_extras)
+    if user_data['testnet']:
         enrollment += '\nTestnet: True'
     return enrollment
 
@@ -225,7 +212,7 @@ def enroll(rein):
     click.echo("%s\n" % enrollment)
     done = False
     while not done:
-        filename = click.prompt(hilight("File containing signed statement", True, True), type=str, default=rein.sig_enroll_filename)
+        filename = click.prompt(highlight("File containing signed statement", True, True), type=str, default=rein.sig_enroll_filename)
         if os.path.isfile(filename):
             done = True
         else:

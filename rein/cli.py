@@ -99,10 +99,10 @@ def setup(multi):
         rein.set_multiuser()
     log.info('entering setup')
     if multi or rein.has_no_account():
-        click.echo("\n" + hilight("Welcome to Rein.", True, True) + "\n\n"
+        click.echo("\n" + highlight("Welcome to Rein.", True, True) + "\n\n"
                    "Do you want to import a backup or create a new account?\n\n"
                    "1 - Create new account\n2 - Import backup\n")
-        choice = click.prompt(hilight("Choice", True, True), type=int, default=1)
+        choice = click.prompt(highlight("Choice", True, True), type=int, default=1)
         if choice == 1:
             create_account(rein)
             log.info('account created')
@@ -223,7 +223,7 @@ def post(multi, identity, defaults, dry_run):
             click.echo('Your post includes the word "test". If this post is a test, '
                        'please put rein into testnet mode with "rein testnet true" '
                        'and setup a test identity before posting.')
-            if not click.confirm(hilight('Would you like to continue to post this on mainnet?', True, True), default=False):
+            if not click.confirm(highlight('Would you like to continue to post this on mainnet?', True, True), default=False):
                 return
 
     document = sign_and_store_document(rein, 'job_posting', document_text, user.daddr, user.dkey, store)
@@ -761,7 +761,7 @@ def request(multi, identity, url):
     log.info('got user for request')
 
     if not url.endswith('/'):
-        url = url + '/'
+        url += '/'
     if not url.startswith('http://') and not url.startswith('https://'):
         url = 'http://' + url
 
@@ -791,7 +791,7 @@ def request(multi, identity, url):
         click.echo('The server returned an error: %s' % data['message'])
 
     for bucket in data['buckets']:
-        b = rein.session.query(Bucket).filter(and_(Bucket.url==url, Bucket.date_created==bucket['created'])).first()
+        b = rein.session.query(Bucket).filter(and_(Bucket.url == url, Bucket.date_created == bucket['created'])).first()
         if b is None:
             b = Bucket(url, user.id, bucket['id'], bucket['bytes_free'],
                        datetime.strptime(bucket['created'], '%Y-%m-%d %H:%M:%S'))
@@ -1098,6 +1098,7 @@ def is_number(s):
         return True
     except ValueError:
         return False
+
 
 def is_int(s):
     try:
