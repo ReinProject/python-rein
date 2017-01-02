@@ -111,10 +111,10 @@ def spend_p2sh (redeemScript,txins_str,amount,daddr,sig,dkey):
         print("txids don't match")    
     return txid
 
-#redeemScript = "522103220d8573c2d9bdea5d60d3ad8a892c94da4a1850445fe3b83b17307a8d655fb1210342b976a71a5aa2daa65512da45f1d44579c1d3fc364d085e398fc771c23fe2622102ba974cf1e3853814e0e05e7e36266e3d5d324eb48a31694d4969bed390535a6053ae"
+redeemScript = "522103220d8573c2d9bdea5d60d3ad8a892c94da4a1850445fe3b83b17307a8d655fb1210342b976a71a5aa2daa65512da45f1d44579c1d3fc364d085e398fc771c23fe2622102ba974cf1e3853814e0e05e7e36266e3d5d324eb48a31694d4969bed390535a6053ae"
 
-#(txins_str,amount,daddr,sig) = partial_spend_p2sh(redeemScript,"mgomM45aKPNbjNgq9bs8CnZnMyzNdrv6EB","cMt7JAxa2Uc97yftEomyg4FX5YjgGsNaDF5S165kRiEi5ibQqKot")
+(txins_str,amount,daddr,sig) = partial_spend_p2sh(redeemScript,"mgomM45aKPNbjNgq9bs8CnZnMyzNdrv6EB","cMt7JAxa2Uc97yftEomyg4FX5YjgGsNaDF5S165kRiEi5ibQqKot")
 
-#print(spend_p2sh(redeemScript,txins_str,float(amount),daddr,sig,"cUtVwDQqPn75KjnF5Qa3kyVUQmE4gprami3QW1QughTACnkHQHpa"))
+print(spend_p2sh(redeemScript,txins_str,float(amount),daddr,sig,"cUtVwDQqPn75KjnF5Qa3kyVUQmE4gprami3QW1QughTACnkHQHpa"))
 
 
