@@ -4,7 +4,7 @@ import json
 import click
 import getpass
 import crypto.bip32
-from bitcoinecdsa import privkey_to_address, pubkey_to_address, pubkey
+from bitcoinecdsa import pubkey_to_address, pubkey, sign
 from bitcoinaddress import check_bitcoin_address
 from validate import validate_enrollment
 from user import User, Base
@@ -136,6 +136,18 @@ def create_account(rein):
                  'testnet': rein.testnet}
     new_identity = User(user_data)
     rein.session.add(new_identity)
+    rein.session.commit()
+
+    # ---- Signing enrollment document ----
+    # No signature verification necessary as enrollment is signed by a Rein-generated key.
+
+    enrollment = build_enrollment(rein)
+    signed_enrollment = sign(mxprv, enrollment)
+
+    User.set_enrolled(rein, new_identity)
+    # insert signed document into documents table as type 'enrollment'
+    document = Document(rein, 'enrollment', signed_enrollment, sig_verified=True, testnet=rein.testnet)
+    rein.session.add(document)
     rein.session.commit()
 
     # ---- Writing to backup file ----

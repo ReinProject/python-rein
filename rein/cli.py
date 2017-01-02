@@ -106,19 +106,8 @@ def setup(multi):
         else:
             click.echo('Invalid choice')
             return
-        click.echo("------------")
-        click.echo("The file %s has just been saved with your user details and needs to be signed "
-                   "with your master private key. The private key for this address should be "
-                   "kept offline and multiple encrypted backups made. This key will effectively "
-                   "become your identity in Rein and a delegate address will be used for day-to-day "
-                   "transactions.\n\n" % rein.enroll_filename)
-        res = enroll(rein)
-        if isinstance(res, dict) and  res['valid']:
-            click.echo("Enrollment complete. Run 'rein buy' to purchase microhosting (required for sync).")
-            log.info('enrollment complete')
-        else:
-            click.echo("Signature verification failed. Please try again.")
-            log.error('enrollment failed')
+        click.echo("Enrollment complete. Run 'rein buy' to purchase microhosting (required for sync).")
+        log.info('enrollment complete')
     elif rein.session.query(Document).filter(Document.doc_type == 'enrollment', Document.testnet == rein.testnet).count() < \
             rein.session.query(User).filter(User.enrolled == 0, User.testnet == rein.testnet).count():
         click.echo('Continuing previously unfinished setup.\n')
