@@ -1473,7 +1473,7 @@ def start(multi, identity, setup):
             amount = delivery['Primary payment amount']
             daddr = delivery['Primary payment address']
             worker_sig = delivery['Primary payment signature']
-            payment_txid = spend_p2sh(redeemScript,txins,float(amount),daddr,worker_sig,user.dkey)
+            payment_txid = spend_p2sh(redeemScript,txins,float(amount),daddr,worker_sig,rein)
             fields = [
                 {'label': 'Job name',                       'value_from': delivery},
                 {'label': 'Job ID',                         'value_from': delivery},
@@ -1861,7 +1861,7 @@ def start(multi, identity, setup):
             offer = order.get_documents(rein, Document, doc_type='offer')
             doc = parse_document(offer[0].contents)
             redeemScript = doc['Primary escrow redeem script']
-            (payment_txins,payment_amount,payment_address,payment_sig) = partial_spend_p2sh(redeemScript,user.daddr,user.dkey)
+            (payment_txins,payment_amount,payment_address,payment_sig) = partial_spend_p2sh(redeemScript,rein)
             fields = [
                 {'label': 'Job name',                       'value_from': doc},
                 {'label': 'Job ID',                         'value_from': doc},
