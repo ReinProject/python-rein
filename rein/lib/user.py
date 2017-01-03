@@ -13,7 +13,8 @@ class User(Base):
     maddr = Column(String(64), nullable=False)
     daddr = Column(String(64), nullable=False)
     dkey = Column(String(64), nullable=False)
-    dxprv = Column(String(250), nullable=False)
+    # Temporary nullable to keep backwards compatibility with v0.2.0 backup files
+    dxprv = Column(String(250), nullable=True)
     will_mediate = Column(Boolean, nullable=False)
     mediator_fee = Column(Float, nullable=False)
     enrolled = Column(Boolean, nullable=False)
