@@ -107,24 +107,21 @@ def setup(multi):
             create_account(rein)
             log.info('account created')
         elif choice == 2:
-            import_account(rein)
+            # If a delegate xprv is in the backup, means userr signed up with the new mnemonic version
+            click.echo("\nDoes your backup include the delegate extended private key (starts with xprv)?\n"
+                       "If you don't specify this correctly Rein will fail to sign your enrollment\n\n"
+                       "1 - Yes\n2 - No\n")
+            version = click.prompt(highlight("Choice", True, True), type=int, default=2)
+            if version == 1:
+                import_account(rein, mnemonic=click.prompt(highlight("Enter the 12-word mnemonic Rein showed you at signup:", True, True)))
+            elif version == 2:
+                import_account(rein, mprv=click.prompt(highlight("Enter the master private key you used to sign your enrollment message with:", True, True)))
             log.info('account imported')
         else:
             click.echo('Invalid choice')
             return
         click.echo("Enrollment complete. Run 'rein buy' to purchase microhosting (required for sync).")
         log.info('enrollment complete')
-    elif rein.session.query(Document).filter(Document.doc_type == 'enrollment', Document.testnet == rein.testnet).count() < \
-            rein.session.query(User).filter(User.enrolled == 0, User.testnet == rein.testnet).count():
-        click.echo('Continuing previously unfinished setup.\n')
-        get_user(rein, False, False)
-        res = enroll(rein)
-        if res['valid']:
-            click.echo("Enrollment complete. Run 'rein buy' to purchase microhosting (required for sync).")
-            log.info('enrollment complete')
-        else:
-            click.echo("Signature verification failed. Please try again.")
-            log.error('enrollment failed')
     else:
         click.echo("Identity already setup.")
     log.info('exiting setup')

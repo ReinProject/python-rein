@@ -86,6 +86,8 @@ def identity_prompt(rein):
     rein.user = rein.session.query(User).filter(User.name == users[i - 1].name).first()
     return rein.user
 
+# ---- Account creation and import ----
+
 
 def create_account(rein):
     Base.metadata.create_all(rein.engine)
@@ -108,7 +110,6 @@ def create_account(rein):
         # TODO - Transform it into a class with all the properties
         key = crypto.bip32.mnemonic_to_key(mnemonic)
         mprv = crypto.bip32.get_master_private_key(key)
-        print(mprv)
         maddr = crypto.bip32.get_master_address(key)
         daddr = crypto.bip32.get_delegate_address(key)
         dkey = crypto.bip32.get_delegate_private_key(key)
@@ -171,7 +172,7 @@ def create_account(rein):
     return rein.user
 
 
-def import_account(rein):
+def import_account(rein, mprv=None, mnemonic=None):
     Base.metadata.create_all(rein.engine)
     backup_filename = click.prompt("Enter backup file name", type=str, default=rein.backup_filename)
     f = open(backup_filename, 'r')
@@ -185,10 +186,33 @@ def import_account(rein):
     if 'testnet' not in user_data:
         click.echo("Warning: testnet not set in backup. Setting to " + str(rein.testnet))
         user_data['testnet'] = rein.testnet
+    if 'dxprv' not in user_data:
+        user_data['dxprv'] = None
     new_identity = User(user_data)
     rein.session.add(new_identity)
     rein.session.commit()
     rein.user = new_identity
+
+    # ---- Signing enrollment ----
+
+    if mnemonic:
+        key = crypto.bip32.mnemonic_to_key(mnemonic)
+        mprv = crypto.bip32.get_master_private_key(key)
+    elif mprv:
+        if not privkey_to_address(mprv):
+            raise Exception('Invalid master private key.')
+
+    enrollment = build_enrollment_from_dict(user_data)
+    signed_enrollment = '-----BEGIN BITCOIN SIGNED MESSAGE-----\n' + \
+                        enrollment + \
+                        '\n-----BEGIN SIGNATURE-----\n' + \
+                        user_data['maddr'] + '\n' + \
+                        sign(mprv, enrollment) + \
+                        '\n-----END BITCOIN SIGNED MESSAGE-----\n'
+    User.set_enrolled(rein, new_identity)
+    document = Document(rein, 'enrollment', signed_enrollment, sig_verified=True, testnet=rein.testnet)
+    rein.session.add(document)
+    rein.session.commit()
     return rein.user
 
 
@@ -244,6 +268,8 @@ def enroll(rein):
         rein.session.add(document)
         rein.session.commit()
     return res
+
+# ---- Jobs | Mediators | Workers ----
 
 
 def mediator_prompt(rein, eligible_mediators):
