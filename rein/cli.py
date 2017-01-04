@@ -589,7 +589,8 @@ def creatordispute(multi, identity, defaults, dry_run):
                 {'label': 'Primary escrow redeem script',   'value_from': doc},
                 {'label': 'Mediator escrow redeem script',  'value_from': doc},
         {'label': 'Job creator public key', 'value_from': doc},
-        {'label': 'Worker public key', 'value_from': doc}
+        {'label': 'Worker public key', 'value_from': doc},
+        {'label': 'Mediator public key', 'value_from':doc}
              ]
     document = assemble_document('Dispute Delivery', fields)
     res = sign_and_store_document(rein, 'creatordispute', document, user.daddr, user.dkey, store)
@@ -639,7 +640,8 @@ def workerdispute(multi, identity, defaults, dry_run):
         {'label': 'Primary escrow redeem script',   'value_from': doc},
         {'label': 'Mediator escrow redeem script',  'value_from': doc},
         {'label': 'Job creator public key', 'value_from': doc},
-        {'label': 'Worker public key','value_from': doc}
+        {'label': 'Worker public key','value_from': doc},
+        {'label': 'Mediator public key','value_from':doc}
              ]
     document = assemble_document('Dispute Offer', fields)
     res = sign_and_store_document(rein, 'workerdispute', document, user.daddr, user.dkey, store)
@@ -1683,7 +1685,7 @@ def start(multi, identity, setup):
             if data and 'review' in data:
                 review += filter_and_parse_valid_sigs(rein, data['review'])
 
-        jobs_mediating = unique(review, 'Description')
+        jobs_mediating = unique(review, 'Dispute detail')
         print(len(jobs_mediating))
 
         # store doc if we don't have it
@@ -1714,13 +1716,13 @@ def start(multi, identity, setup):
 
             # add ones that need resolution to the choices
             # Note: removed requirement for state since it causes problems
-            dispute_docs = order.get_documents(rein, Document, state)
-            if len(dispute_docs) > 0:
-                d = dispute_docs[0]
-                doc = parse_document(d.contents)
-                if 'Dispute detail' in doc:
-                    disputes.append((str(d.id), '{}</td><td>{}'.format( job_link(doc),
-                                                                        doc['Dispute detail']
+            #dispute_docs = order.get_documents(rein, Document, state)
+            #if len(dispute_docs) > 0:
+             #   d = dispute_docs[0]
+              #  doc = parse_document(d.contents)
+                if 'Dispute detail' in u:
+                    disputes.append((str(d.id), '{}</td><td>{}'.format( job_link(u),
+                                                                        u['Dispute detail']
                                                                     )))
         no_choices = len(disputes) == 0
 
@@ -1857,7 +1859,8 @@ def start(multi, identity, setup):
                 {'label': 'Primary escrow redeem script',   'value_from': doc},
                 {'label': 'Mediator escrow redeem script',  'value_from': doc},
                 {'label': 'Job creator public key', 'value_from': doc},
-                {'label': 'Worker public key', 'value_from':doc}
+                {'label': 'Worker public key', 'value_from':doc},
+                {'label': 'Mediator public key', 'value_from':doc}
                      ]
 
             if key == doc['Job creator public key']:
