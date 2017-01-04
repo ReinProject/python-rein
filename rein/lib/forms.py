@@ -71,4 +71,5 @@ class ResolveForm(Form):
     signed_primary_payment = TextAreaField('Signed primary payment')
     signed_mediator_payment = TextAreaField('Signed mediator payment')
     resolution = TextAreaField('Resolution', validators = [Required()])
+    client_payment_amount = TextAreaField('Client payment amount', validators = [Required()])
     dispute_id = RadioField('Disputes')

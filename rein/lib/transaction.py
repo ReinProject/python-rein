@@ -59,8 +59,11 @@ def broadcast_tx (tx_hex,rein):
             print("got data and txid")
             return data['txid']
     
-def partial_spend_p2sh (redeemScript,rein):
+def partial_spend_p2sh (redeemScript,rein,alt_amount=None,alt_pubkey=None):
     daddr = rein.user.daddr
+    daddr_alt = None
+    if alt_amount:
+        daddr_alt = P2PKHBitcoinAddress.from_pubkey(x(alt_pubkey))
     txin_redeemScript = CScript(x(redeemScript))
     txin_scriptPubKey = txin_redeemScript.to_p2sh_scriptPubKey()
     txin_p2sh_address = CBitcoinAddress.from_scriptPubKey(txin_scriptPubKey)
@@ -74,16 +77,25 @@ def partial_spend_p2sh (redeemScript,rein):
         txins_obj.append(CMutableTxIn(COutPoint(lx(txid),vout)))                
     fee = 0.0005
     amount = total_value-fee
-    if amount<=0:
+    if alt_amount:
+        amount = amount-alt_amount
+    if amount<=0. or alt_amount<total_value-fee:
         raise ValueError('Not enough value in the inputs')
-    txout = CMutableTxOut((total_value-fee)*COIN, CBitcoinAddress(daddr).to_scriptPubKey())
-    tx = CMutableTransaction(txins_obj, [txout])
+    txouts = []
+    txout = CMutableTxOut(amount*COIN, CBitcoinAddress(daddr).to_scriptPubKey())
+    txouts.append(txout)
+    if alt_amount:
+        txout_alt = CMutableTxOut(alt_amount*COIN, CBitcoinAddress(daddr_alt).to_scriptPubKey())
+        txouts.append(txout)
+    tx = CMutableTransaction(txins_obj, txouts)
     ntxins = len(txins_obj)
     seckey = CBitcoinSecret(rein.user.dkey)
     sig = "";
     for i in range(0,ntxins):
         sighash = SignatureHash(txin_redeemScript, tx, i, SIGHASH_ALL)
         sig += " "+b2x(seckey.sign(sighash))+"01"
+    if alt_amount:
+        return (txins_str[1:],str(amount),daddr,str(alt_amount),daddr_alt,sig[1:])
     return (txins_str[1:],str(amount),daddr,sig[1:])
 
 def partial_spend_p2sh_mediator (redeemScript,rein,mediator_pubkey):
