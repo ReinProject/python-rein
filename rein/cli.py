@@ -44,7 +44,10 @@ from .lib.mediator import Mediator
 
 rein = config.Config()
 import bitcoin
+from bitcoin.wallet import P2PKHBitcoinAddress
+from bitcoin.core import x
 if (rein.testnet): bitcoin.SelectParams('testnet')
+
 
 @click.group()
 @click.option('--debug/--no-debug', default=False)
@@ -438,9 +441,9 @@ def deliver(multi, identity, defaults, dry_run):
     log.info('got offer for delivery')
     redeemScript = doc['Primary escrow redeem script']
     mediatorRedeemScript = doc['Mediator escrow redeem script']
-    mediator_pubkey = doc['Mediator public key']
+    mediator_daddr = str(P2PKHBitcoinAddress.from_pubkey(x(doc['Mediator public key'])))
     (payment_txins,payment_amount,payment_address,payment_sig) = partial_spend_p2sh(redeemScript,rein)
-    (mediator_payment_txins,mediator_payment_amount,mediator_payment_address) = partial_spend_p2sh_mediator(mediatorRedeemScript,rein,mediator_pubkey)
+    (mediator_payment_txins,mediator_payment_amount,mediator_payment_address) = partial_spend_p2sh_mediator(mediatorRedeemScript,rein,mediator_daddr)
     fields = [
         {'label': 'Job name',                       'value_from': doc},
         {'label': 'Job ID',                         'value_from': doc},
@@ -585,6 +588,8 @@ def creatordispute(multi, identity, defaults, dry_run):
                 {'label': 'Dispute detail',                 'not_null': form},
                 {'label': 'Primary escrow redeem script',   'value_from': doc},
                 {'label': 'Mediator escrow redeem script',  'value_from': doc},
+        {'label': 'Job creator public key', 'value_from': doc},
+        {'label': 'Worker public key', 'value_from': doc}
              ]
     document = assemble_document('Dispute Delivery', fields)
     res = sign_and_store_document(rein, 'creatordispute', document, user.daddr, user.dkey, store)
@@ -628,11 +633,13 @@ def workerdispute(multi, identity, defaults, dry_run):
 
     log.info('got in-process job for dispute')
     fields = [
-                {'label': 'Job name',                       'value_from': doc},
-                {'label': 'Job ID',                         'value_from': doc},
-                {'label': 'Dispute detail',                 'not_null': form},
-                {'label': 'Primary escrow redeem script',   'value_from': doc},
-                {'label': 'Mediator escrow redeem script',  'value_from': doc},
+        {'label': 'Job name',                       'value_from': doc},
+        {'label': 'Job ID',                         'value_from': doc},
+        {'label': 'Dispute detail',                 'not_null': form},
+        {'label': 'Primary escrow redeem script',   'value_from': doc},
+        {'label': 'Mediator escrow redeem script',  'value_from': doc},
+        {'label': 'Job creator public key', 'value_from': doc},
+        {'label': 'Worker public key','value_from': doc}
              ]
     document = assemble_document('Dispute Offer', fields)
     res = sign_and_store_document(rein, 'workerdispute', document, user.daddr, user.dkey, store)
@@ -700,17 +707,17 @@ def resolve(multi, identity, defaults, dry_run):
     log.info('got disputes for resolve')
     redeemScript = doc['Primary escrow redeem script']
     mediatorRedeemScript = doc['Mediator escrow redeem script']
-    mediator_pubkey = doc['Mediator public key']
-    payment_address_1 = form['Primary payment address 1']
-    payment_address_2 = form['Primary payment address 2']
-    client_payment_amount = form['Client payment amount']
-    client_payment_pubkey = doc['Job creator public key'];
-    (payment_txins,payment_amount_1,payment_address_1,payment_amount_2,payment_address_2,payment_sig) = partial_spend_p2sh(redeemScript,rein,client_payment_amount,client_payment_pubkey)
-    (mediator_payment_txins,mediator_payment_amount,mediator_payment_address) = partial_spend_p2sh_mediator(mediatorRedeemScript,rein,mediator_pubkey)
+    mediator_daddr = rein.user.daddr
+    client_payment_amount = 0.011
+    worker_payment_daddr = str(P2PKHBitcoinAddress.from_pubkey(x(doc['Worker public key'])));
+    client_payment_daddr = str(P2PKHBitcoinAddress.from_pubkey(x(doc['Job creator public key'])));
+    (payment_txins,payment_amount_1,payment_address_1,payment_amount_2,payment_address_2,payment_sig) = partial_spend_p2sh(redeemScript,rein,client_payment_amount,client_payment_daddr)
+    (mediator_payment_txins,mediator_payment_amount,mediator_payment_address) = partial_spend_p2sh_mediator(mediatorRedeemScript,rein,mediator_daddr)
     fields = [
         {'label': 'Job name',                       'value_from': doc},
         {'label': 'Job ID',                         'value_from': doc},
         {'label': 'Resolution',                     'not_null': form},
+        {'label': 'Client payment amount', 'not_null':form},
         {'label':'Primary payment inputs','value':payment_txins},
         {'label':'Primary worker payment amount','value':payment_amount_1},
         {'label':'Primary worker payment address','value':payment_address_1},
@@ -1156,7 +1163,7 @@ def start(multi, identity, setup):
     from .lib.mediator import Mediator
 
     host = '127.0.0.1'
-    port = 5001
+    port = 5003
 
     tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'html')
 
@@ -1740,6 +1747,8 @@ def start(multi, identity, setup):
                 {'label': 'Dispute detail',                 'value': form.dispute_detail.data},
                 {'label': 'Primary escrow redeem script',   'value_from': doc},
                 {'label': 'Mediator escrow redeem script',  'value_from': doc},
+                {'label': 'Job creator public key', 'value_from': doc},
+                {'label': 'Worker public key', 'value_from':doc}
                      ]
 
             if key == doc['Job creator public key']:
@@ -1920,9 +1929,9 @@ def start(multi, identity, setup):
             doc = parse_document(offer[0].contents)
             redeemScript = doc['Primary escrow redeem script']
             mediatorRedeemScript = doc['Mediator escrow redeem script']
-            mediator_pubkey = doc['Mediator public key']
+            mediator_daddr = str(P2PKHBitcoinAddress.from_pubkey(x(doc['Mediator public key'])))
             (payment_txins,payment_amount,payment_address,payment_sig) = partial_spend_p2sh(redeemScript,rein)
-            (mediator_payment_txins,mediator_payment_amount,mediator_payment_address) = partial_spend_p2sh_mediator(mediatorRedeemScript,rein,mediator_pubkey)
+            (mediator_payment_txins,mediator_payment_amount,mediator_payment_address) = partial_spend_p2sh_mediator(mediatorRedeemScript,rein,mediator_daddr)
             fields = [
                 {'label': 'Job name',                       'value_from': doc},
                 {'label': 'Job ID',                         'value_from': doc},
