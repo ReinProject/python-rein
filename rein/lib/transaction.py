@@ -59,8 +59,7 @@ def broadcast_tx (tx_hex,rein):
         if data and 'txid' in data:
             return data['txid']
     
-def partial_spend_p2sh (redeemScript,rein,alt_amount=None,alt_daddr=None):
-    daddr = rein.user.daddr
+def partial_spend_p2sh (redeemScript,rein,daddr=rein.user.daddr,alt_amount=None,alt_daddr=None):
     txin_redeemScript = CScript(x(redeemScript))
     txin_scriptPubKey = txin_redeemScript.to_p2sh_scriptPubKey()
     txin_p2sh_address = CBitcoinAddress.from_scriptPubKey(txin_scriptPubKey)

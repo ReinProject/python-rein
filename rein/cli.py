@@ -713,7 +713,7 @@ def resolve(multi, identity, defaults, dry_run):
     worker_payment_daddr = str(P2PKHBitcoinAddress.from_pubkey(x(doc['Worker public key'])));
     client_payment_daddr = str(P2PKHBitcoinAddress.from_pubkey(x(doc['Job creator public key'])));
     client_payment_amount = float(click.prompt("Client payment amount"))
-    (payment_txins,payment_amount_1,payment_address_1,payment_amount_2,payment_address_2,payment_sig) = partial_spend_p2sh(redeemScript,rein,client_payment_amount,client_payment_daddr)
+    (payment_txins,payment_amount_1,payment_address_1,payment_amount_2,payment_address_2,payment_sig) = partial_spend_p2sh(redeemScript,rein,worker_payment_daddr,client_payment_amount,client_payment_daddr)
     (mediator_payment_txins,mediator_payment_amount,mediator_payment_address,mediator_payment_sig) = partial_spend_p2sh_mediator(mediatorRedeemScript,rein,mediator_daddr,True)
     fields = [
         {'label': 'Job name',                       'value_from': doc},
@@ -1750,7 +1750,7 @@ def start(multi, identity, setup):
             worker_payment_daddr = str(P2PKHBitcoinAddress.from_pubkey(x(dispute['Worker public key'])));
             client_payment_daddr = str(P2PKHBitcoinAddress.from_pubkey(x(dispute['Job creator public key'])));
             client_payment_amount = float(form.client_payment_amount.data)
-            (payment_txins,payment_amount_1,payment_address_1,payment_amount_2,payment_address_2,payment_sig) = partial_spend_p2sh(redeemScript,rein,client_payment_amount,client_payment_daddr)
+            (payment_txins,payment_amount_1,payment_address_1,payment_amount_2,payment_address_2,payment_sig) = partial_spend_p2sh(redeemScript,rein,worker_payment_daddr,client_payment_amount,client_payment_daddr)
             (mediator_payment_txins,mediator_payment_amount,mediator_payment_address,mediator_payment_sig) = partial_spend_p2sh_mediator(mediatorRedeemScript,rein,mediator_daddr,True)
             fields = [
                 {'label': 'Job name',                       'value_from': dispute},
