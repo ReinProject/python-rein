@@ -71,4 +71,4 @@ class ResolveForm(Form):
     dispute_id = RadioField('Disputes')
 
 class AcceptResolutionForm(Form):
-    deliverable_id = RadioField('Resolution')
+    resolution_id = RadioField('Resolution')

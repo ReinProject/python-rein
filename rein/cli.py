@@ -1580,9 +1580,32 @@ def start(multi, identity, setup):
         Order.update_orders(rein, Document)
         form = AcceptResolutionForm(request.form)
         our_orders = get_in_process_orders(rein, Document, key, 'Job creator public key', True)
+
+        orders = []
+        for o in our_orders:
+            doc_hash = Document.calc_hash(o['original'])
+            d = Document.find(rein, doc_hash, 'remote')
+            if d:
+                id = d[0].id
+            else:
+                d = Document(rein, Document.get_document_type(o['original']), o['original'], source_url='remote', testnet=rein.testnet)
+                rein.session.add(d)
+                rein.session.commit()
+                id = d.id
+            if o['Job creator public key'] == key:
+                role = 'Job creator'
+            else:
+                role = 'Worker'
+            if o['state'] in ['resolve']:
+                orders.append((str(id), '{}</td><td>{}'.format( job_link(o),
+                                                                role,
+                                                            )))
+
+        no_choices = len(orders) == 0
+        form.resolution_id.choices = orders
         
         if request.method == 'POST' and form.validate_on_submit():
-            delivery_doc = Document.get(rein, form.deliverable_id.data)
+            delivery_doc = Document.get(rein, form.resolution_id.data)
             delivery = parse_document(delivery_doc.contents)
             redeemScript = delivery['Primary escrow redeem script']
             txins = delivery['Primary payment inputs']
