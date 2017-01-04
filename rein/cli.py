@@ -1634,14 +1634,28 @@ def start(multi, identity, setup):
         if request.method == 'POST' and form.validate_on_submit():
             dispute_doc = Document.get(rein, form.dispute_id.data)
             dispute = parse_document(dispute_doc.contents)
+            redeemScript = dispute['Primary escrow redeem script']
+            mediatorRedeemScript = dispute['Mediator escrow redeem script']
+            mediator_daddr = rein.user.daddr
+            worker_payment_daddr = str(P2PKHBitcoinAddress.from_pubkey(x(dispute['Worker public key'])));
+            client_payment_daddr = str(P2PKHBitcoinAddress.from_pubkey(x(dispute['Job creator public key'])));
+            client_payment_amount = float(form.client_payment_amount.data)
+            (payment_txins,payment_amount_1,payment_address_1,payment_amount_2,payment_address_2,payment_sig) = partial_spend_p2sh(redeemScript,rein,client_payment_amount,client_payment_daddr)
+            (mediator_payment_txins,mediator_payment_amount,mediator_payment_address) = partial_spend_p2sh_mediator(mediatorRedeemScript,rein,mediator_daddr)
             fields = [
                 {'label': 'Job name',                       'value_from': dispute},
                 {'label': 'Job ID',                         'value_from': dispute},
                 {'label': 'Resolution',                     'value': form.resolution.data},
-                {'label': 'Signed primary payment',         'value': form.signed_primary_payment.data},
-                {'label': 'Signed mediator payment',        'value': form.signed_mediator_payment.data},
-                     ]
-
+                {'label':'Primary payment inputs','value':payment_txins},
+                {'label':'Primary worker payment amount','value':payment_amount_1},
+                {'label':'Primary worker payment address','value':payment_address_1},
+                {'label':'Primary client payment amount','value':payment_amount_2},
+                {'label':'Primary client payment address','value':payment_address_2},
+                {'label':'Primary payment signature','value':payment_sig},
+                {'label':'Mediator payment inputs','value':mediator_payment_txins},
+                {'label':'Mediator payment amount','value':mediator_payment_amount},
+                {'label':'Mediator payment address','value':mediator_payment_address}
+            ]
             document_text = assemble_document('Dispute Resolution', fields)
             store = True
             document = sign_and_store_document(rein, 'resolve', document_text, user.daddr, user.dkey, store)
