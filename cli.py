@@ -1716,22 +1716,21 @@ def start(multi, identity, setup):
 
             # add ones that need resolution to the choices
             # Note: removed requirement for state since it causes problems
-            #dispute_docs = order.get_documents(rein, Document)
-            #for d in dispute_docs:
-                #doc = parse_document(d.contents)
-            if 'Dispute detail' in u:
-                disputes.append((u['Job ID'], '{}</td><td>{}'.format( job_link(u),
-                                                                      u['Dispute detail']
-                                                                  )))
+            #dispute_docs = order.get_documents(rein, Document, state)
+            #if len(dispute_docs) > 0:
+             #   d = dispute_docs[0]
+              #  doc = parse_document(d.contents)
+                if 'Dispute detail' in u:
+                    disputes.append((str(d.id), '{}</td><td>{}'.format( job_link(u),
+                                                                        u['Dispute detail']
+                                                                    )))
         no_choices = len(disputes) == 0
 
         form.dispute_id.choices = unique(disputes)
 
         if request.method == 'POST' and form.validate_on_submit():
-            dispute = None
-            for u in jobs_mediating:
-                if u['Job ID'] == form.dispute_id.data:
-                    dispute = u
+            dispute_doc = Document.get(rein, form.dispute_id.data)
+            dispute = parse_document(dispute_doc.contents)
             redeemScript = dispute['Primary escrow redeem script']
             mediatorRedeemScript = dispute['Mediator escrow redeem script']
             mediator_daddr = rein.user.daddr
