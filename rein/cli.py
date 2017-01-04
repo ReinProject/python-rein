@@ -708,16 +708,15 @@ def resolve(multi, identity, defaults, dry_run):
     redeemScript = doc['Primary escrow redeem script']
     mediatorRedeemScript = doc['Mediator escrow redeem script']
     mediator_daddr = rein.user.daddr
-    client_payment_amount = 0.011
     worker_payment_daddr = str(P2PKHBitcoinAddress.from_pubkey(x(doc['Worker public key'])));
     client_payment_daddr = str(P2PKHBitcoinAddress.from_pubkey(x(doc['Job creator public key'])));
+    client_payment_amount = float(click.prompt("Client payment amount"))
     (payment_txins,payment_amount_1,payment_address_1,payment_amount_2,payment_address_2,payment_sig) = partial_spend_p2sh(redeemScript,rein,client_payment_amount,client_payment_daddr)
     (mediator_payment_txins,mediator_payment_amount,mediator_payment_address) = partial_spend_p2sh_mediator(mediatorRedeemScript,rein,mediator_daddr)
     fields = [
         {'label': 'Job name',                       'value_from': doc},
         {'label': 'Job ID',                         'value_from': doc},
         {'label': 'Resolution',                     'not_null': form},
-        {'label': 'Client payment amount', 'not_null':form},
         {'label':'Primary payment inputs','value':payment_txins},
         {'label':'Primary worker payment amount','value':payment_amount_1},
         {'label':'Primary worker payment address','value':payment_address_1},
@@ -1163,7 +1162,7 @@ def start(multi, identity, setup):
     from .lib.mediator import Mediator
 
     host = '127.0.0.1'
-    port = 5003
+    port = 5001
 
     tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'html')
 
