@@ -721,7 +721,7 @@ def resolve(multi, identity, defaults, dry_run):
         {'label': 'Resolution',                     'not_null': form},
         {'label': 'Job creator public key', 'value_from': doc},
         {'label': 'Worker public key', 'value_from':doc},
-        {'label': 'Mediator public key', 'value_from':doc}
+        {'label': 'Mediator public key', 'value_from':doc},
         {'label':'Primary payment inputs','value':payment_txins},
         {'label':'Primary worker payment amount','value':payment_amount_1},
         {'label':'Primary worker payment address','value':payment_address_1},
@@ -1168,7 +1168,7 @@ def start(multi, identity, setup):
     from .lib.mediator import Mediator
 
     host = '127.0.0.1'
-    port = 5003
+    port = 5004
 
     tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'html')
 
@@ -1749,7 +1749,7 @@ def start(multi, identity, setup):
                 {'label': 'Resolution',                     'value': form.resolution.data},
                 {'label': 'Job creator public key', 'value_from': dispute},
                 {'label': 'Worker public key', 'value_from':dispute},
-                {'label': 'Mediator public key', 'value_from':dispute}
+                {'label': 'Mediator public key', 'value_from':dispute},
                 {'label':'Primary payment inputs','value':payment_txins},
                 {'label':'Primary worker payment amount','value':payment_amount_1},
                 {'label':'Primary worker payment address','value':payment_address_1},
