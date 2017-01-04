@@ -722,6 +722,8 @@ def resolve(multi, identity, defaults, dry_run):
         {'label': 'Job creator public key', 'value_from': doc},
         {'label': 'Worker public key', 'value_from':doc},
         {'label': 'Mediator public key', 'value_from':doc},
+        {'label': 'Primary escrow redeem script',   'value_from': doc},
+        {'label': 'Mediator escrow redeem script',  'value_from': doc},
         {'label':'Primary payment inputs','value':payment_txins},
         {'label':'Primary worker payment amount','value':payment_amount_1},
         {'label':'Primary worker payment address','value':payment_address_1},
@@ -1168,7 +1170,7 @@ def start(multi, identity, setup):
     from .lib.mediator import Mediator
 
     host = '127.0.0.1'
-    port = 5004
+    port = 5002
 
     tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'html')
 
@@ -1582,36 +1584,43 @@ def start(multi, identity, setup):
                             )
     @app.route("/acceptresolution", methods=['POST', 'GET'])
     def job_acceptresolution():
-        Order.update_orders(rein, Document)
+
         form = AcceptResolutionForm(request.form)
-        our_orders = get_in_process_orders(rein, Document, key, 'Job creator public key', True)
 
-        orders = []
-        for o in our_orders:
-            doc_hash = Document.calc_hash(o['original'])
-            d = Document.find(rein, doc_hash, 'remote')
-            if d:
-                id = d[0].id
-            else:
-                d = Document(rein, Document.get_document_type(o['original']), o['original'], source_url='remote', testnet=rein.testnet)
-                rein.session.add(d)
-                rein.session.commit()
-                id = d.id
-            if o['Job creator public key'] == key:
-                role = 'Job creator'
-            else:
-                role = 'Worker'
-            if o['state'] in ['resolve']:
-                orders.append((str(id), '{}</td><td>{}'.format( job_link(o),
-                                                                role,
-                                                            )))
+        documents = Document.get_user_documents(rein)
+        job_ids = []
+        for document in documents:
+            job_id = Document.get_job_id(document.contents)
+            if job_id not in job_ids:
+                if document.source_url == 'local' and document.doc_type != 'enrollment':
+                    job_ids.append(job_id)
 
-        no_choices = len(orders) == 0
-        form.resolution_id.choices = orders
+        urls = Bucket.get_urls(rein)
+        documents = []
+        job_ids_string = ','.join(job_ids)
+        valid_results = []
+        for url in urls:
+            sel_url = "{0}query?owner={1}&job_ids={2}&query=by_job_id&testnet={3}"
+            data = safe_get(log, sel_url.format(url, user.maddr, job_ids_string, rein.testnet))
+            if data and 'by_job_id' in data:
+                results = data['by_job_id']
+                valid_results += filter_and_parse_valid_sigs(rein, results, 'Resolution')
+                    
+        valid_results = unique(valid_results, 'Job ID')
+
+        resolutions = []
+        for result in valid_results:
+            if "Resolution" in result:
+                resolutions.append((result['Job ID'], '{}</td><td>{}'.format( job_link(result), result['Resolution'] )))
+                
+        no_choices = len(resolutions) == 0
+        form.resolution_id.choices = unique(resolutions)
         
         if request.method == 'POST' and form.validate_on_submit():
-            delivery_doc = Document.get(rein, form.resolution_id.data)
-            delivery = parse_document(delivery_doc.contents)
+            delivery = None
+            for u in valid_results:
+                if u['Job ID'] == form.resolution_id.data:
+                    delivery = u
             redeemScript = delivery['Primary escrow redeem script']
             txins = delivery['Primary payment inputs']
             amount1 = delivery['Primary worker payment amount']
@@ -1750,6 +1759,8 @@ def start(multi, identity, setup):
                 {'label': 'Job creator public key', 'value_from': dispute},
                 {'label': 'Worker public key', 'value_from':dispute},
                 {'label': 'Mediator public key', 'value_from':dispute},
+                {'label': 'Primary escrow redeem script',   'value_from': dispute},
+                {'label': 'Mediator escrow redeem script',  'value_from': dispute},
                 {'label':'Primary payment inputs','value':payment_txins},
                 {'label':'Primary worker payment amount','value':payment_amount_1},
                 {'label':'Primary worker payment address','value':payment_address_1},
