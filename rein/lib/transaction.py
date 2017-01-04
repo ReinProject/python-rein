@@ -9,6 +9,7 @@ from hashlib import sha256
 api = "blocktrail" #handle this
 from .bucket import Bucket
 from .io import safe_get
+import click
 
 def unspent_txins(address,testnet):
     if (api == "blockr"):
@@ -56,7 +57,6 @@ def broadcast_tx (tx_hex,rein):
     for url in urls:
         data = safe_get(rein.log, sel_url.format(url,rein.user.maddr,tx_hex,rein.testnet))
         if data and 'txid' in data:
-            print("got data and txid")
             return data['txid']
     
 def partial_spend_p2sh (redeemScript,rein,alt_amount=None,alt_daddr=None):
@@ -76,7 +76,8 @@ def partial_spend_p2sh (redeemScript,rein,alt_amount=None,alt_daddr=None):
     amount = total_value-fee
     if alt_amount:
         amount = amount-alt_amount
-    if amount<=0. or alt_amount<total_value-fee:
+    if amount<=0. or alt_amount>total_value-fee:
+        click.echo("amount: "+str(amount)+" alt_amount: "+str(alt_amount)+" total_value: "+str(total_value))
         raise ValueError('Not enough value in the inputs')
     txouts = []
     txout = CMutableTxOut(amount*COIN, CBitcoinAddress(daddr).to_scriptPubKey())
