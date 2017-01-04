@@ -70,7 +70,7 @@ STATE = {
         'endpoint': '/acceptresolution',
         'past_tense': 'complete, resolution accepted'
        }
-
+}
 
 class Order(Base):
     __tablename__ = 'order'

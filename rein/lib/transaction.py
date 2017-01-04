@@ -193,7 +193,7 @@ def spend_p2sh_mediator (redeemScript,txins_str,amounts,daddrs,sig,rein):
         sighash = SignatureHash(txin_redeemScript,tx,i,SIGHASH_ALL)
         sig2 = seckey.sign(sighash)+x("01")
         sig2_str += " "+b2x(sig2)
-        txins_obj[i].scriptSig = CScript([OP_0, sig2, sig_list[i], txin_redeemScript])
+        txins_obj[i].scriptSig = CScript([OP_0, sig_list[i], sig2, txin_redeemScript])
         VerifyScript(txins_obj[i].scriptSig, txin_scriptPubKey, tx, i, (SCRIPT_VERIFY_P2SH,))
     tx_bytes = tx.serialize()
     hash = sha256(sha256(tx_bytes).digest()).digest()
