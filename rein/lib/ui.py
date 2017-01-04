@@ -3,7 +3,7 @@ import sys
 import json
 import click
 import getpass
-from .bitcoinecdsa import privkey_to_address, pubkey
+from .bitcoinecdsa import privkey_to_address, pubkey, pubkey_to_address
 from .bitcoinaddress import check_bitcoin_address
 from .validate import validate_enrollment
 from .user import User, Base
