@@ -1655,7 +1655,7 @@ def start(multi, identity, setup):
         elif request.method == 'POST':
             print("form data " + str(form))
             flash_errors(form)
-            return redirect("/accept")
+            return redirect("/acceptresolution")
         else:
             return render_template("acceptresolution.html",
                                    form=form,
@@ -1713,14 +1713,15 @@ def start(multi, identity, setup):
             state = order.get_state(rein, Document)
 
             # add ones that need resolution to the choices
-            if state in ['workerdispute', 'creatordispute']:
-                dispute_docs = order.get_documents(rein, Document, state)
-                if len(dispute_docs) > 0:
-                    d = dispute_docs[0]
-                    doc = parse_document(d.contents)
+            # Note: removed requirement for state since it causes problems
+            dispute_docs = order.get_documents(rein, Document, state)
+            if len(dispute_docs) > 0:
+                d = dispute_docs[0]
+                doc = parse_document(d.contents)
+                if 'Dispute detail' in doc:
                     disputes.append((str(d.id), '{}</td><td>{}'.format( job_link(doc),
                                                                         doc['Dispute detail']
-                                                                        )))
+                                                                    )))
         no_choices = len(disputes) == 0
 
         form.dispute_id.choices = unique(disputes)
