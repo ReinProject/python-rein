@@ -726,7 +726,7 @@ def resolve(multi, identity, defaults, dry_run):
         {'label':'Mediator payment inputs','value':mediator_payment_txins},
         {'label':'Mediator payment amount','value':mediator_payment_amount},
         {'label':'Mediator payment address','value':mediator_payment_address},
-        {'label':'Mediator payment signature','value':mediator_payment_signature}
+        {'label':'Mediator payment signature','value':mediator_payment_sig}
     ]
     document = assemble_document('Dispute Resolution', fields)
     res = sign_and_store_document(rein, 'resolve', document, user.daddr, user.dkey, store)
@@ -1159,11 +1159,11 @@ def start(multi, identity, setup):
     """
     import webbrowser
     from flask import Flask, request, redirect, url_for, flash, send_from_directory, render_template
-    from .lib.forms import SetupForm, JobPostForm, BidForm, JobOfferForm, DeliverForm, AcceptForm, DisputeForm, ResolveForm
+    from .lib.forms import SetupForm, JobPostForm, BidForm, JobOfferForm, DeliverForm, AcceptForm, DisputeForm, ResolveForm, AcceptResolutionForm
     from .lib.mediator import Mediator
 
     host = '127.0.0.1'
-    port = 5001
+    port = 5003
 
     tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'html')
 
