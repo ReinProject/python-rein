@@ -719,6 +719,9 @@ def resolve(multi, identity, defaults, dry_run):
         {'label': 'Job name',                       'value_from': doc},
         {'label': 'Job ID',                         'value_from': doc},
         {'label': 'Resolution',                     'not_null': form},
+        {'label': 'Job creator public key', 'value_from': doc},
+        {'label': 'Worker public key', 'value_from':doc},
+        {'label': 'Mediator public key', 'value_from':doc}
         {'label':'Primary payment inputs','value':payment_txins},
         {'label':'Primary worker payment amount','value':payment_amount_1},
         {'label':'Primary worker payment address','value':payment_address_1},
@@ -1744,6 +1747,9 @@ def start(multi, identity, setup):
                 {'label': 'Job name',                       'value_from': dispute},
                 {'label': 'Job ID',                         'value_from': dispute},
                 {'label': 'Resolution',                     'value': form.resolution.data},
+                {'label': 'Job creator public key', 'value_from': dispute},
+                {'label': 'Worker public key', 'value_from':dispute},
+                {'label': 'Mediator public key', 'value_from':dispute}
                 {'label':'Primary payment inputs','value':payment_txins},
                 {'label':'Primary worker payment amount','value':payment_amount_1},
                 {'label':'Primary worker payment address','value':payment_address_1},
