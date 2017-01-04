@@ -519,7 +519,7 @@ def accept(multi, identity, defaults, dry_run):
     txins_mediator = doc['Mediator payment inputs']
     amount_mediator = doc['Mediator payment amount']
     daddr_mediator = doc['Mediator payment address']
-    (payment_txid,client_sig) = spend_p2sh(redeemScript,txins,float(amount),daddr,worker_sig,rein)
+    (payment_txid,client_sig) = spend_p2sh(redeemScript,txins,[float(amount)],[daddr],worker_sig,rein)
     client_sig_for_mediator = partial_spend_p2sh_mediator_2(redeemScript_mediator,txins_mediator,float(amount_mediator),daddr_mediator,rein)
     
     fields = [
@@ -712,7 +712,7 @@ def resolve(multi, identity, defaults, dry_run):
     client_payment_daddr = str(P2PKHBitcoinAddress.from_pubkey(x(doc['Job creator public key'])));
     client_payment_amount = float(click.prompt("Client payment amount"))
     (payment_txins,payment_amount_1,payment_address_1,payment_amount_2,payment_address_2,payment_sig) = partial_spend_p2sh(redeemScript,rein,client_payment_amount,client_payment_daddr)
-    (mediator_payment_txins,mediator_payment_amount,mediator_payment_address) = partial_spend_p2sh_mediator(mediatorRedeemScript,rein,mediator_daddr)
+    (mediator_payment_txins,mediator_payment_amount,mediator_payment_address,mediator_payment_sig) = partial_spend_p2sh_mediator(mediatorRedeemScript,rein,mediator_daddr,True)
     fields = [
         {'label': 'Job name',                       'value_from': doc},
         {'label': 'Job ID',                         'value_from': doc},
@@ -726,6 +726,7 @@ def resolve(multi, identity, defaults, dry_run):
         {'label':'Mediator payment inputs','value':mediator_payment_txins},
         {'label':'Mediator payment amount','value':mediator_payment_amount},
         {'label':'Mediator payment address','value':mediator_payment_address},
+        {'label':'Mediator payment signature','value':mediator_payment_signature}
     ]
     document = assemble_document('Dispute Resolution', fields)
     res = sign_and_store_document(rein, 'resolve', document, user.daddr, user.dkey, store)
@@ -1531,7 +1532,7 @@ def start(multi, identity, setup):
             txins_mediator = delivery['Mediator payment inputs']
             amount_mediator = delivery['Mediator payment amount']
             daddr_mediator = delivery['Mediator payment address']
-            (payment_txid,client_sig) = spend_p2sh(redeemScript,txins,float(amount),daddr,worker_sig,rein)
+            (payment_txid,client_sig) = spend_p2sh(redeemScript,txins,[float(amount)],[daddr],worker_sig,rein)
             client_sig_for_mediator = partial_spend_p2sh_mediator_2(redeemScript_mediator,txins_mediator,float(amount_mediator),daddr_mediator,rein)
             fields = [
                 {'label': 'Job name',                       'value_from': delivery},
@@ -1574,6 +1575,76 @@ def start(multi, identity, setup):
                             no_choices=no_choices,
                             time_offset=time_offset
                             )
+    @app.route("/acceptresolution", methods=['POST', 'GET'])
+    def job_acceptresolution():
+        Order.update_orders(rein, Document)
+        form = AcceptResolutionForm(request.form)
+        our_orders = get_in_process_orders(rein, Document, key, 'Job creator public key', True)
+        
+        if request.method == 'POST' and form.validate_on_submit():
+            delivery_doc = Document.get(rein, form.deliverable_id.data)
+            delivery = parse_document(delivery_doc.contents)
+            redeemScript = delivery['Primary escrow redeem script']
+            txins = delivery['Primary payment inputs']
+            amount1 = delivery['Primary worker payment amount']
+            daddr1 = delivery['Primary worker payment address']
+            amount2 = delivery['Primary client payment amount']
+            daddr2 = delivery['Primary client payment address']
+            sig_primary = delivery['Primary payment signature']
+            redeemScript_mediator = delivery['Mediator escrow redeem script']
+            txins_mediator = delivery['Mediator payment inputs']
+            amount_mediator = delivery['Mediator payment amount']
+            daddr_mediator = delivery['Mediator payment address']
+            sig_mediator = delivery['Mediator payment signature']
+            (payment_txid,second_sig) = spend_p2sh(redeemScript,txins,[float(amount1),float(amount2)],[daddr1,daddr2],sig_primary,rein)
+            (payment_txid_mediator,second_sig_mediator) = spend_p2sh_mediator(redeemScript_mediator,txins,[float(amount1)],[daddr_mediator],sig_mediator,rein)
+            fields = [
+                {'label': 'Job name',                       'value_from': delivery},
+                {'label': 'Job ID',                         'value_from': delivery},
+                {'label': 'Primary escrow redeem script',   'value_from': delivery},
+                {'label': 'Mediator escrow redeem script',  'value_from': delivery},
+                {'label':'Primary payment inputs','value_from':delivery},
+                {'label':'Primary worker payment amount','value_from':delivery},
+                {'label':'Primary worker payment address','value_from':delivery},
+                {'label':'Primary client payment amount','value_from':delivery},
+                {'label':'Primary client payment address','value_from':delivery},
+                {'label':'Primary payment signature','value_from':delivery},
+                {'label':'Primary payment txid','value':payment_txid},
+                {'label':'Primary payment second signature','value':second_sig},
+                {'label':'Mediator payment inputs','value_from':delivery},
+                {'label':'Mediator payment amount','value_from':delivery},
+                {'label':'Mediator payment address','value_from':delivery},
+                {'label':'Mediator payment signature','value_from':delivery},
+                {'label':'Mediator payment txid','value':payment_txid_mediator},
+                {'label':'Mediator payment second signature','value':second_sig_mediator}
+            ]
+            
+            document_text = assemble_document('Accept Resolution', fields)
+            store = True
+            document = sign_and_store_document(rein, 'acceptresolution', document_text, user.daddr, user.dkey, store)
+            if document and store:
+                click.echo("Accept Resolution created.")
+                sync_core(log, user, key, urls)
+                flash("Accept Resolution signed and pushed to available servers.")
+            assemble_order(rein, document)
+            log.info('accept resolution signed') if document else log.error('accept resolution failed')
+            return redirect("/")
+        elif request.method == 'POST':
+            print("form data " + str(form))
+            flash_errors(form)
+            return redirect("/accept")
+        else:
+            return render_template("acceptresolution.html",
+                                   form=form,
+                                user=user,
+                                   key=key,
+                                   urls=urls,
+                                   block_time=str_block_time,
+                                   no_choices=no_choices,
+                                time_offset=time_offset
+            )
+                    
+                                                                
 
 
     @app.route("/resolve", methods=['POST', 'GET'])
@@ -1641,7 +1712,7 @@ def start(multi, identity, setup):
             client_payment_daddr = str(P2PKHBitcoinAddress.from_pubkey(x(dispute['Job creator public key'])));
             client_payment_amount = float(form.client_payment_amount.data)
             (payment_txins,payment_amount_1,payment_address_1,payment_amount_2,payment_address_2,payment_sig) = partial_spend_p2sh(redeemScript,rein,client_payment_amount,client_payment_daddr)
-            (mediator_payment_txins,mediator_payment_amount,mediator_payment_address) = partial_spend_p2sh_mediator(mediatorRedeemScript,rein,mediator_daddr)
+            (mediator_payment_txins,mediator_payment_amount,mediator_payment_address,mediator_payment_sig) = partial_spend_p2sh_mediator(mediatorRedeemScript,rein,mediator_daddr,True)
             fields = [
                 {'label': 'Job name',                       'value_from': dispute},
                 {'label': 'Job ID',                         'value_from': dispute},
@@ -1654,7 +1725,8 @@ def start(multi, identity, setup):
                 {'label':'Primary payment signature','value':payment_sig},
                 {'label':'Mediator payment inputs','value':mediator_payment_txins},
                 {'label':'Mediator payment amount','value':mediator_payment_amount},
-                {'label':'Mediator payment address','value':mediator_payment_address}
+                {'label':'Mediator payment address','value':mediator_payment_address},
+                {'label':'Mediator payment signature','value':mediator_payment_sig}
             ]
             document_text = assemble_document('Dispute Resolution', fields)
             store = True

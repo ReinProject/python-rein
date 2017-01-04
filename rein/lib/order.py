@@ -60,10 +60,15 @@ STATE = {
                         },
         'resolve':   {
                     'pre': ['creatordispute', 'workerdispute'],
-                    'next': ['complete'],
+                    'next': ['acceptresolution', 'creatordispute', 'workerdispute'],
                     'endpoint': '/resolve',
-                    'past_tense': 'complete, dispute resolved'
-                        },
+                    'past_tense': 'dispute resolved'
+        },
+    'acceptresolution': {
+        'pre': ['resolve'],
+        'next': ['complete'],
+        'endpoint': '/acceptresolution',
+        'past_tense': 'complete, resolution accepted'
        }
 
 
