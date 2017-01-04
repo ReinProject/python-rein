@@ -63,11 +63,12 @@ class DisputeForm(Form):
     order_id = RadioField('Choose job')
 
 class AcceptForm(Form):
-    signed_primary_payment = TextAreaField('Signed primary payment')
-    signed_mediator_payment = TextAreaField('Signed mediator payment')
     deliverable_id = RadioField('Deliverables')
 
 class ResolveForm(Form):
     resolution = TextAreaField('Resolution', validators = [Required()])
     client_payment_amount = TextAreaField('Client payment amount', validators = [Required()])
     dispute_id = RadioField('Disputes')
+
+class AcceptResolutionForm(Form):
+    deliverable_id = RadioField('Resolution')
