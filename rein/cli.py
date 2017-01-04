@@ -436,19 +436,31 @@ def deliver(multi, identity, defaults, dry_run):
         return
 
     log.info('got offer for delivery')
+    redeemScript = doc['Primary escrow redeem script']
+    mediatorRedeemScript = doc['Mediator escrow redeem script']
+    mediator_pubkey = doc['Mediator public key']
+    (payment_txins,payment_amount,payment_address,payment_sig) = partial_spend_p2sh(redeemScript,rein)
+    (mediator_payment_txins,mediator_payment_amount,mediator_payment_address) = partial_spend_p2sh_mediator(mediatorRedeemScript,rein,mediator_pubkey)
     fields = [
-                {'label': 'Job name',                       'value_from': doc},
-                {'label': 'Job ID',                         'value_from': doc},
-                {'label': 'Deliverables',                   'value': form.deliverables.data},
-                {'label': 'Bid amount (BTC)',               'value_from': doc},
-                {'label': 'Primary escrow address',         'value_from': doc},
-                {'label': 'Mediator escrow address',        'value_from': doc},
-                {'label': 'Primary escrow redeem script',   'value_from': doc},
-                {'label': 'Mediator escrow redeem script',  'value_from': doc},
-                {'label': 'Worker public key',              'value_from': doc},
-                {'label': 'Mediator public key',            'value_from': doc},
-                {'label': 'Job creator public key',         'value_from': doc},
-             ]
+        {'label': 'Job name',                       'value_from': doc},
+        {'label': 'Job ID',                         'value_from': doc},
+        {'label': 'Deliverables',                   'value': form.deliverables.data},
+        {'label': 'Bid amount (BTC)',               'value_from': doc},
+        {'label': 'Primary escrow address',         'value_from': doc},
+        {'label': 'Mediator escrow address',        'value_from': doc},
+        {'label': 'Primary escrow redeem script',   'value_from': doc},
+        {'label': 'Mediator escrow redeem script',  'value_from': doc},
+        {'label': 'Worker public key',              'value_from': doc},
+        {'label': 'Mediator public key',            'value_from': doc},
+        {'label': 'Job creator public key',         'value_from': doc},
+        {'label':'Primary payment inputs','value':payment_txins},
+        {'label':'Primary payment amount','value':payment_amount},
+        {'label':'Primary payment address','value':payment_address},
+        {'label':'Primary payment signature','value':payment_sig},
+        {'label':'Mediator payment inputs','value':mediator_payment_txins},
+        {'label':'Mediator payment amount','value':mediator_payment_amount},
+        {'label':'Mediator payment address','value':mediator_payment_address}
+    ]
     document = assemble_document('Delivery', fields)
     if check_redeem_scripts(document):
         res = sign_and_store_document(rein, 'delivery', document, user.daddr, user.dkey, store)
@@ -495,14 +507,34 @@ def accept(multi, identity, defaults, dry_run):
 
     log.info('got delivery for accept')
 
+    redeemScript = doc['Primary escrow redeem script']
+    txins = doc['Primary payment inputs']
+    amount = doc['Primary payment amount']
+    daddr = doc['Primary payment address']
+    worker_sig = doc['Primary payment signature']
+    redeemScript_mediator = doc['Mediator escrow redeem script']
+    txins_mediator = doc['Mediator payment inputs']
+    amount_mediator = doc['Mediator payment amount']
+    daddr_mediator = doc['Mediator payment address']
+    (payment_txid,client_sig) = spend_p2sh(redeemScript,txins,float(amount),daddr,worker_sig,rein)
+    client_sig_for_mediator = partial_spend_p2sh_mediator_2(redeemScript_mediator,txins_mediator,float(amount_mediator),daddr_mediator,rein)
+    
     fields = [
-                {'label': 'Job name',                       'value_from': doc},
-                {'label': 'Job ID',                         'value_from': doc},
-                {'label': 'Signed primary payment',         'not_null': form},
-                {'label': 'Signed mediator payment',        'not_null': form},
-                {'label': 'Primary escrow redeem script',   'value_from': doc},
-                {'label': 'Mediator escrow redeem script',  'value_from': doc},
-             ]
+        {'label': 'Job name',                       'value_from': doc},
+        {'label': 'Job ID',                         'value_from': doc},
+        {'label': 'Primary escrow redeem script',   'value_from': doc},
+        {'label': 'Mediator escrow redeem script',  'value_from': doc},
+        {'label':'Primary payment inputs','value_from':doc},
+        {'label':'Primary payment amount','value_from':doc},
+        {'label':'Primary payment address','value_from':doc},
+        {'label':'Primary payment signature','value_from':doc},
+        {'label':'Primary payment txid','value':payment_txid},
+        {'label':'Primary payment client signature','value':client_sig},
+        {'label':'Mediator payment inputs','value_from':doc},
+        {'label':'Mediator payment amount','value_from':doc},
+        {'label':'Mediator payment address','value_from':doc},
+        {'label':'Mediator payment client signature','value':client_sig_for_mediator}
+    ]
     document = assemble_document('Accept Delivery', fields)
     click.echo('\n'+document+'\n')
     if click.confirm("Are you sure?"):
