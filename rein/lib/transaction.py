@@ -186,7 +186,7 @@ def spend_p2sh_mediator (redeemScript,txins_str,amounts,daddrs,sig,rein):
     txouts = []
     len_amounts = len(amounts)
     for i in range(0,len_amounts):
-        txouts.append(CMutableTxOut(amounts[i]*COIN,CBitcoinAddress(daddrs[i]).to_scriptPubKey()))
+        txouts.append(CMutableTxOut(round(amounts[i],8)*COIN,CBitcoinAddress(daddrs[i]).to_scriptPubKey()))
     tx = CMutableTransaction(txins_obj,txouts)
     seckey = CBitcoinSecret(rein.user.dkey)
     ntxins = len(txins_obj)
@@ -198,7 +198,7 @@ def spend_p2sh_mediator (redeemScript,txins_str,amounts,daddrs,sig,rein):
         sighash = SignatureHash(txin_redeemScript,tx,i,SIGHASH_ALL)
         sig2 = seckey.sign(sighash)+x("01")
         sig2_str += " "+b2x(sig2)
-        txins_obj[i].scriptSig = CScript([OP_0, sig_list[i], sig2, txin_redeemScript])
+        txins_obj[i].scriptSig = CScript([OP_0, sig2, sig_list[i], txin_redeemScript])
         VerifyScript(txins_obj[i].scriptSig, txin_scriptPubKey, tx, i, (SCRIPT_VERIFY_P2SH,))
     tx_bytes = tx.serialize()
     hash = sha256(sha256(tx_bytes).digest()).digest()
@@ -206,10 +206,5 @@ def spend_p2sh_mediator (redeemScript,txins_str,amounts,daddrs,sig,rein):
     txid_causeway = broadcast_tx(b2x(tx_bytes),rein)
     return (txid,sig2_str[1:])
 
-#redeemScript = "522103220d8573c2d9bdea5d60d3ad8a892c94da4a1850445fe3b83b17307a8d655fb1210342b976a71a5aa2daa65512da45f1d44579c1d3fc364d085e398fc771c23fe2622102ba974cf1e3853814e0e05e7e36266e3d5d324eb48a31694d4969bed390535a6053ae"
-
-#(txins_str,amount,daddr,sig) = partial_spend_p2sh(redeemScript,"mgomM45aKPNbjNgq9bs8CnZnMyzNdrv6EB","cMt7JAxa2Uc97yftEomyg4FX5YjgGsNaDF5S165kRiEi5ibQqKot")
-
-#print(spend_p2sh(redeemScript,txins_str,float(amount),daddr,sig,"cUtVwDQqPn75KjnF5Qa3kyVUQmE4gprami3QW1QughTACnkHQHpa"))
 
 
