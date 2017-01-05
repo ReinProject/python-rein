@@ -25,7 +25,7 @@ from .lib.market import *
 from .lib.util import unique
 from .lib.io import safe_get
 from .lib.script import build_2_of_3, build_mandatory_multisig, check_redeem_scripts
-from .lib.transaction import partial_spend_p2sh, spend_p2sh, partial_spend_p2sh_mediator, partial_spend_p2sh_mediator_2
+from .lib.transaction import partial_spend_p2sh, spend_p2sh, spend_p2sh_mediator, partial_spend_p2sh_mediator, partial_spend_p2sh_mediator_2
 
 # Import config
 import rein.lib.config as config
