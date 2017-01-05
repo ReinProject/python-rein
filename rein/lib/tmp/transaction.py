@@ -76,17 +76,21 @@ def partial_spend_p2sh (redeemScript,rein,daddr=None,alt_amount=None,alt_daddr=N
         txins_str += " "+txid+"-"+str(vout)
         txins_obj.append(CMutableTxIn(COutPoint(lx(txid),vout)))                
     fee = 0.0005
-    amount = total_value-fee
+    amount = round(total_value-fee,8)
     if alt_amount is not None:
-        amount = amount-alt_amount
+        amount = round(amount-alt_amount,8)
     if amount<=0. or alt_amount>total_value-fee:
         click.echo("amount: "+str(amount)+" alt_amount: "+str(alt_amount)+" total_value: "+str(total_value))
         raise ValueError('Not enough value in the inputs')
     txouts = []
-    txout = CMutableTxOut(amount*COIN, CBitcoinAddress(daddr).to_scriptPubKey())
+    amount_satoshi = int(amount*float(COIN))
+    print("amount_satoshi: "+str(amount_satoshi))
+    txout = CMutableTxOut(amount_satoshi, CBitcoinAddress(daddr).to_scriptPubKey())
     txouts.append(txout)
     if alt_amount is not None:
-        txout_alt = CMutableTxOut(alt_amount*COIN, CBitcoinAddress(alt_daddr).to_scriptPubKey())
+        amount_satoshi_alt = int(alt_amount*float(COIN))
+        print("amount_satoshi_alt: "+str(amount_satoshi_alt))
+        txout_alt = CMutableTxOut(amount_satoshi_alt, CBitcoinAddress(alt_daddr).to_scriptPubKey())
         txouts.append(txout_alt)
     tx = CMutableTransaction(txins_obj, txouts)
     ntxins = len(txins_obj)
@@ -96,8 +100,8 @@ def partial_spend_p2sh (redeemScript,rein,daddr=None,alt_amount=None,alt_daddr=N
         sighash = SignatureHash(txin_redeemScript, tx, i, SIGHASH_ALL)
         sig += " "+b2x(seckey.sign(sighash))+"01"
     if alt_amount is not None:
-        return (txins_str[1:],str(amount),daddr,str(alt_amount),alt_daddr,sig[1:])
-    return (txins_str[1:],str(amount),daddr,sig[1:])
+        return (txins_str[1:],"{:.9f}".format(amount),daddr,"{:.9f}".format(alt_amount),alt_daddr,sig[1:])
+    return (txins_str[1:],"{:.8f}".format(amount),daddr,sig[1:])
 
 def partial_spend_p2sh_mediator (redeemScript,rein,mediator_address,mediator_sig=False):
     txin_redeemScript = CScript(x(redeemScript))
@@ -154,7 +158,9 @@ def spend_p2sh (redeemScript,txins_str,amounts,daddrs,sig,rein):
     txouts = []
     len_amounts = len(amounts)
     for i in range(0,len_amounts):
-        txouts.append(CMutableTxOut(amounts[i]*COIN,CBitcoinAddress(daddrs[i]).to_scriptPubKey()))
+        amount_satoshi = int(amounts[i]*COIN)
+        print("amount: "+str(amount_satoshi))
+        txouts.append(CMutableTxOut(amount_satoshi,CBitcoinAddress(daddrs[i]).to_scriptPubKey()))
     tx = CMutableTransaction(txins_obj,txouts)
     seckey = CBitcoinSecret(rein.user.dkey)
     ntxins = len(txins_obj)
@@ -225,7 +231,7 @@ reinclient = Config()
 reinclient.user = client
 
 daddr = "mgomM45aKPNbjNgq9bs8CnZnMyzNdrv6EB"
-alt_amount = 0.0081
+alt_amount = 0.00805
 alt_daddr = "mzcrNKvmKJZKhzy1kV9uht9uJfJBQaPJMF"
 
 (txins_str,amount_str,daddr,alt_amount_str,alt_daddr,sig_str) = partial_spend_p2sh(redeemScript,reinmediator,daddr,alt_amount,alt_daddr)

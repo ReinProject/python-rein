@@ -1869,10 +1869,10 @@ def start(multi, identity, setup):
 
         no_choices = len(orders) == 0
 
-        form.order_id.choices = orders
+        form.dispute_id.choices = orders
 
         if request.method == 'POST' and form.validate_on_submit():
-            latest_doc = Document.get(rein, form.order_id.data)
+            latest_doc = Document.get(rein, form.dispute_id.data)
             doc = parse_document(latest_doc.contents)
             fields = [
                 {'label': 'Job name',                       'value_from': doc},

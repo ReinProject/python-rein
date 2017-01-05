@@ -74,17 +74,18 @@ def partial_spend_p2sh (redeemScript,rein,daddr=None,alt_amount=None,alt_daddr=N
         txins_str += " "+txid+"-"+str(vout)
         txins_obj.append(CMutableTxIn(COutPoint(lx(txid),vout)))                
     fee = 0.0005
-    amount = total_value-fee
+    amount = round(total_value-fee,8)
     if alt_amount:
-        amount = amount-alt_amount
+        amount = round(amount-alt_amount,8)
     if amount<=0. or alt_amount>total_value-fee:
         click.echo("amount: "+str(amount)+" alt_amount: "+str(alt_amount)+" total_value: "+str(total_value))
+
         raise ValueError('Not enough value in the inputs')
     txouts = []
     txout = CMutableTxOut(amount*COIN, CBitcoinAddress(daddr).to_scriptPubKey())
     txouts.append(txout)
     if alt_amount:
-        txout_alt = CMutableTxOut(alt_amount*COIN, CBitcoinAddress(alt_daddr).to_scriptPubKey())
+        txout_alt = CMutableTxOut(round(alt_amount,8)*COIN, CBitcoinAddress(alt_daddr).to_scriptPubKey())
         txouts.append(txout_alt)
     tx = CMutableTransaction(txins_obj, txouts)
     ntxins = len(txins_obj)
@@ -94,8 +95,8 @@ def partial_spend_p2sh (redeemScript,rein,daddr=None,alt_amount=None,alt_daddr=N
         sighash = SignatureHash(txin_redeemScript, tx, i, SIGHASH_ALL)
         sig += " "+b2x(seckey.sign(sighash))+"01"
     if alt_amount:
-        return (txins_str[1:],str(amount),daddr,str(alt_amount),alt_daddr,sig[1:])
-    return (txins_str[1:],str(amount),daddr,sig[1:])
+        return (txins_str[1:],"{:.8f}".format(amount),daddr,"{:.8f}".format(alt_amount),alt_daddr,sig[1:])
+    return (txins_str[1:],"{:.8f}".format(alt_amount),daddr,sig[1:])
 
 def partial_spend_p2sh_mediator (redeemScript,rein,mediator_address,mediator_sig=False):
     txin_redeemScript = CScript(x(redeemScript))
@@ -110,7 +111,7 @@ def partial_spend_p2sh_mediator (redeemScript,rein,mediator_address,mediator_sig
         txins_str += " "+txid+"-"+str(vout)
         txins_obj.append(CMutableTxIn(COutPoint(lx(txid),vout)))
     fee = 0.0005
-    amount = total_value-fee
+    amount = round(total_value-fee,8)
     if amount<=0:
         raise ValueError('Not enough value in the inputs')
     if mediator_sig:
@@ -122,8 +123,8 @@ def partial_spend_p2sh_mediator (redeemScript,rein,mediator_address,mediator_sig
         for i in range(0,ntxins):
             sighash = SignatureHash(txin_redeemScript,tx,i,SIGHASH_ALL)
             sig += " "+b2x(seckey.sign(sighash)+x("01"))
-        return (txins_str[1:],str(amount),str(mediator_address),sig[1:])
-    return (txins_str[1:],str(amount),str(mediator_address))
+        return (txins_str[1:],"{:.8f}".format(amount),str(mediator_address),sig[1:])
+    return (txins_str[1:],"{:.8f}".format(amount),str(mediator_address))
 
 def partial_spend_p2sh_mediator_2 (redeemScript,txins_str,amount,daddr,rein):
     txin_redeemScript = CScript(x(redeemScript))
@@ -152,7 +153,7 @@ def spend_p2sh (redeemScript,txins_str,amounts,daddrs,sig,rein,reverse_sigs=Fals
     txouts = []
     len_amounts = len(amounts)
     for i in range(0,len_amounts):
-        txouts.append(CMutableTxOut(amounts[i]*COIN,CBitcoinAddress(daddrs[i]).to_scriptPubKey()))
+        txouts.append(CMutableTxOut(round(amounts[i],8)*COIN,CBitcoinAddress(daddrs[i]).to_scriptPubKey()))
     tx = CMutableTransaction(txins_obj,txouts)
     seckey = CBitcoinSecret(rein.user.dkey)
     ntxins = len(txins_obj)
