@@ -1253,6 +1253,9 @@ def start(multi, identity, setup):
     from flask import Flask, request, redirect, url_for, flash, send_from_directory, render_template
     from .lib.forms import SetupForm, JobPostForm, BidForm, JobOfferForm, DeliverForm, AcceptForm, DisputeForm, ResolveForm, AcceptResolutionForm
     from .lib.mediator import Mediator
+    import rein.lib.crypto.bip32 as bip32
+    from .lib.ui import build_enrollment_from_dict
+    from .lib.bitcoinecdsa import sign
 
     host = '127.0.0.1'
     port = 5001
@@ -1270,78 +1273,58 @@ def start(multi, identity, setup):
                        error
                        ))
 
-    @app.route("/setup", methods=['POST', 'GET'])
-    def start_setup():
-        log = rein.get_log()
-        form = SetupForm(request.form)
-
-        from rein.lib.user import User
-
-        if request.method == 'POST' and form.validate_on_submit():
-            new_identity = User(form.name.data,
-                                form.contact.data,
-                                form.maddr.data,
-                                form.daddr.data,
-                                form.dkey.data,
-                                form.will_mediate.data,
-                                form.mediator_fee.data,
-                                rein.testnet)
+    @app.route('/register-user', methods=['POST'])
+    def register_user():
+        try:
+            # Generate user data
+            key = crypto.bip32.seed_to_key(str(request.form['seed']))
+            mprv = crypto.bip32.get_master_private_key(key)
+            maddr = crypto.bip32.get_master_address(key)
+            daddr = crypto.bip32.get_delegate_address(key)
+            dkey = crypto.bip32.get_delegate_private_key(key)
+            dxprv = crypto.bip32.get_delegate_extended_key(key)
+            if request.form['mediate'] == "True":
+                will_mediate = True
+            else:
+                will_mediate = False
+            user_data = {'name': request.form['name'],
+                        'contact': request.form['contact'],
+                        'maddr': maddr,
+                        'daddr': daddr,
+                        'dkey': dkey,
+                        'dxprv': dxprv,
+                        'will_mediate': will_mediate,
+                        'mediator_fee': request.form['mediatorFee'],
+                        'testnet': rein.testnet}
+            new_identity = User(user_data)
+            rein.user = new_identity
             rein.session.add(new_identity)
             rein.session.commit()
-            data = {'name': form.name.data,
-                    'contact': form.contact.data,
-                    'maddr': form.maddr.data,
-                    'daddr': form.daddr.data,
-                    'dkey': form.dkey.data,
-                    'will_mediate': form.will_mediate.data,
-                    'mediator_fee': form.mediator_fee.data,
-                    'testnet': rein.testnet}
-            filename = rein.backup_filename + '-' + ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(6))
-            if not os.path.isfile(filename):
-                f = open(filename, 'w')
-                try:
-                    f.write(json.dumps(data))
-                    click.echo("Backup saved successfully to %s" % filename)
-                except:
-                    RuntimeError('Problem writing user details to json backup file.')
-                    return render_template("setup.html",
-                                           form=form)
-                f.close()
-            else:
-                click.echo("Backup file already exists. Please run with --backup to save "
-                            "user details to file.")
-            return redirect('/sign')
-        else:
-            return render_template("setup.html",
-                                   form=form)
 
-
-    @app.route("/sign", methods=['POST', 'GET'])
-    def start_sign():
-        log = rein.get_log()
-
-        from rein.lib.user import User
-        from .lib.forms import SignForm
-        form = SignForm(request.form)
-
-        if request.method == 'POST' and form.validate_on_submit():
-            user = User.get(rein, form.identity_id.data)
-            User.set_enrolled(rein, user)
-
-            # insert signed document into documents table as type 'enrollment'
-            signed = form.signed.data.replace("\r\n","\n")
-            document = Document(rein, 'enrollment', signed, sig_verified=True, testnet=rein.testnet)
+            # Enroll user
+            enrollment = build_enrollment_from_dict(user_data)
+            signed_enrollment = '-----BEGIN BITCOIN SIGNED MESSAGE-----\n' + \
+                                enrollment + \
+                                '\n-----BEGIN SIGNATURE-----\n' + \
+                                maddr + '\n' + \
+                                sign(mprv, enrollment) + \
+                                '\n-----END BITCOIN SIGNED MESSAGE-----\n'
+            User.set_enrolled(rein, new_identity)
+            document = Document(rein, 'enrollment', signed_enrollment, sig_verified=True, testnet=rein.testnet)
             rein.session.add(document)
             rein.session.commit()
-            return redirect('/done')
-        elif not User.get_newest(rein):
-            return redirect("/setup")
-        else:
-            rein.user = User.get_newest(rein)
-            form.identity_id.data = rein.user.id
-            form.enrollment = build_enrollment(rein)
-            return render_template("sign.html",
-                                   form=form)
+            return json.dumps({'enrolled': True})
+        except Exception as exc:
+            import traceback
+            print(traceback.format_exc())
+            to_return = {'enrolled': False,
+                         'exception': str(exc)}
+            print(exc)
+            return json.dumps(to_return)
+
+    @app.route('/setup')
+    def setup2():
+        return render_template('setup2.html')
 
 
     def shutdown_server():
@@ -1350,7 +1333,7 @@ def start(multi, identity, setup):
             raise RuntimeError('Not running with the Werkzeug Server')
         func()
 
-    @app.route("/done", methods=['POST', 'GET'])
+    @app.route("/done")
     def start_done():
         shutdown_server()
         return render_template("done.html")
@@ -1366,7 +1349,7 @@ def start(multi, identity, setup):
 
 
     if rein.has_no_account() or setup:
-        print('Open your browser to http://'+host+':' + str(port) + '/setup')
+        #print('Open your browser to http://'+host+':' + str(port) + '/setup')
         app.run(host=host, port=port, debug=rein.debug)
         return
     else:

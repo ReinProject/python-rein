@@ -44,6 +44,12 @@ def mnemonic_to_key(mnemonic):
     return key
 
 
+def seed_to_key(seed):
+    secret, chain = seed[:32], seed[32:]
+    key = BIP32Key(secret=secret, chain=chain, depth=0, index=0, fpr=b'\0\0\0\0', public=False, testnet=False)
+    return key
+
+
 def get_child_key(parent, depth):
     return parent.ChildKey(depth)
 
