@@ -96,7 +96,7 @@ def partial_spend_p2sh (redeemScript,rein,daddr=None,alt_amount=None,alt_daddr=N
         sig += " "+b2x(seckey.sign(sighash))+"01"
     if alt_amount:
         return (txins_str[1:],"{:.8f}".format(amount),daddr,"{:.8f}".format(alt_amount),alt_daddr,sig[1:])
-    return (txins_str[1:],"{:.8f}".format(alt_amount),daddr,sig[1:])
+    return (txins_str[1:],"{:.8f}".format(amount),daddr,sig[1:])
 
 def partial_spend_p2sh_mediator (redeemScript,rein,mediator_address,mediator_sig=False):
     txin_redeemScript = CScript(x(redeemScript))
