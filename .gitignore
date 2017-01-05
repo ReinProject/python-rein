@@ -3,6 +3,7 @@ dist/
 c/
 venv/
 .idea/
+.vscode/
 *.txt
 *.sig
 *.log
