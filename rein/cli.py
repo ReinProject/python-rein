@@ -1633,7 +1633,11 @@ def start(multi, identity, setup):
             amount_mediator = delivery['Mediator payment amount']
             daddr_mediator = delivery['Mediator payment address']
             sig_mediator = delivery['Mediator payment signature']
-            (payment_txid,second_sig) = spend_p2sh(redeemScript,txins,[float(amount1),float(amount2)],[daddr1,daddr2],sig_primary,rein)
+
+            reverse_sigs = False
+            if key == delivery['Worker public key']:
+                reverse_sigs = True
+            (payment_txid,second_sig) = spend_p2sh(redeemScript,txins,[float(amount1),float(amount2)],[daddr1,daddr2],sig_primary,rein,reverse_sigs)
             (payment_txid_mediator,second_sig_mediator) = spend_p2sh_mediator(redeemScript_mediator,txins,[float(amount1)],[daddr_mediator],sig_mediator,rein)
             fields = [
                 {'label': 'Job name',                       'value_from': delivery},

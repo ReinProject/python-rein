@@ -142,7 +142,7 @@ def partial_spend_p2sh_mediator_2 (redeemScript,txins_str,amount,daddr,rein):
         sig += " "+b2x(seckey.sign(sighash)+x("01"))
     return sig[1:]
 
-def spend_p2sh (redeemScript,txins_str,amounts,daddrs,sig,rein):
+def spend_p2sh (redeemScript,txins_str,amounts,daddrs,sig,rein,reverse_sigs=False):
     txin_redeemScript = CScript(x(redeemScript))
     txin_scriptPubKey = txin_redeemScript.to_p2sh_scriptPubKey()
     txins_obj = []
@@ -164,7 +164,10 @@ def spend_p2sh (redeemScript,txins_str,amounts,daddrs,sig,rein):
         sighash = SignatureHash(txin_redeemScript,tx,i,SIGHASH_ALL)
         sig2 = seckey.sign(sighash)+x("01")
         sig2_str += " "+b2x(sig2)
-        txins_obj[i].scriptSig = CScript([OP_0, sig2, sig_list[i], txin_redeemScript])
+        if reverse_sigs:
+            txins_obj[i].scriptSig = CScript([OP_0, sig_list[i], sig2, txin_redeemScript])
+        else:
+            txins_obj[i].scriptSig = CScript([OP_0, sig2, sig_list[i], txin_redeemScript])
         VerifyScript(txins_obj[i].scriptSig, txin_scriptPubKey, tx, i, (SCRIPT_VERIFY_P2SH,))
     tx_bytes = tx.serialize()
     hash = sha256(sha256(tx_bytes).digest()).digest()
