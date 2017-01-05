@@ -44,11 +44,11 @@
     <tr>
         <th></th>
         <th>Job name</th>
-        <th>Delivery</th>
+        <th>Resolution</th>
     </tr>
 </thead>
 <tbody>
-{% for subfield in form.deliverable_id %}
+{% for subfield in form.resolution_id %}
 
     <tr>
         <td>{{ subfield }}</td>
@@ -57,7 +57,8 @@
 {% endfor %}
 </tbody>
 </table>
-    
+
+Click accept to release the funds from the escrow addresses according to the terms written by the mediator in the resolution document.<br /><br >
 <input type="submit" value="Accept">
 </form>
 {% endif %}
