@@ -60,7 +60,7 @@ class DeliverForm(Form):
 
 class DisputeForm(Form):
     dispute_detail = TextAreaField('Dispute detail', validators = [Required()])
-    order_id = RadioField('Choose job')
+    dispute_id = RadioField('Choose job')
 
 class AcceptForm(Form):
     deliverable_id = RadioField('Deliverables')
