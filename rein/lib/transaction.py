@@ -85,7 +85,7 @@ def partial_spend_p2sh (redeemScript,rein,daddr=None,alt_amount=None,alt_daddr=N
     txouts.append(txout)
     if alt_amount:
         txout_alt = CMutableTxOut(alt_amount*COIN, CBitcoinAddress(alt_daddr).to_scriptPubKey())
-        txouts.append(txout)
+        txouts.append(txout_alt)
     tx = CMutableTransaction(txins_obj, txouts)
     ntxins = len(txins_obj)
     seckey = CBitcoinSecret(rein.user.dkey)
