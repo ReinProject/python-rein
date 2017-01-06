@@ -3,7 +3,7 @@ import sys
 import json
 import click
 import getpass
-import crypto.bip32
+from crypto.bip32 import get_user_data, mnemonic_to_key, generate_mnemonic, get_master_private_key
 from bitcoinecdsa import pubkey_to_address, privkey_to_address, pubkey, sign
 from bitcoinaddress import check_bitcoin_address
 from validate import validate_enrollment
@@ -91,62 +91,12 @@ def identity_prompt(rein):
 
 # ---- Account creation and import ----
 
-
-def create_account(rein):
-    Base.metadata.create_all(rein.engine)
-
-    # ---- Contact data ----
-
-    name = click.prompt(highlight("\nEnter name or handle", True, True), type=str)
-    contact = click.prompt(highlight("Email or BitMessage address", True, True), type=str)
-
-    # ---- Mnemonic ----
-
-    click.echo(highlight('\nHere is your 12 word mnemonic. Keep it secure - it is the key to\n'
-               'accessing your Rein account, and is only showed once.\n', True, True))
-    mnemonic = crypto.bip32.generate_mnemonic(128)
-    click.echo(' '.join(mnemonic))
-    confirm_mnemonic = click.confirm(highlight('\nConfirm that you put down the mnemonic.\n', True, True),
-                                     default=False)
-    if confirm_mnemonic:
-        click.echo(highlight('\nGenerating BIP32 data...\n', True, True))
-        # TODO - Transform it into a class with all the properties
-        key = crypto.bip32.mnemonic_to_key(mnemonic)
-        mprv = crypto.bip32.get_master_private_key(key)
-        maddr = crypto.bip32.get_master_address(key)
-        daddr = crypto.bip32.get_delegate_address(key)
-        dkey = crypto.bip32.get_delegate_private_key(key)
-        dxprv = crypto.bip32.get_delegate_extended_key(key)
-    else:
-        click.echo(highlight('\nTo sign up for Rein you have to put down the mnemonic. Aborting.', False, True))
-        quit()
-
-    # ---- Mediator ----
-
-    will_mediate = click.confirm(highlight('Are you willing to mediate?', True, True), default=False)
-    mediator_fee = 1
-    if will_mediate:
-        mediator_fee = click.prompt(highlight("Mediator fee (%)", True, True), default=1.0)
-
-    # ---- Registering user ----
-
-    user_data = {'name': name,
-                 'contact': contact,
-                 'maddr': maddr,
-                 'daddr': daddr,
-                 'dkey': dkey,
-                 'dxprv': dxprv,
-                 'will_mediate': will_mediate,
-                 'mediator_fee': mediator_fee,
-                 'testnet': rein.testnet}
-    new_identity = User(user_data)
-    rein.session.add(new_identity)
+def register_user_data(rein, user_data):
+    rein.user = User(user_data)
+    rein.session.add(rein.user)
     rein.session.commit()
 
-    # ---- Signing enrollment document ----
-    # No signature verification necessary as enrollment is signed by a Rein-generated key.
-
-    rein.user = new_identity
+def enroll(rein, user_data, mprv, maddr):
     enrollment = build_enrollment_from_dict(user_data)
     signed_enrollment = '-----BEGIN BITCOIN SIGNED MESSAGE-----\n' + \
                         enrollment + \
@@ -154,13 +104,12 @@ def create_account(rein):
                         maddr + '\n' + \
                         sign(mprv, enrollment) + \
                         '\n-----END BITCOIN SIGNED MESSAGE-----\n'
-    User.set_enrolled(rein, new_identity)
+    User.set_enrolled(rein, rein.user)
     document = Document(rein, 'enrollment', signed_enrollment, sig_verified=True, testnet=rein.testnet)
     rein.session.add(document)
     rein.session.commit()
 
-    # ---- Writing to backup file ----
-
+def backup(rein, user_data):
     if not os.path.isfile(rein.backup_filename):
         f = open(rein.backup_filename, 'w')
         try:
@@ -172,8 +121,56 @@ def create_account(rein):
     else:
         click.echo("Backup file already exists. Please run with --backup to save "
                    "user details to file.")
-    return rein.user
 
+def build_enrollment_from_dict(user_data):
+    mediator_extras = ''
+    if user_data['will_mediate']:
+        mediator_extras = "\nMediator public key: %s\nMediator fee: %s%%" % \
+                          (pubkey(user_data['dkey']), user_data['mediator_fee'])
+    enrollment = "Rein User Enrollment\nUser: %s\nContact: %s\nMaster signing address: %s" \
+                 "\nDelegate signing address: %s\nWilling to mediate: %s%s" % \
+                 (user_data['name'], user_data['contact'], user_data['maddr'], user_data['daddr'], user_data['will_mediate'], mediator_extras)
+    if user_data['testnet']:
+        enrollment += '\nTestnet: True'
+    return enrollment
+
+def create_account(rein):
+    Base.metadata.create_all(rein.engine)
+    # ---- Contact data ----
+    name = click.prompt(highlight("\nEnter name or handle", True, True), type=str)
+    contact = click.prompt(highlight("Email or BitMessage address", True, True), type=str)
+    # ---- Mnemonic ----
+    click.echo(highlight('\nHere is your 12 word mnemonic. Keep it secure - it is the key to\n'
+                         'accessing your Rein account, and is only showed once.\n', True, True))
+    mnemonic = generate_mnemonic(128)
+    click.echo(' '.join(mnemonic))
+    confirm_mnemonic = click.confirm(highlight('\nConfirm that you put down the mnemonic.\n', True, True),
+                                     default=False)
+    if confirm_mnemonic:
+        click.echo(highlight('\nGenerating BIP32 data...\n', True, True))
+        key = mnemonic_to_key(mnemonic)
+        mprv, maddr, daddr, dkey, dxprv = get_user_data(key)
+    else:
+        click.echo(highlight('\nTo sign up for Rein you have to put down the mnemonic. Aborting.', False, True))
+        quit()
+    # ---- Mediator ----
+    will_mediate = click.confirm(highlight('Are you willing to mediate?', True, True), default=False)
+    mediator_fee = 1
+    if will_mediate:
+        mediator_fee = click.prompt(highlight("Mediator fee (%)", True, True), default=1.0)
+    # ---- Registration and backup ----
+    user_data = {'name': name,
+                 'contact': contact,
+                 'maddr': maddr,
+                 'daddr': daddr,
+                 'dkey': dkey,
+                 'dxprv': dxprv,
+                 'will_mediate': will_mediate,
+                 'mediator_fee': mediator_fee,
+                 'testnet': rein.testnet}
+    register_user_data(rein, user_data=user_data)
+    enroll(rein, user_data=user_data, mprv=mprv, maddr=maddr)
+    backup(rein, user_data=user_data)
 
 def import_account(rein, mprv=None, mnemonic=None):
     Base.metadata.create_all(rein.engine)
@@ -191,33 +188,14 @@ def import_account(rein, mprv=None, mnemonic=None):
         user_data['testnet'] = rein.testnet
     if 'dxprv' not in user_data:
         user_data['dxprv'] = None
-    new_identity = User(user_data)
-    rein.session.add(new_identity)
-    rein.session.commit()
-    rein.user = new_identity
-
-    # ---- Signing enrollment ----
-
+    register_user_data(rein, user_data=user_data)
     if mnemonic:
-        key = crypto.bip32.mnemonic_to_key(mnemonic)
-        mprv = crypto.bip32.get_master_private_key(key)
+        key = mnemonic_to_key(mnemonic)
+        mprv = get_master_private_key(key)
     elif mprv:
         if not privkey_to_address(mprv):
             raise Exception('Invalid master private key.')
-
-    enrollment = build_enrollment_from_dict(user_data)
-    signed_enrollment = '-----BEGIN BITCOIN SIGNED MESSAGE-----\n' + \
-                        enrollment + \
-                        '\n-----BEGIN SIGNATURE-----\n' + \
-                        user_data['maddr'] + '\n' + \
-                        sign(mprv, enrollment) + \
-                        '\n-----END BITCOIN SIGNED MESSAGE-----\n'
-    User.set_enrolled(rein, new_identity)
-    document = Document(rein, 'enrollment', signed_enrollment, sig_verified=True, testnet=rein.testnet)
-    rein.session.add(document)
-    rein.session.commit()
-    return rein.user
-
+    enroll(rein, user_data=user_data, mprv=mprv, maddr=user_data['maddr'])
 
 def build_enrollment(rein):
     user = rein.user
@@ -231,46 +209,6 @@ def build_enrollment(rein):
     if rein.testnet:
         enrollment += '\nTestnet: True'
     return enrollment
-
-
-def build_enrollment_from_dict(user_data):
-    mediator_extras = ''
-    if user_data['will_mediate']:
-        mediator_extras = "\nMediator public key: %s\nMediator fee: %s%%" % \
-                          (pubkey(user_data['dkey']), user_data['mediator_fee'])
-    enrollment = "Rein User Enrollment\nUser: %s\nContact: %s\nMaster signing address: %s" \
-                 "\nDelegate signing address: %s\nWilling to mediate: %s%s" % \
-                 (user_data['name'], user_data['contact'], user_data['maddr'], user_data['daddr'], user_data['will_mediate'], mediator_extras)
-    if user_data['testnet']:
-        enrollment += '\nTestnet: True'
-    return enrollment
-
-
-def enroll(rein):
-    user = rein.user
-    Base.metadata.create_all(rein.engine)
-    enrollment = build_enrollment(rein)
-    f = open(rein.enroll_filename, 'w')
-    f.write(enrollment)
-    f.close()
-    click.echo("%s\n" % enrollment)
-    done = False
-    while not done:
-        filename = click.prompt(highlight("File containing signed statement", True, True), type=str, default=rein.sig_enroll_filename)
-        if os.path.isfile(filename):
-            done = True
-        else:
-            click.echo("File not found. Please check the file name and location and try again.")
-    f = open(filename, 'r')
-    signed = f.read()
-    res = validate_enrollment(signed)
-    if res:
-        User.set_enrolled(rein, user)
-        # insert signed document into documents table as type 'enrollment'
-        document = Document(rein, 'enrollment', signed, sig_verified=True, testnet=rein.testnet)
-        rein.session.add(document)
-        rein.session.commit()
-    return res
 
 # ---- Jobs | Mediators | Workers ----
 

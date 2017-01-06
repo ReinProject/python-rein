@@ -8,6 +8,7 @@ import hashlib
 import click
 import time
 import os
+import traceback
 from pprint import pprint
 from datetime import datetime
 from sqlalchemy import and_
@@ -103,13 +104,13 @@ def setup(multi):
         elif choice == 2:
             # If a delegate xprv is in the backup, means userr signed up with the new mnemonic version
             click.echo("\nDoes your backup include the delegate extended private key (starts with xprv)?\n"
-                       "If you don't specify this correctly Rein will fail to sign your enrollment\n\n"
+                       "If you don't specify this correctly Rein will fail to sign your enrollment.\n\n"
                        "1 - Yes\n2 - No\n")
             version = click.prompt(highlight("Choice", True, True), type=int, default=2)
             if version == 1:
-                import_account(rein, mnemonic=click.prompt(highlight("Enter the 12-word mnemonic Rein showed you at signup:", True, True)))
+                import_account(rein, mnemonic=click.prompt(highlight("Enter the 12-word mnemonic Rein showed you at signup", True, True)))
             elif version == 2:
-                import_account(rein, mprv=click.prompt(highlight("Enter the master private key you used to sign your enrollment message with:", True, True)))
+                import_account(rein, mprv=click.prompt(highlight("Enter the master private key you used to sign your enrollment message with", True, True)))
             log.info('account imported')
         else:
             click.echo('Invalid choice')
@@ -1088,11 +1089,9 @@ def start(multi, identity, setup):
     """
     import webbrowser
     from flask import Flask, request, redirect, url_for, flash, send_from_directory, render_template
-    from lib.forms import SetupForm, JobPostForm, BidForm, JobOfferForm, DeliverForm, AcceptForm, DisputeForm, ResolveForm
+    from lib.forms import JobPostForm, BidForm, JobOfferForm, DeliverForm, AcceptForm, DisputeForm, ResolveForm
     from lib.mediator import Mediator
-    import lib.crypto.bip32
-    from lib.ui import build_enrollment_from_dict
-    from lib.bitcoinecdsa import sign
+    from lib.crypto.bip32 import get_user_data, seed_to_key
 
     host = '127.0.0.1'
     port = 5001
@@ -1110,20 +1109,22 @@ def start(multi, identity, setup):
                        error
                        ))
 
+    @app.route('/setup')
+    def setup():
+        return render_template('setup.html')
+
     @app.route('/register-user', methods=['POST'])
     def register_user():
         try:
             # Generate user data
-            key = crypto.bip32.seed_to_key(str(request.form['seed']))
-            mprv = crypto.bip32.get_master_private_key(key)
-            maddr = crypto.bip32.get_master_address(key)
-            daddr = crypto.bip32.get_delegate_address(key)
-            dkey = crypto.bip32.get_delegate_private_key(key)
-            dxprv = crypto.bip32.get_delegate_extended_key(key)
+            key = seed_to_key(str(request.form['seed']))
+            mprv, maddr, daddr, dkey, dxprv = get_user_data(key)
+            # Chech mediator status
             if request.form['mediate'] == "True":
                 will_mediate = True
             else:
                 will_mediate = False
+            # Form a User object and insert it into the DB
             user_data = {'name': request.form['name'],
                         'contact': request.form['contact'],
                         'maddr': maddr,
@@ -1133,36 +1134,13 @@ def start(multi, identity, setup):
                         'will_mediate': will_mediate,
                         'mediator_fee': request.form['mediatorFee'],
                         'testnet': rein.testnet}
-            new_identity = User(user_data)
-            rein.user = new_identity
-            rein.session.add(new_identity)
-            rein.session.commit()
-
-            # Enroll user
-            enrollment = build_enrollment_from_dict(user_data)
-            signed_enrollment = '-----BEGIN BITCOIN SIGNED MESSAGE-----\n' + \
-                                enrollment + \
-                                '\n-----BEGIN SIGNATURE-----\n' + \
-                                maddr + '\n' + \
-                                sign(mprv, enrollment) + \
-                                '\n-----END BITCOIN SIGNED MESSAGE-----\n'
-            User.set_enrolled(rein, new_identity)
-            document = Document(rein, 'enrollment', signed_enrollment, sig_verified=True, testnet=rein.testnet)
-            rein.session.add(document)
-            rein.session.commit()
+            register_user_data(rein, user_data=user_data)
+            enroll(rein, user_data=user_data, mprv=mprv, maddr=maddr)
             return json.dumps({'enrolled': True})
         except Exception as exc:
-            import traceback
-            print(traceback.format_exc())
             to_return = {'enrolled': False,
-                         'exception': str(exc)}
-            print(exc)
+                         'exception': traceback.format_exc()}
             return json.dumps(to_return)
-
-    @app.route('/setup')
-    def setup2():
-        return render_template('setup.html')
-
 
     def shutdown_server():
         func = request.environ.get('werkzeug.server.shutdown')
@@ -1184,9 +1162,8 @@ def start(multi, identity, setup):
     def serve_static_file(path):
         return send_from_directory(tmpl_dir, path)
 
-
     if rein.has_no_account() or setup:
-        # webbrowser.open('http://'+host+':' + str(port) + '/setup')
+        webbrowser.open('http://'+host+':' + str(port) + '/setup')
         app.run(host=host, port=port, debug=rein.debug)
         return
     else:

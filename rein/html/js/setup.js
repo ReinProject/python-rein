@@ -44,7 +44,7 @@ function getMnemonic() {
     document.getElementById('ajax-description').innerHTML = "<span style='font-size: 12pt'>Put down on paper these 12 words. They are the key to accessing and recovering your Rein account.</span><br>"
     document.getElementById('ajax-elements').innerHTML = "<br><p style='font-size: 13pt'>" + mnemonic + "</p>";
     document.getElementById('ajax-button').removeAttribute('class')
-    document.getElementById('ajax-button').setAttribute('class', 'col-sm-offset-3 col-sm-6')
+    document.getElementById('ajax-button').setAttribute('class', 'col-sm-6')
     document.getElementById('ajax-button').innerHTML = "<br><button onclick='renderConfirmMnemonic()'>Next</button>"
     sessionStorage.mnemonic = mnemonic;
     sessionStorage.seed = mnemonics.toSeed(mnemonic);
@@ -65,7 +65,7 @@ function renderConfirmMnemonic() {
     ajaxHtml += '</form></div></div>';
     document.getElementById('ajax-elements').innerHTML = ajaxHtml;
     document.getElementById('ajax-button').removeAttribute('class')
-
+    document.getElementById('ajax-button').setAttribute('class', 'col-sm-offset-3 col-sm-6')
     document.getElementById('ajax-button').innerHTML = "<button onclick='confirmMnemonic()'>Next</button>"
 }
 // -------------------------
