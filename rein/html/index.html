@@ -39,7 +39,7 @@
 <div class="well">
     <p>
     <b>Master bitcoin address:</b> {{ user.maddr }}<br />
-    <b>Delegate bitcoin address:</b> {{ user.daddr }}<br />
+    <b>Delegate bitcoin address:</b> <a href="https://blockchain.info/address/{{ user.daddr }}">{{ user.daddr }}</a><br />
     <b>Delegate public key:</b> {{ key }}<br />
     <b>Willing to mediate:</b> {{ user.will_mediate }}<br />
     {% if user.will_mediate %}
