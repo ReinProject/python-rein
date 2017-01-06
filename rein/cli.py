@@ -1681,8 +1681,9 @@ def start(multi, identity, setup):
             time_left = str(days) + 'd ' + str(hours) + 'h'
 
             if state in ['job_posting', 'bid'] and j['Job creator public key'] != key:
-                row = '{}</td><td>{}</td><td>{}</td><td><span title="{}">{}</span>'
-                job_ids.append((j['Job ID'], row.format(j['Job name'],
+                row = '<a href="http://localhost:5001/job/{}">{}</a></td><td>{}</td><td>{}</td><td><span title="{}">{}</span>'
+                job_ids.append((j['Job ID'], row.format(j['Job ID'],
+                                                        j['Job name'],
                                                         j['Description'],
                                                         time_left,
                                                         j['Mediator public key'],
