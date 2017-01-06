@@ -3,13 +3,13 @@ import sys
 import json
 import click
 import getpass
-from crypto.bip32 import get_user_data, mnemonic_to_key, generate_mnemonic, get_master_private_key
-from bitcoinecdsa import pubkey_to_address, privkey_to_address, pubkey, sign
-from bitcoinaddress import check_bitcoin_address
-from validate import validate_enrollment
-from user import User, Base
-from util import unique
-from document import Document
+from .crypto.bip32 import get_user_data, mnemonic_to_key, generate_mnemonic, get_master_private_key
+from .bitcoinecdsa import pubkey_to_address, privkey_to_address, pubkey, sign
+from .bitcoinaddress import check_bitcoin_address
+from .validate import validate_enrollment
+from .user import User, Base
+from .util import unique
+from .document import Document
 
 # ---- Utilities ----
 

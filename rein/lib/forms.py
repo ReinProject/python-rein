@@ -2,15 +2,15 @@ from flask import Flask
 from flask_wtf import Form
 from wtforms import TextField, TextAreaField, RadioField, PasswordField, HiddenField
 from wtforms.validators import Required, ValidationError
-import config
-from mediator import Mediator
-from document import Document
-from order import Order
-from bitcoinecdsa import privkey_to_address
-from bitcoinaddress import check_bitcoin_address
+import rein.lib.config as config
+from .mediator import Mediator
+from .document import Document
+from .order import Order
+from .bitcoinecdsa import privkey_to_address
+from .bitcoinaddress import check_bitcoin_address
 
-from ui import build_enrollment
-from validate import validate_enrollment
+from .ui import build_enrollment
+from .validate import validate_enrollment
 
 
 def validate_privkey(form, field):
@@ -47,15 +47,15 @@ class DeliverForm(Form):
 
 class DisputeForm(Form):
     dispute_detail = TextAreaField('Dispute detail', validators = [Required()])
-    order_id = RadioField('Choose job')
+    dispute_id = RadioField('Choose job')
 
 class AcceptForm(Form):
-    signed_primary_payment = TextAreaField('Signed primary payment', validators = [Required()])
-    signed_mediator_payment = TextAreaField('Signed mediator payment', validators = [Required()])
     deliverable_id = RadioField('Deliverables')
 
 class ResolveForm(Form):
-    signed_primary_payment = TextAreaField('Signed primary payment', validators = [Required()])
-    signed_mediator_payment = TextAreaField('Signed mediator payment', validators = [Required()])
     resolution = TextAreaField('Resolution', validators = [Required()])
+    client_payment_amount = TextField('Client payment amount', validators = [Required()])
     dispute_id = RadioField('Disputes')
+
+class AcceptResolutionForm(Form):
+    resolution_id = RadioField('Resolution')

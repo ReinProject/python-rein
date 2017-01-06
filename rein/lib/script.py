@@ -3,7 +3,7 @@ import bitcoin
 from bitcoin.core import b2x, lx, x
 from bitcoin.core.script import CScript, OP_CHECKMULTISIG, OP_CHECKSIGVERIFY
 from bitcoin.wallet import CBitcoinAddress
-from validate import parse_document
+from .validate import parse_document
 import unittest
 
 def parse_script(text):

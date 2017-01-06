@@ -2,9 +2,9 @@ import hashlib
 import re
 from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, and_
 from sqlalchemy.ext.declarative import declarative_base
-from validate import filter_valid_sigs, parse_document
-from order import Order
-from io import safe_get
+from .validate import filter_valid_sigs, parse_document
+from .order import Order
+from .io import safe_get
 
 Base = declarative_base()
 
@@ -32,6 +32,7 @@ class Document(Base):
               'Rein Dispute Delivery':   'creatordispute',
               'Rein Dispute Offer':      'workerdispute',
               'Rein Dispute Resolution': 'resolution',
+              'Rein Accept Resolution': 'acceptresolution'
              }
 
     def __init__(self, rein, doc_type, contents, order_id = None,
