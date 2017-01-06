@@ -1161,7 +1161,7 @@ def start(multi, identity, setup):
 
     @app.route('/setup')
     def setup2():
-        return render_template('setup2.html')
+        return render_template('setup.html')
 
 
     def shutdown_server():

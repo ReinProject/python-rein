@@ -43,7 +43,6 @@ var Mnemonic = function(language) {
 
     function init() {
         wordlist = WORDLISTS[language];
-        console.log(language);
         if (wordlist.length != RADIX) {
             err = 'Wordlist should contain ' + RADIX + ' words, but it contains ' + wordlist.length + ' words.';
             throw err;
@@ -62,7 +61,6 @@ var Mnemonic = function(language) {
         }
         var buffer = new Uint8Array(strength / 8);
         var data = crypto.getRandomValues(buffer);
-        console.log(self.toMnemonic(data));
         return self.toMnemonic(data);
     }
 
