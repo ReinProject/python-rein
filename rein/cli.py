@@ -18,30 +18,36 @@ if not os.path.isdir(config_dir):
     os.mkdir(config_dir)
 
 # Import helper functions
-from lib.ui import *
-from lib.validate import filter_and_parse_valid_sigs, parse_document, choose_best_block, filter_out_expired, remote_query
-from lib.bitcoinecdsa import sign, pubkey
-from lib.market import * 
-from lib.util import unique
-from lib.io import safe_get
-from lib.script import build_2_of_3, build_mandatory_multisig, check_redeem_scripts
+from .lib.ui import *
+from .lib.validate import filter_and_parse_valid_sigs, parse_document, choose_best_block, filter_out_expired, remote_query
+from .lib.bitcoinecdsa import sign, pubkey
+from .lib.market import * 
+from .lib.util import unique
+from .lib.io import safe_get
+from .lib.script import build_2_of_3, build_mandatory_multisig, check_redeem_scripts
+from .lib.transaction import partial_spend_p2sh, spend_p2sh, spend_p2sh_mediator, partial_spend_p2sh_mediator, partial_spend_p2sh_mediator_2
 
 # Import config
-import lib.config as config
+import rein.lib.config as config
 
 # Create tables
-import lib.models
+import rein.lib.models
 
 # Import models
-from lib.persistconfig import PersistConfig
-from lib.user import User
-from lib.bucket import Bucket
-from lib.document import Document
-from lib.placement import Placement
-from lib.order import Order, STATE
-from lib.mediator import Mediator
+from .lib.persistconfig import PersistConfig
+from .lib.user import User
+from .lib.bucket import Bucket
+from .lib.document import Document
+from .lib.placement import Placement
+from .lib.order import Order, STATE
+from .lib.mediator import Mediator
 
 rein = config.Config()
+import bitcoin
+from bitcoin.wallet import P2PKHBitcoinAddress
+from bitcoin.core import x
+if (rein.testnet): bitcoin.SelectParams('testnet')
+
 
 @click.group()
 @click.option('--debug/--no-debug', default=False)
@@ -433,19 +439,31 @@ def deliver(multi, identity, defaults, dry_run):
         return
 
     log.info('got offer for delivery')
+    redeemScript = doc['Primary escrow redeem script']
+    mediatorRedeemScript = doc['Mediator escrow redeem script']
+    mediator_daddr = str(P2PKHBitcoinAddress.from_pubkey(x(doc['Mediator public key'])))
+    (payment_txins,payment_amount,payment_address,payment_sig) = partial_spend_p2sh(redeemScript,rein)
+    (mediator_payment_txins,mediator_payment_amount,mediator_payment_address) = partial_spend_p2sh_mediator(mediatorRedeemScript,rein,mediator_daddr)
     fields = [
-                {'label': 'Job name',                       'value_from': doc},
-                {'label': 'Job ID',                         'value_from': doc},
-                {'label': 'Deliverables',                   'value': form.deliverables.data},
-                {'label': 'Bid amount (BTC)',               'value_from': doc},
-                {'label': 'Primary escrow address',         'value_from': doc},
-                {'label': 'Mediator escrow address',        'value_from': doc},
-                {'label': 'Primary escrow redeem script',   'value_from': doc},
-                {'label': 'Mediator escrow redeem script',  'value_from': doc},
-                {'label': 'Worker public key',              'value_from': doc},
-                {'label': 'Mediator public key',            'value_from': doc},
-                {'label': 'Job creator public key',         'value_from': doc},
-             ]
+        {'label': 'Job name',                       'value_from': doc},
+        {'label': 'Job ID',                         'value_from': doc},
+        {'label': 'Deliverables',                   'value': form.deliverables.data},
+        {'label': 'Bid amount (BTC)',               'value_from': doc},
+        {'label': 'Primary escrow address',         'value_from': doc},
+        {'label': 'Mediator escrow address',        'value_from': doc},
+        {'label': 'Primary escrow redeem script',   'value_from': doc},
+        {'label': 'Mediator escrow redeem script',  'value_from': doc},
+        {'label': 'Worker public key',              'value_from': doc},
+        {'label': 'Mediator public key',            'value_from': doc},
+        {'label': 'Job creator public key',         'value_from': doc},
+        {'label':'Primary payment inputs','value':payment_txins},
+        {'label':'Primary payment amount','value':payment_amount},
+        {'label':'Primary payment address','value':payment_address},
+        {'label':'Primary payment signature','value':payment_sig},
+        {'label':'Mediator payment inputs','value':mediator_payment_txins},
+        {'label':'Mediator payment amount','value':mediator_payment_amount},
+        {'label':'Mediator payment address','value':mediator_payment_address}
+    ]
     document = assemble_document('Delivery', fields)
     if check_redeem_scripts(document):
         res = sign_and_store_document(rein, 'delivery', document, user.daddr, user.dkey, store)
@@ -492,14 +510,34 @@ def accept(multi, identity, defaults, dry_run):
 
     log.info('got delivery for accept')
 
+    redeemScript = doc['Primary escrow redeem script']
+    txins = doc['Primary payment inputs']
+    amount = doc['Primary payment amount']
+    daddr = doc['Primary payment address']
+    worker_sig = doc['Primary payment signature']
+    redeemScript_mediator = doc['Mediator escrow redeem script']
+    txins_mediator = doc['Mediator payment inputs']
+    amount_mediator = doc['Mediator payment amount']
+    daddr_mediator = doc['Mediator payment address']
+    (payment_txid,client_sig) = spend_p2sh(redeemScript,txins,[float(amount)],[daddr],worker_sig,rein)
+    client_sig_for_mediator = partial_spend_p2sh_mediator_2(redeemScript_mediator,txins_mediator,float(amount_mediator),daddr_mediator,rein)
+    
     fields = [
-                {'label': 'Job name',                       'value_from': doc},
-                {'label': 'Job ID',                         'value_from': doc},
-                {'label': 'Signed primary payment',         'not_null': form},
-                {'label': 'Signed mediator payment',        'not_null': form},
-                {'label': 'Primary escrow redeem script',   'value_from': doc},
-                {'label': 'Mediator escrow redeem script',  'value_from': doc},
-             ]
+        {'label': 'Job name',                       'value_from': doc},
+        {'label': 'Job ID',                         'value_from': doc},
+        {'label': 'Primary escrow redeem script',   'value_from': doc},
+        {'label': 'Mediator escrow redeem script',  'value_from': doc},
+        {'label':'Primary payment inputs','value_from':doc},
+        {'label':'Primary payment amount','value_from':doc},
+        {'label':'Primary payment address','value_from':doc},
+        {'label':'Primary payment signature','value_from':doc},
+        {'label':'Primary payment txid','value':payment_txid},
+        {'label':'Primary payment client signature','value':client_sig},
+        {'label':'Mediator payment inputs','value_from':doc},
+        {'label':'Mediator payment amount','value_from':doc},
+        {'label':'Mediator payment address','value_from':doc},
+        {'label':'Mediator payment client signature','value':client_sig_for_mediator}
+    ]
     document = assemble_document('Accept Delivery', fields)
     click.echo('\n'+document+'\n')
     if click.confirm("Are you sure?"):
@@ -550,6 +588,9 @@ def creatordispute(multi, identity, defaults, dry_run):
                 {'label': 'Dispute detail',                 'not_null': form},
                 {'label': 'Primary escrow redeem script',   'value_from': doc},
                 {'label': 'Mediator escrow redeem script',  'value_from': doc},
+        {'label': 'Job creator public key', 'value_from': doc},
+        {'label': 'Worker public key', 'value_from': doc},
+        {'label': 'Mediator public key', 'value_from':doc}
              ]
     document = assemble_document('Dispute Delivery', fields)
     res = sign_and_store_document(rein, 'creatordispute', document, user.daddr, user.dkey, store)
@@ -593,11 +634,14 @@ def workerdispute(multi, identity, defaults, dry_run):
 
     log.info('got in-process job for dispute')
     fields = [
-                {'label': 'Job name',                       'value_from': doc},
-                {'label': 'Job ID',                         'value_from': doc},
-                {'label': 'Dispute detail',                 'not_null': form},
-                {'label': 'Primary escrow redeem script',   'value_from': doc},
-                {'label': 'Mediator escrow redeem script',  'value_from': doc},
+        {'label': 'Job name',                       'value_from': doc},
+        {'label': 'Job ID',                         'value_from': doc},
+        {'label': 'Dispute detail',                 'not_null': form},
+        {'label': 'Primary escrow redeem script',   'value_from': doc},
+        {'label': 'Mediator escrow redeem script',  'value_from': doc},
+        {'label': 'Job creator public key', 'value_from': doc},
+        {'label': 'Worker public key','value_from': doc},
+        {'label': 'Mediator public key','value_from':doc}
              ]
     document = assemble_document('Dispute Offer', fields)
     res = sign_and_store_document(rein, 'workerdispute', document, user.daddr, user.dkey, store)
@@ -663,13 +707,34 @@ def resolve(multi, identity, defaults, dry_run):
         return
 
     log.info('got disputes for resolve')
+    redeemScript = doc['Primary escrow redeem script']
+    mediatorRedeemScript = doc['Mediator escrow redeem script']
+    mediator_daddr = rein.user.daddr
+    worker_payment_daddr = str(P2PKHBitcoinAddress.from_pubkey(x(doc['Worker public key'])));
+    client_payment_daddr = str(P2PKHBitcoinAddress.from_pubkey(x(doc['Job creator public key'])));
+    client_payment_amount = float(click.prompt("Client payment amount"))
+    (payment_txins,payment_amount_1,payment_address_1,payment_amount_2,payment_address_2,payment_sig) = partial_spend_p2sh(redeemScript,rein,worker_payment_daddr,client_payment_amount,client_payment_daddr)
+    (mediator_payment_txins,mediator_payment_amount,mediator_payment_address,mediator_payment_sig) = partial_spend_p2sh_mediator(mediatorRedeemScript,rein,mediator_daddr,True)
     fields = [
-                {'label': 'Job name',                       'value_from': doc},
-                {'label': 'Job ID',                         'value_from': doc},
-                {'label': 'Resolution',                     'not_null': form},
-                {'label': 'Signed primary payment',         'not_null': form},
-                {'label': 'Signed mediator payment',        'not_null': form},
-             ]
+        {'label': 'Job name',                       'value_from': doc},
+        {'label': 'Job ID',                         'value_from': doc},
+        {'label': 'Resolution',                     'not_null': form},
+        {'label': 'Job creator public key', 'value_from': doc},
+        {'label': 'Worker public key', 'value_from':doc},
+        {'label': 'Mediator public key', 'value_from':doc},
+        {'label': 'Primary escrow redeem script',   'value_from': doc},
+        {'label': 'Mediator escrow redeem script',  'value_from': doc},
+        {'label':'Primary payment inputs','value':payment_txins},
+        {'label':'Primary worker payment amount','value':payment_amount_1},
+        {'label':'Primary worker payment address','value':payment_address_1},
+        {'label':'Primary client payment amount','value':payment_amount_2},
+        {'label':'Primary client payment address','value':payment_address_2},
+        {'label':'Primary payment signature','value':payment_sig},
+        {'label':'Mediator payment inputs','value':mediator_payment_txins},
+        {'label':'Mediator payment amount','value':mediator_payment_amount},
+        {'label':'Mediator payment address','value':mediator_payment_address},
+        {'label':'Mediator payment signature','value':mediator_payment_sig}
+    ]
     document = assemble_document('Dispute Resolution', fields)
     res = sign_and_store_document(rein, 'resolve', document, user.daddr, user.dkey, store)
     if res and store:
@@ -1101,8 +1166,8 @@ def start(multi, identity, setup):
     """
     import webbrowser
     from flask import Flask, request, redirect, url_for, flash, send_from_directory, render_template
-    from lib.forms import SetupForm, JobPostForm, BidForm, JobOfferForm, DeliverForm, AcceptForm, DisputeForm, ResolveForm
-    from lib.mediator import Mediator
+    from .lib.forms import SetupForm, JobPostForm, BidForm, JobOfferForm, DeliverForm, AcceptForm, DisputeForm, ResolveForm, AcceptResolutionForm
+    from .lib.mediator import Mediator
 
     host = '127.0.0.1'
     port = 5001
@@ -1171,7 +1236,7 @@ def start(multi, identity, setup):
         log = rein.get_log()
 
         from rein.lib.user import User
-        from lib.forms import SignForm
+        from .lib.forms import SignForm
         form = SignForm(request.form)
 
         if request.method == 'POST' and form.validate_on_submit():
@@ -1216,7 +1281,7 @@ def start(multi, identity, setup):
 
 
     if rein.has_no_account() or setup:
-        webbrowser.open('http://'+host+':' + str(port) + '/setup')
+        print('Open your browser to http://'+host+':' + str(port) + '/setup')
         app.run(host=host, port=port, debug=rein.debug)
         return
     else:
@@ -1465,13 +1530,32 @@ def start(multi, identity, setup):
         if request.method == 'POST' and form.validate_on_submit():
             delivery_doc = Document.get(rein, form.deliverable_id.data)
             delivery = parse_document(delivery_doc.contents)
+            redeemScript = delivery['Primary escrow redeem script']
+            txins = delivery['Primary payment inputs']
+            amount = delivery['Primary payment amount']
+            daddr = delivery['Primary payment address']
+            worker_sig = delivery['Primary payment signature']
+            redeemScript_mediator = delivery['Mediator escrow redeem script']
+            txins_mediator = delivery['Mediator payment inputs']
+            amount_mediator = delivery['Mediator payment amount']
+            daddr_mediator = delivery['Mediator payment address']
+            (payment_txid,client_sig) = spend_p2sh(redeemScript,txins,[float(amount)],[daddr],worker_sig,rein)
+            client_sig_for_mediator = partial_spend_p2sh_mediator_2(redeemScript_mediator,txins_mediator,float(amount_mediator),daddr_mediator,rein)
             fields = [
                 {'label': 'Job name',                       'value_from': delivery},
                 {'label': 'Job ID',                         'value_from': delivery},
-                {'label': 'Signed primary payment',         'value': form.signed_primary_payment.data},
-                {'label': 'Signed mediator payment',        'value': form.signed_mediator_payment.data},
                 {'label': 'Primary escrow redeem script',   'value_from': delivery},
                 {'label': 'Mediator escrow redeem script',  'value_from': delivery},
+                {'label':'Primary payment inputs','value_from':delivery},
+                {'label':'Primary payment amount','value_from':delivery},
+                {'label':'Primary payment address','value_from':delivery},
+                {'label':'Primary payment signature','value_from':delivery},
+                {'label':'Primary payment txid','value':payment_txid},
+                {'label':'Primary payment client signature','value':client_sig},
+                {'label':'Mediator payment inputs','value_from':delivery},
+                {'label':'Mediator payment amount','value_from':delivery},
+                {'label':'Mediator payment address','value_from':delivery},
+                {'label':'Mediator payment client signature','value':client_sig_for_mediator}
                      ]
 
             document_text = assemble_document('Accept Delivery', fields)
@@ -1485,7 +1569,7 @@ def start(multi, identity, setup):
             log.info('accept signed') if document else log.error('accept failed')
             return redirect("/")
         elif request.method == 'POST':
-            print "form data " + str(form)
+            print("form data " + str(form))
             flash_errors(form)
             return redirect("/accept")
         else:
@@ -1498,6 +1582,110 @@ def start(multi, identity, setup):
                             no_choices=no_choices,
                             time_offset=time_offset
                             )
+    @app.route("/acceptresolution", methods=['POST', 'GET'])
+    def job_acceptresolution():
+
+        form = AcceptResolutionForm(request.form)
+
+        documents = Document.get_user_documents(rein)
+        job_ids = []
+        for document in documents:
+            job_id = Document.get_job_id(document.contents)
+            if job_id not in job_ids:
+                if document.source_url == 'local' and document.doc_type != 'enrollment':
+                    job_ids.append(job_id)
+
+        urls = Bucket.get_urls(rein)
+        documents = []
+        job_ids_string = ','.join(job_ids)
+        valid_results = []
+        for url in urls:
+            sel_url = "{0}query?owner={1}&job_ids={2}&query=by_job_id&testnet={3}"
+            data = safe_get(log, sel_url.format(url, user.maddr, job_ids_string, rein.testnet))
+            if data and 'by_job_id' in data:
+                results = data['by_job_id']
+                valid_results += filter_and_parse_valid_sigs(rein, results, 'Resolution')
+                    
+        valid_results = unique(valid_results, 'Job ID')
+
+        resolutions = []
+        for result in valid_results:
+            if "Resolution" in result:
+                resolutions.append((result['Job ID'], '{}</td><td>{}'.format( job_link(result), result['Resolution'] )))
+                
+        no_choices = len(resolutions) == 0
+        form.resolution_id.choices = unique(resolutions)
+        
+        if request.method == 'POST' and form.validate_on_submit():
+            delivery = None
+            for u in valid_results:
+                if u['Job ID'] == form.resolution_id.data:
+                    delivery = u
+            redeemScript = delivery['Primary escrow redeem script']
+            txins = delivery['Primary payment inputs']
+            amount1 = delivery['Primary worker payment amount']
+            daddr1 = delivery['Primary worker payment address']
+            amount2 = delivery['Primary client payment amount']
+            daddr2 = delivery['Primary client payment address']
+            sig_primary = delivery['Primary payment signature']
+            redeemScript_mediator = delivery['Mediator escrow redeem script']
+            txins_mediator = delivery['Mediator payment inputs']
+            amount_mediator = delivery['Mediator payment amount']
+            daddr_mediator = delivery['Mediator payment address']
+            sig_mediator = delivery['Mediator payment signature']
+
+            reverse_sigs = False
+            if key == delivery['Worker public key']:
+                reverse_sigs = True
+            (payment_txid,second_sig) = spend_p2sh(redeemScript,txins,[float(amount1),float(amount2)],[daddr1,daddr2],sig_primary,rein,reverse_sigs)
+            (payment_txid_mediator,second_sig_mediator) = spend_p2sh_mediator(redeemScript_mediator,txins_mediator,[float(amount_mediator)],[daddr_mediator],sig_mediator,rein)
+            fields = [
+                {'label': 'Job name',                       'value_from': delivery},
+                {'label': 'Job ID',                         'value_from': delivery},
+                {'label': 'Primary escrow redeem script',   'value_from': delivery},
+                {'label': 'Mediator escrow redeem script',  'value_from': delivery},
+                {'label':'Primary payment inputs','value_from':delivery},
+                {'label':'Primary worker payment amount','value_from':delivery},
+                {'label':'Primary worker payment address','value_from':delivery},
+                {'label':'Primary client payment amount','value_from':delivery},
+                {'label':'Primary client payment address','value_from':delivery},
+                {'label':'Primary payment signature','value_from':delivery},
+                {'label':'Primary payment txid','value':payment_txid},
+                {'label':'Primary payment second signature','value':second_sig},
+                {'label':'Mediator payment inputs','value_from':delivery},
+                {'label':'Mediator payment amount','value_from':delivery},
+                {'label':'Mediator payment address','value_from':delivery},
+                {'label':'Mediator payment signature','value_from':delivery},
+                {'label':'Mediator payment txid','value':payment_txid_mediator},
+                {'label':'Mediator payment second signature','value':second_sig_mediator}
+            ]
+            
+            document_text = assemble_document('Accept Resolution', fields)
+            store = True
+            document = sign_and_store_document(rein, 'acceptresolution', document_text, user.daddr, user.dkey, store)
+            if document and store:
+                click.echo("Accept Resolution created.")
+                sync_core(log, user, key, urls)
+                flash("Accept Resolution signed and pushed to available servers.")
+            assemble_order(rein, document)
+            log.info('accept resolution signed') if document else log.error('accept resolution failed')
+            return redirect("/")
+        elif request.method == 'POST':
+            print("form data " + str(form))
+            flash_errors(form)
+            return redirect("/acceptresolution")
+        else:
+            return render_template("acceptresolution.html",
+                                   form=form,
+                                user=user,
+                                   key=key,
+                                   urls=urls,
+                                   block_time=str_block_time,
+                                   no_choices=no_choices,
+                                time_offset=time_offset
+            )
+                    
+                                                                
 
 
     @app.route("/resolve", methods=['POST', 'GET'])
@@ -1513,8 +1701,8 @@ def start(multi, identity, setup):
             if data and 'review' in data:
                 review += filter_and_parse_valid_sigs(rein, data['review'])
 
-        jobs_mediating = unique(review, 'Description')
-        print len(jobs_mediating)
+        jobs_mediating = unique(review, 'Dispute detail')
+        print(len(jobs_mediating))
 
         # store doc if we don't have it
         updated_jobs = []
@@ -1543,29 +1731,51 @@ def start(multi, identity, setup):
             state = order.get_state(rein, Document)
 
             # add ones that need resolution to the choices
-            if state in ['workerdispute', 'creatordispute']:
-                dispute_docs = order.get_documents(rein, Document, state)
-                if len(dispute_docs) > 0:
-                    d = dispute_docs[0]
-                    doc = parse_document(d.contents)
-                    disputes.append((str(d.id), '{}</td><td>{}'.format( job_link(doc),
-                                                                        doc['Dispute detail']
-                                                                        )))
+            # Note: removed requirement for state since it causes problems
+            #dispute_docs = order.get_documents(rein, Document)
+            #for d in dispute_docs:
+                #doc = parse_document(d.contents)
+            if 'Dispute detail' in u:
+                disputes.append((u['Job ID'], '{}</td><td>{}'.format( job_link(u),
+                                                                      u['Dispute detail']
+                                                                  )))
         no_choices = len(disputes) == 0
 
         form.dispute_id.choices = unique(disputes)
 
         if request.method == 'POST' and form.validate_on_submit():
-            dispute_doc = Document.get(rein, form.dispute_id.data)
-            dispute = parse_document(dispute_doc.contents)
+            dispute = None
+            for u in jobs_mediating:
+                if u['Job ID'] == form.dispute_id.data:
+                    dispute = u
+            redeemScript = dispute['Primary escrow redeem script']
+            mediatorRedeemScript = dispute['Mediator escrow redeem script']
+            mediator_daddr = rein.user.daddr
+            worker_payment_daddr = str(P2PKHBitcoinAddress.from_pubkey(x(dispute['Worker public key'])));
+            client_payment_daddr = str(P2PKHBitcoinAddress.from_pubkey(x(dispute['Job creator public key'])));
+            client_payment_amount = float(form.client_payment_amount.data)
+            (payment_txins,payment_amount_1,payment_address_1,payment_amount_2,payment_address_2,payment_sig) = partial_spend_p2sh(redeemScript,rein,worker_payment_daddr,client_payment_amount,client_payment_daddr)
+            (mediator_payment_txins,mediator_payment_amount,mediator_payment_address,mediator_payment_sig) = partial_spend_p2sh_mediator(mediatorRedeemScript,rein,mediator_daddr,True)
             fields = [
                 {'label': 'Job name',                       'value_from': dispute},
                 {'label': 'Job ID',                         'value_from': dispute},
                 {'label': 'Resolution',                     'value': form.resolution.data},
-                {'label': 'Signed primary payment',         'value': form.signed_primary_payment.data},
-                {'label': 'Signed mediator payment',        'value': form.signed_mediator_payment.data},
-                     ]
-
+                {'label': 'Job creator public key', 'value_from': dispute},
+                {'label': 'Worker public key', 'value_from':dispute},
+                {'label': 'Mediator public key', 'value_from':dispute},
+                {'label': 'Primary escrow redeem script',   'value_from': dispute},
+                {'label': 'Mediator escrow redeem script',  'value_from': dispute},
+                {'label':'Primary payment inputs','value':payment_txins},
+                {'label':'Primary worker payment amount','value':payment_amount_1},
+                {'label':'Primary worker payment address','value':payment_address_1},
+                {'label':'Primary client payment amount','value':payment_amount_2},
+                {'label':'Primary client payment address','value':payment_address_2},
+                {'label':'Primary payment signature','value':payment_sig},
+                {'label':'Mediator payment inputs','value':mediator_payment_txins},
+                {'label':'Mediator payment amount','value':mediator_payment_amount},
+                {'label':'Mediator payment address','value':mediator_payment_address},
+                {'label':'Mediator payment signature','value':mediator_payment_sig}
+            ]
             document_text = assemble_document('Dispute Resolution', fields)
             store = True
             document = sign_and_store_document(rein, 'resolve', document_text, user.daddr, user.dkey, store)
@@ -1577,7 +1787,7 @@ def start(multi, identity, setup):
             log.info('resolve signed') if document else log.error('resolve failed')
             return redirect("/")
         elif request.method == 'POST':
-            print "form data " + str(form)
+            print("form data " + str(form))
             flash_errors(form)
             return redirect("/resolve")
         else:
@@ -1659,10 +1869,10 @@ def start(multi, identity, setup):
 
         no_choices = len(orders) == 0
 
-        form.order_id.choices = orders
+        form.dispute_id.choices = orders
 
         if request.method == 'POST' and form.validate_on_submit():
-            latest_doc = Document.get(rein, form.order_id.data)
+            latest_doc = Document.get(rein, form.dispute_id.data)
             doc = parse_document(latest_doc.contents)
             fields = [
                 {'label': 'Job name',                       'value_from': doc},
@@ -1670,6 +1880,9 @@ def start(multi, identity, setup):
                 {'label': 'Dispute detail',                 'value': form.dispute_detail.data},
                 {'label': 'Primary escrow redeem script',   'value_from': doc},
                 {'label': 'Mediator escrow redeem script',  'value_from': doc},
+                {'label': 'Job creator public key', 'value_from': doc},
+                {'label': 'Worker public key', 'value_from':doc},
+                {'label': 'Mediator public key', 'value_from':doc}
                      ]
 
             if key == doc['Job creator public key']:
@@ -1690,7 +1903,7 @@ def start(multi, identity, setup):
             log.info(doc_type + ' signed') if document else log.error(doc_type + ' failed')
             return redirect("/")
         elif request.method == 'POST':
-            print "form data " + str(form)
+            print("form data " + str(form))
             flash_errors(form)
             return redirect("/dispute")
         else:
@@ -1849,6 +2062,11 @@ def start(multi, identity, setup):
             order = Order.get_by_job_id(rein, form.job_id.data)
             offer = order.get_documents(rein, Document, doc_type='offer')
             doc = parse_document(offer[0].contents)
+            redeemScript = doc['Primary escrow redeem script']
+            mediatorRedeemScript = doc['Mediator escrow redeem script']
+            mediator_daddr = str(P2PKHBitcoinAddress.from_pubkey(x(doc['Mediator public key'])))
+            (payment_txins,payment_amount,payment_address,payment_sig) = partial_spend_p2sh(redeemScript,rein)
+            (mediator_payment_txins,mediator_payment_amount,mediator_payment_address) = partial_spend_p2sh_mediator(mediatorRedeemScript,rein,mediator_daddr)
             fields = [
                 {'label': 'Job name',                       'value_from': doc},
                 {'label': 'Job ID',                         'value_from': doc},
@@ -1861,6 +2079,13 @@ def start(multi, identity, setup):
                 {'label': 'Worker public key',              'value_from': doc},
                 {'label': 'Mediator public key',            'value_from': doc},
                 {'label': 'Job creator public key',         'value_from': doc},
+                {'label':'Primary payment inputs','value':payment_txins},
+                {'label':'Primary payment amount','value':payment_amount},
+                {'label':'Primary payment address','value':payment_address},
+                {'label':'Primary payment signature','value':payment_sig},
+                {'label':'Mediator payment inputs','value':mediator_payment_txins},
+                {'label':'Mediator payment amount','value':mediator_payment_amount},
+                {'label':'Mediator payment address','value':mediator_payment_address},
                     ]
             document_text = assemble_document('Delivery', fields)
             store = True
@@ -1905,7 +2130,7 @@ def start(multi, identity, setup):
                         documents=documents,
                         orders=orders)
 
-    webbrowser.open('http://'+host+':' + str(port))
+    print('Open your browser to http://'+host+':' + str(port))
     app.run(host=host, port=port, debug=rein.debug)
 
     # testing steps: Disable tor. Then turn on debug because debug doesn't work when socket is overriden
