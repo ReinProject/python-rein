@@ -1,8 +1,8 @@
 build/
 dist/
 c/
-venv/
 .idea/
+venv/
 .vscode/
 *.txt
 *.sig
