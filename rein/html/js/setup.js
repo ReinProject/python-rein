@@ -45,12 +45,12 @@ function getMnemonic() {
     document.getElementById('ajax-elements').innerHTML = "<br><p style='font-size: 13pt'>" + mnemonic + "</p>";
     document.getElementById('ajax-button').removeAttribute('class')
     document.getElementById('ajax-button').setAttribute('class', 'col-sm-6')
-    document.getElementById('ajax-button').innerHTML = "<br><button onclick='renderConfirmMnemonic()'>Next</button>"
+    document.getElementById('ajax-button').innerHTML = "<br><button onclick='renderConfirmationPage()'>Next</button>"
     sessionStorage.mnemonic = mnemonic;
     sessionStorage.seed = mnemonics.toSeed(mnemonic);
 }
 // -------------------------
-function renderConfirmMnemonic() {
+function renderConfirmationPage() {
     document.getElementById('ajax-header').innerText = "Confirm that you wrote down the mnemonic";
     document.getElementById('ajax-description').innerText = '';
     var wordsToCheck = [1, 2, 3, 10, 11, 12];
