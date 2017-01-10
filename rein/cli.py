@@ -1227,6 +1227,10 @@ def start(multi, identity, setup):
     def serve_static_file(path):
         return send_from_directory(tmpl_dir, path)
 
+    @app.route('/rate')
+    def rate():
+        return render_template('rate.html')
+
     if rein.has_no_account() or setup:
         print('Open your browser to http://'+host+':' + str(port) + '/setup')
         app.run(host=host, port=port, debug=rein.debug)
