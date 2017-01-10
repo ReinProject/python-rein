@@ -5,7 +5,7 @@ import click
 import getpass
 from .crypto.bip32 import get_user_data, mnemonic_to_key, generate_mnemonic, get_master_private_key
 from .bitcoinecdsa import pubkey_to_address, privkey_to_address, pubkey, sign
-from .bitcoinaddress import check_bitcoin_address
+from .bitcoinaddress import check_bitcoin_address, generate_sin
 from .validate import validate_enrollment
 from .user import User, Base
 from .util import unique
@@ -128,8 +128,8 @@ def build_enrollment_from_dict(user_data):
         mediator_extras = "\nMediator public key: %s\nMediator fee: %s%%" % \
                           (pubkey(user_data['dkey']), user_data['mediator_fee'])
     enrollment = "Rein User Enrollment\nUser: %s\nContact: %s\nMaster signing address: %s" \
-                 "\nDelegate signing address: %s\nWilling to mediate: %s%s" % \
-                 (user_data['name'], user_data['contact'], user_data['maddr'], user_data['daddr'], user_data['will_mediate'], mediator_extras)
+                 "\nDelegate signing address: %s\nMaster Secure Identity Number: %s\nWilling to mediate: %s%s" % \
+                 (user_data['name'], user_data['contact'], user_data['maddr'], user_data['daddr'], user_data['msin'], user_data['will_mediate'], mediator_extras)
     if user_data['testnet']:
         enrollment += '\nTestnet: True'
     return enrollment
@@ -150,6 +150,7 @@ def create_account(rein):
         click.echo(highlight('\nGenerating BIP32 data...\n', True, True))
         key = mnemonic_to_key(mnemonic)
         mprv, maddr, daddr, dkey, dxprv = get_user_data(key)
+        msin = generate_sin(maddr)
     else:
         click.echo(highlight('\nTo sign up for Rein you have to put down the mnemonic. Aborting.', False, True))
         quit()
@@ -165,6 +166,7 @@ def create_account(rein):
                  'daddr': daddr,
                  'dkey': dkey,
                  'dxprv': dxprv,
+                 'msin': msin,
                  'will_mediate': will_mediate,
                  'mediator_fee': mediator_fee,
                  'testnet': rein.testnet}

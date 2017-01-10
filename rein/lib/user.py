@@ -15,7 +15,7 @@ class User(Base):
     dkey = Column(String(64), nullable=False)
     # Temporary nullable to keep backwards compatibility with v0.2.0 backup files
     dxprv = Column(String(250), nullable=True)
-    msin = Column(String(64), nullable=False)
+    msin = Column(String(64), nullable=True)
     will_mediate = Column(Boolean, nullable=False)
     mediator_fee = Column(Float, nullable=False)
     enrolled = Column(Boolean, nullable=False)
@@ -28,6 +28,7 @@ class User(Base):
         self.daddr = user_data['daddr']
         self.dkey = user_data['dkey']
         self.dxprv = user_data['dxprv']
+        self.msin = user_data['msin']
         self.enrolled = False
         self.testnet = user_data['testnet']
 

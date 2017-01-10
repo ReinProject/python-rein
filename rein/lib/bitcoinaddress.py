@@ -36,11 +36,16 @@ class BitcoinAddressTest(unittest.TestCase):
     def check_sin(self):
         self.assertEqual(sin_type_2('02F840A04114081690223B7069071A70D6DABB891763B638CC20C7EC3BD58E6C86', 'TfG4ScDgysrSpodWD4Re5UtXmcLbY5CiUHA'))
 
-def sin_type_2(master_key):
+def generate_sin(master_key):
     """Generates a type 2 'Secure Identity Number' using the bip32 master public key"""
     prefix = 0x0F
     sin_type = 0x02
-    master_key = unhexlify(master_key)
+    # Convert master key to hex if necessary
+    try:
+        master_key = unhexlify(master_key)
+
+    except TypeError:
+        pass
 
     # Step 1 (SHA-256 of public key)
     step_1 = sha256(master_key).hexdigest()
