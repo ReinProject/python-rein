@@ -62,14 +62,14 @@ class AcceptResolutionForm(Form):
 
 class RatingForm(Form):
     rating_choices = [
-        (0, 'Could not have been worse'),
-        (1, 'Bad'),
-        (2, 'Acceptable'),
-        (3, 'Good'),
-        (4, 'Very good'),
-        (5, 'Could not have been better')
+        ('0', 'Could not have been worse'),
+        ('1', 'Bad'),
+        ('2', 'Acceptable'),
+        ('3', 'Good'),
+        ('4', 'Very good'),
+        ('5', 'Could not have been better')
     ]
-    job_id = TextField('Job id', validators = [Required()])
-    user_id = TextField('User id', validators = [Required()])
-    rating = RadioField('Rate user\' performance', choices=rating_choices, validators=[Required()])
-    comments = TextAreaField('Comments', validators = [])
+    job_id = TextField('Job id', validators = [Required()], default='')
+    user_id = TextField('User id', validators = [Required()], default='')
+    rating = RadioField('Rate user\' performance', choices=rating_choices, validators=[Required()], default=0)
+    comments = TextAreaField('Comments', validators = [], default='')

@@ -9,13 +9,13 @@
 
         <div class="form-group">
             <label class="col-sm-4 control-label">{{ form.job_id.label }}</label>
-            <div class="col-sm-6">{{ form.job_id(rows=1, cols=40, class="form-control", data_toggle="tooltip", title="Unique job identifier", disabled=True) }}</div>
+            <div class="col-sm-6">{{ form.job_id(class="form-control", data_toggle="tooltip", title="Unique job identifier", readonly=true) }}</div>
             {{ render_error(form.job_id) }}
         </div>
 
         <div class="form-group">
             <label class="col-sm-4 control-label">{{ form.user_id.label }}</label>
-            <div class="col-sm-6">{{ form.user_id(rows=1, cols=40, class="form-control", data_toggle="tooltip", title="Unique user identifier: either the user's master bitcoin address or Secure Identity Number", disabled=True) }}</div>
+            <div class="col-sm-6">{{ form.user_id(class="form-control", data_toggle="tooltip", title="Unique user identifier: either the user's master bitcoin address or Secure Identity Number", readonly=true) }}</div>
             {{ render_error(form.user_id) }}
         </div>
 
@@ -35,7 +35,7 @@
 
         <div class="form-group">
             <label class="col-sm-4 control-label">{{ form.comments.label }}</label>
-            <div class="col-sm-6">{{ form.comments(rows=1, cols=40, class="form-control", data_toggle="tooltip", title="Add any comments you consider important") }}</div>
+            <div class="col-sm-6">{{ form.comments(class="form-control", data_toggle="tooltip", title="Add any comments you consider important") }}</div>
             {{ render_error(form.comments) }}
         </div>
 
