@@ -8,6 +8,7 @@ import hashlib
 import click
 import time
 import os
+import traceback
 from pprint import pprint
 from datetime import datetime
 from sqlalchemy import and_
@@ -99,43 +100,29 @@ def setup(multi):
         rein.set_multiuser()
     log.info('entering setup')
     if multi or rein.has_no_account():
-        click.echo("\n" + hilight("Welcome to Rein.", True, True) + "\n\n"
+        click.echo("\n" + highlight("Welcome to Rein.", True, True) + "\n\n"
                    "Do you want to import a backup or create a new account?\n\n"
                    "1 - Create new account\n2 - Import backup\n")
-        choice = click.prompt(hilight("Choice", True, True), type=int, default=1)
+        choice = click.prompt(highlight("Choice", True, True), type=int, default=1)
         if choice == 1:
             create_account(rein)
             log.info('account created')
         elif choice == 2:
-            import_account(rein)
+            # If a delegate xprv is in the backup, means userr signed up with the new mnemonic version
+            click.echo("\nDoes your backup include the delegate extended private key (starts with xprv)?\n"
+                       "If you don't specify this correctly Rein will fail to sign your enrollment.\n\n"
+                       "1 - Yes\n2 - No\n")
+            version = click.prompt(highlight("Choice", True, True), type=int, default=2)
+            if version == 1:
+                import_account(rein, mnemonic=click.prompt(highlight("Enter the 12-word mnemonic Rein showed you at signup", True, True)))
+            elif version == 2:
+                import_account(rein, mprv=click.prompt(highlight("Enter the master private key you used to sign your enrollment message with", True, True)))
             log.info('account imported')
         else:
             click.echo('Invalid choice')
             return
-        click.echo("------------")
-        click.echo("The file %s has just been saved with your user details and needs to be signed "
-                   "with your master private key. The private key for this address should be "
-                   "kept offline and multiple encrypted backups made. This key will effectively "
-                   "become your identity in Rein and a delegate address will be used for day-to-day "
-                   "transactions.\n\n" % rein.enroll_filename)
-        res = enroll(rein)
-        if isinstance(res, dict) and  res['valid']:
-            click.echo("Enrollment complete. Run 'rein buy' to purchase microhosting (required for sync).")
-            log.info('enrollment complete')
-        else:
-            click.echo("Signature verification failed. Please try again.")
-            log.error('enrollment failed')
-    elif rein.session.query(Document).filter(Document.doc_type == 'enrollment', Document.testnet == rein.testnet).count() < \
-            rein.session.query(User).filter(User.enrolled == 0, User.testnet == rein.testnet).count():
-        click.echo('Continuing previously unfinished setup.\n')
-        get_user(rein, False, False)
-        res = enroll(rein)
-        if res['valid']:
-            click.echo("Enrollment complete. Run 'rein buy' to purchase microhosting (required for sync).")
-            log.info('enrollment complete')
-        else:
-            click.echo("Signature verification failed. Please try again.")
-            log.error('enrollment failed')
+        click.echo("Enrollment complete. Run 'rein buy' to purchase microhosting (required for sync).")
+        log.info('enrollment complete')
     else:
         click.echo("Identity already setup.")
     log.info('exiting setup')
@@ -223,7 +210,7 @@ def post(multi, identity, defaults, dry_run):
             click.echo('Your post includes the word "test". If this post is a test, '
                        'please put rein into testnet mode with "rein testnet true" '
                        'and setup a test identity before posting.')
-            if not click.confirm(hilight('Would you like to continue to post this on mainnet?', True, True), default=False):
+            if not click.confirm(highlight('Would you like to continue to post this on mainnet?', True, True), default=False):
                 return
 
     document = sign_and_store_document(rein, 'job_posting', document_text, user.daddr, user.dkey, store)
@@ -761,7 +748,7 @@ def request(multi, identity, url):
     log.info('got user for request')
 
     if not url.endswith('/'):
-        url = url + '/'
+        url += '/'
     if not url.startswith('http://') and not url.startswith('https://'):
         url = 'http://' + url
 
@@ -791,7 +778,7 @@ def request(multi, identity, url):
         click.echo('The server returned an error: %s' % data['message'])
 
     for bucket in data['buckets']:
-        b = rein.session.query(Bucket).filter(and_(Bucket.url==url, Bucket.date_created==bucket['created'])).first()
+        b = rein.session.query(Bucket).filter(and_(Bucket.url == url, Bucket.date_created == bucket['created'])).first()
         if b is None:
             b = Bucket(url, user.id, bucket['id'], bucket['bytes_free'],
                        datetime.strptime(bucket['created'], '%Y-%m-%d %H:%M:%S'))
@@ -1099,6 +1086,7 @@ def is_number(s):
     except ValueError:
         return False
 
+
 def is_int(s):
     try:
         int(s)
@@ -1166,8 +1154,9 @@ def start(multi, identity, setup):
     """
     import webbrowser
     from flask import Flask, request, redirect, url_for, flash, send_from_directory, render_template
-    from .lib.forms import SetupForm, JobPostForm, BidForm, JobOfferForm, DeliverForm, AcceptForm, DisputeForm, ResolveForm, AcceptResolutionForm
+    from .lib.forms import JobPostForm, BidForm, JobOfferForm, DeliverForm, AcceptForm, DisputeForm, ResolveForm, AcceptResolutionForm
     from .lib.mediator import Mediator
+    from .lib.crypto.bip32 import get_user_data, seed_to_key
 
     host = '127.0.0.1'
     port = 5001
@@ -1185,87 +1174,46 @@ def start(multi, identity, setup):
                        error
                        ))
 
-    @app.route("/setup", methods=['POST', 'GET'])
-    def start_setup():
-        log = rein.get_log()
-        form = SetupForm(request.form)
+    @app.route('/setup')
+    def web_setup():
+        return render_template('setup.html')
 
-        from rein.lib.user import User
-
-        if request.method == 'POST' and form.validate_on_submit():
-            new_identity = User(form.name.data,
-                                form.contact.data,
-                                form.maddr.data,
-                                form.daddr.data,
-                                form.dkey.data,
-                                form.will_mediate.data,
-                                form.mediator_fee.data,
-                                rein.testnet)
-            rein.session.add(new_identity)
-            rein.session.commit()
-            data = {'name': form.name.data,
-                    'contact': form.contact.data,
-                    'maddr': form.maddr.data,
-                    'daddr': form.daddr.data,
-                    'dkey': form.dkey.data,
-                    'will_mediate': form.will_mediate.data,
-                    'mediator_fee': form.mediator_fee.data,
-                    'testnet': rein.testnet}
-            filename = rein.backup_filename + '-' + ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(6))
-            if not os.path.isfile(filename):
-                f = open(filename, 'w')
-                try:
-                    f.write(json.dumps(data))
-                    click.echo("Backup saved successfully to %s" % filename)
-                except:
-                    RuntimeError('Problem writing user details to json backup file.')
-                    return render_template("setup.html",
-                                           form=form)
-                f.close()
+    @app.route('/register-user', methods=['POST'])
+    def register_user():
+        try:
+            # Generate user data
+            key = seed_to_key(str(request.form['seed']))
+            mprv, maddr, daddr, dkey, dxprv = get_user_data(key)
+            # Chech mediator status
+            if request.form['mediate'] == "True":
+                will_mediate = True
             else:
-                click.echo("Backup file already exists. Please run with --backup to save "
-                            "user details to file.")
-            return redirect('/sign')
-        else:
-            return render_template("setup.html",
-                                   form=form)
-
-
-    @app.route("/sign", methods=['POST', 'GET'])
-    def start_sign():
-        log = rein.get_log()
-
-        from rein.lib.user import User
-        from .lib.forms import SignForm
-        form = SignForm(request.form)
-
-        if request.method == 'POST' and form.validate_on_submit():
-            user = User.get(rein, form.identity_id.data)
-            User.set_enrolled(rein, user)
-
-            # insert signed document into documents table as type 'enrollment'
-            signed = form.signed.data.replace("\r\n","\n")
-            document = Document(rein, 'enrollment', signed, sig_verified=True, testnet=rein.testnet)
-            rein.session.add(document)
-            rein.session.commit()
-            return redirect('/done')
-        elif not User.get_newest(rein):
-            return redirect("/setup")
-        else:
-            rein.user = User.get_newest(rein)
-            form.identity_id.data = rein.user.id
-            form.enrollment = build_enrollment(rein)
-            return render_template("sign.html",
-                                   form=form)
-
-
+                will_mediate = False
+            # Form a User object and insert it into the DB
+            user_data = {'name': request.form['name'],
+                        'contact': request.form['contact'],
+                        'maddr': maddr,
+                        'daddr': daddr,
+                        'dkey': dkey,
+                        'dxprv': dxprv,
+                        'will_mediate': will_mediate,
+                        'mediator_fee': request.form['mediatorFee'],
+                        'testnet': rein.testnet}
+            register_user_data(rein, user_data=user_data)
+            enroll(rein, user_data=user_data, mprv=mprv, maddr=maddr)
+            return json.dumps({'enrolled': True})
+        except Exception as exc:
+            to_return = {'enrolled': False,
+                         'exception': traceback.format_exc()}
+            return json.dumps(to_return)
+                             
     def shutdown_server():
         func = request.environ.get('werkzeug.server.shutdown')
         if func is None:
             raise RuntimeError('Not running with the Werkzeug Server')
         func()
 
-    @app.route("/done", methods=['POST', 'GET'])
+    @app.route("/done")
     def start_done():
         shutdown_server()
         return render_template("done.html")
@@ -1278,7 +1226,6 @@ def start(multi, identity, setup):
     @app.route('/<path:path>')
     def serve_static_file(path):
         return send_from_directory(tmpl_dir, path)
-
 
     if rein.has_no_account() or setup:
         print('Open your browser to http://'+host+':' + str(port) + '/setup')
