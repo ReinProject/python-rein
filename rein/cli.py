@@ -1273,6 +1273,10 @@ def start(multi, identity, setup):
                        error
                        ))
 
+    @app.route('/setup')
+    def web_setup():
+        return render_template('setup.html')
+
     @app.route('/register-user', methods=['POST'])
     def register_user():
         try:
