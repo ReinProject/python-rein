@@ -59,3 +59,17 @@ class ResolveForm(Form):
 
 class AcceptResolutionForm(Form):
     resolution_id = RadioField('Resolution')
+
+class RatingForm(Form):
+    rating_choices = [
+        (0, 'Could not have been worse'),
+        (1, 'Bad'),
+        (2, 'Acceptable'),
+        (3, 'Good'),
+        (4, 'Very good'),
+        (5, 'Could not have been better')
+    ]
+    job_id = TextField('Job id', validators = [Required()])
+    user_id = TextField('User id', validators = [Required()])
+    rating = RadioField('Rate user\' performance', choices=rating_choices, validators=[Required()])
+    comments = TextAreaField('Comments', validators = [])

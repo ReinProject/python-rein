@@ -1154,7 +1154,7 @@ def start(multi, identity, setup):
     """
     import webbrowser
     from flask import Flask, request, redirect, url_for, flash, send_from_directory, render_template
-    from .lib.forms import JobPostForm, BidForm, JobOfferForm, DeliverForm, AcceptForm, DisputeForm, ResolveForm, AcceptResolutionForm
+    from .lib.forms import JobPostForm, BidForm, JobOfferForm, DeliverForm, AcceptForm, DisputeForm, ResolveForm, AcceptResolutionForm, RatingForm
     from .lib.mediator import Mediator
     from .lib.crypto.bip32 import get_user_data, seed_to_key
 
@@ -1169,10 +1169,10 @@ def start(multi, identity, setup):
     def flash_errors(form):
         for field, errors in form.errors.items():
             for error in errors:
-                 flash(u"Error in the %s field - %s" % (
-                       getattr(form, field).label.text,
-                       error
-                       ))
+                flash(u"Error in the %s field - %s" % (
+                    getattr(form, field).label.text,
+                    error
+                ))
 
     @app.route('/setup')
     def setup():
@@ -1227,9 +1227,20 @@ def start(multi, identity, setup):
     def serve_static_file(path):
         return send_from_directory(tmpl_dir, path)
 
-    @app.route('/rate')
+    @app.route('/rate', methods=['POST', 'GET'])
     def rate():
-        return render_template('rate.html')
+        form = RatingForm(request.form)
+
+        if request.method == 'POST' and form.validate_on_submit():
+            for i in [form.job_id, form.user_id, form.rating, form.comments]: print(i.data)        
+            return redirect("/")
+
+        elif request.method == 'POST':
+            flash_errors(form)
+            return redirect("/rate")
+
+        else:
+            return render_template("rate.html", form=form)
 
     if rein.has_no_account() or setup:
         print('Open your browser to http://'+host+':' + str(port) + '/setup')
