@@ -1175,7 +1175,7 @@ def start(multi, identity, setup):
                        ))
 
     @app.route('/setup')
-    def setup():
+    def web_setup():
         return render_template('setup.html')
 
     @app.route('/register-user', methods=['POST'])
