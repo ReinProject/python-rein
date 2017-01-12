@@ -10,6 +10,7 @@ function getJobs() {
 }
 
 function setUser() {
+	// Ensures valid content of the "User id" field and its label upon init and job change
 	user_id = ''
 	user_name = ''
 	if ($CURRENT_USER == 0) {
@@ -74,8 +75,10 @@ function nextJob() {
 }
 
 document.addEventListener("DOMContentLoaded", function(event) {
+	// Initialize contents of the job and user id fields and their labels
 	$("input[name='job_id']").val($USER_JOBS[0].job_id);
 	$("input[name='user_id']").val($USER_JOBS[0].employer.ID);
+	$("input[name='rated_by_id']").val($USER_ID);
 	$("button.job_name").text($USER_JOBS[0].job_name);
 	$("button.user_name").text($USER_JOBS[0].employer.Name);
 });

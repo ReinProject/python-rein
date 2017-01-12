@@ -5,7 +5,7 @@
 <script src="js/rate.js"></script>
 <script type=text/javascript>
     $SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
-    $USER_ID = "test";
+    $USER_ID = "test_user_id";
     $USER_JOBS = [
         {
             job_id: "test", 
@@ -65,6 +65,12 @@
                     <span class="glyphicon glyphicon-chevron-right"></span>
                 </button>
             </div>
+        </div>
+
+        <div class="form-group">
+            <label class="col-sm-4 control-label">{{ form.rated_by_id.label }}</label>
+            <div class="col-sm-6">{{ form.rated_by_id(class="form-control", data_toggle="tooltip", title="Unique user identifier: either the user's master bitcoin address or Secure Identity Number", readonly=true) }}</div>
+            {{ render_error(form.rated_by_id) }}
         </div>
 
         <div class="form-group">

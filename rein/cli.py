@@ -42,6 +42,7 @@ from .lib.document import Document
 from .lib.placement import Placement
 from .lib.order import Order, STATE
 from .lib.mediator import Mediator
+from .lib.rating import Rating
 
 rein = config.Config()
 import bitcoin
@@ -1237,6 +1238,23 @@ def start(multi, identity, setup):
         form = RatingForm(request.form)
 
         if request.method == 'POST' and form.validate_on_submit():
+            (rating, user_id, job_id, rated_by_id, comments) = (form.rating.data, form.user_id.data, form.job_id.data, form.rated_by_id.data, form.comments.data)
+            existing_rating = rein.session.query(Rating).filter(and_(Rating.user_id == user_id, Rating.job_id == job_id, Rating.rated_by_id ==rated_by_id)).first()
+
+            # Update ranking, if this user has previously rated the user in question
+            # For this job
+            if existing_rating:
+                existing_rating.rating = rating
+                existing_rating.user_id = user_id
+                existing_rating.job_id = job_id
+                existing_rating.comments = comments
+
+            # Otherwise, create a new ranking
+            else:
+                rating = Rating(rating, user_id, job_id, rated_by_id, comments)
+                rein.session.add(rating)
+
+            rein.session.commit()
             return redirect("/rate")
 
         elif request.method == 'POST':
