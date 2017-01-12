@@ -1185,6 +1185,7 @@ def start(multi, identity, setup):
             # Generate user data
             key = seed_to_key(str(request.form['seed']))
             mprv, maddr, daddr, dkey, dxprv = get_user_data(key)
+            msin = generate_sin(maddr)
             # Chech mediator status
             if request.form['mediate'] == "True":
                 will_mediate = True
@@ -1197,6 +1198,7 @@ def start(multi, identity, setup):
                         'daddr': daddr,
                         'dkey': dkey,
                         'dxprv': dxprv,
+                        'msin': msin,
                         'will_mediate': will_mediate,
                         'mediator_fee': request.form['mediatorFee'],
                         'testnet': rein.testnet}
@@ -1229,40 +1231,9 @@ def start(multi, identity, setup):
         return send_from_directory(tmpl_dir, path)
 
     @app.route('/get-jobs', methods=['GET'])
-    def get_users():
+    def get_jobs():
         user = request.args.get('user', 0, type=str)
         return jsonify(result=user)
-
-    @app.route('/rate', methods=['POST', 'GET'])
-    def rate():
-        form = RatingForm(request.form)
-
-        if request.method == 'POST' and form.validate_on_submit():
-            (rating, user_id, job_id, rated_by_id, comments) = (form.rating.data, form.user_id.data, form.job_id.data, form.rated_by_id.data, form.comments.data)
-            existing_rating = rein.session.query(Rating).filter(and_(Rating.user_id == user_id, Rating.job_id == job_id, Rating.rated_by_id ==rated_by_id)).first()
-
-            # Update ranking, if this user has previously rated the user in question
-            # For this job
-            if existing_rating:
-                existing_rating.rating = rating
-                existing_rating.user_id = user_id
-                existing_rating.job_id = job_id
-                existing_rating.comments = comments
-
-            # Otherwise, create a new ranking
-            else:
-                rating = Rating(rating, user_id, job_id, rated_by_id, comments)
-                rein.session.add(rating)
-
-            rein.session.commit()
-            return redirect("/rate")
-
-        elif request.method == 'POST':
-            flash_errors(form)
-            return redirect("/rate")
-
-        else:
-            return render_template("rate.html", form=form)
 
     if rein.has_no_account() or setup:
         print('Open your browser to http://'+host+':' + str(port) + '/setup')
@@ -1293,6 +1264,37 @@ def start(multi, identity, setup):
         dst_offset = 3600 * t.tm_isdst
         str_block_time = datetime.fromtimestamp(block_time + time.timezone - dst_offset).strftime('%Y-%m-%d %H:%M:%S %Z')
         time_offset = abs(block_time - int(time.time()))
+
+    @app.route('/rate', methods=['POST', 'GET'])
+    def rate():
+        form = RatingForm(request.form)
+
+        if request.method == 'POST' and form.validate_on_submit():
+            (rating, user_id, job_id, rated_by_id, comments) = (form.rating.data, form.user_id.data, form.job_id.data, form.rated_by_id.data, form.comments.data)
+            existing_rating = rein.session.query(Rating).filter(and_(Rating.user_id == user_id, Rating.job_id == job_id, Rating.rated_by_id ==rated_by_id)).first()
+
+            # Update ranking, if this user has previously rated the user in question
+            # For this job
+            if existing_rating:
+                existing_rating.rating = rating
+                existing_rating.user_id = user_id
+                existing_rating.job_id = job_id
+                existing_rating.comments = comments
+
+            # Otherwise, create a new ranking
+            else:
+                rating = Rating(rating, user_id, job_id, rated_by_id, comments)
+                rein.session.add(rating)
+
+            rein.session.commit()
+            return redirect("/rate")
+
+        elif request.method == 'POST':
+            flash_errors(form)
+            return redirect("/rate")
+
+        else:
+            return render_template("rate.html", form=form, user_sin=user.msin)
 
     @app.route("/post", methods=['POST', 'GET'])
     def job_post():

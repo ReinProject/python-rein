@@ -5,7 +5,7 @@
 <script src="js/rate.js"></script>
 <script type=text/javascript>
     $SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
-    $USER_ID = "test_user_id";
+    $USER_ID = "{{ user_sin }}";
     $USER_JOBS = [
         {
             job_id: "test", 
