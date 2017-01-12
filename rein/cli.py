@@ -1237,8 +1237,7 @@ def start(multi, identity, setup):
         form = RatingForm(request.form)
 
         if request.method == 'POST' and form.validate_on_submit():
-            for i in [form.job_id, form.user_id, form.rating, form.comments]: print(i.data)        
-            return redirect("/")
+            return redirect("/rate")
 
         elif request.method == 'POST':
             flash_errors(form)

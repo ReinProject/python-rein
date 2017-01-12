@@ -4,7 +4,26 @@
 
 <script src="js/rate.js"></script>
 <script type=text/javascript>
-  $SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
+    $SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
+    $USER_ID = "test";
+    $USER_JOBS = [
+        {
+            job_id: "test", 
+            job_name: "job 1",
+            employer: {ID: "test_employer", Name: "test employer"}, 
+            mediator: {ID: "test_mediator", Name: "test mediator"}, 
+            employee: {ID: "test_employee", Name: "test employee"}
+        }, 
+        {
+            job_id: "test_2", 
+            job_name: "job 2",
+            employer: {ID: "test_employer_2", Name: "test employer 2"}, 
+            mediator: {ID: "test_mediator_2", Name: "test mediator 2"}, 
+            employee: {ID: "test_employee_2", Name: "test employee 2"}
+        }
+    ];
+    $CURRENT_JOB = 0;
+    $CURRENT_USER = 0;
 </script>
 
 <br>
@@ -20,11 +39,11 @@
 
         <div class="form-group">
             <div class="btn-group col-sm-offset-4 col-sm-6" role="group">
-                <button type="button" class="btn btn-default">
+                <button type="button" class="btn btn-default" onclick="lastJob()">
                     <span class="glyphicon glyphicon-chevron-left"></span>
                 </button>
-                <button type="button" class="btn btn-default" disabled="true">Job name</button>
-                <button type="button" class="btn btn-default">
+                <button type="button" class="btn btn-default job_name" disabled="true">Job name</button>
+                <button type="button" class="btn btn-default" onclick="nextJob()">
                     <span class="glyphicon glyphicon-chevron-right"></span>
                 </button>
             </div>
@@ -38,11 +57,11 @@
 
         <div class="form-group">
             <div class="btn-group col-sm-offset-4 col-sm-6" role="group">
-                <button type="button" class="btn btn-default">
+                <button type="button" class="btn btn-default" onclick="lastUser()">
                     <span class="glyphicon glyphicon-chevron-left"></span>
                 </button>
-                <button type="button" class="btn btn-default" disabled="true">User name</button>
-                <button type="button" class="btn btn-default">
+                <button type="button" class="btn btn-default user_name" disabled="true">User name</button>
+                <button type="button" class="btn btn-default" onclick="nextUser()">
                     <span class="glyphicon glyphicon-chevron-right"></span>
                 </button>
             </div>
