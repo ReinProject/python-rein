@@ -1619,6 +1619,7 @@ def start(multi, identity, setup):
             found = True
 
         return render_template('job.html',
+                            rein=rein,
                             user=user,
                             order=o,
                             state=state,
