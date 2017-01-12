@@ -2,6 +2,11 @@
 {% from "_form_helpers.html" import render_error %}
 {% block body %}
 
+<script src="js/rate.js"></script>
+<script type=text/javascript>
+  $SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
+</script>
+
 <br>
 <div class="well">
     <form class="form-horizontal" role="form" method="POST" onsubmit="return confirm('This will be sync\'d immediately to available servers. Please confirm.');" action="{{ url_for('rate') }}">
@@ -14,9 +19,33 @@
         </div>
 
         <div class="form-group">
+            <div class="btn-group col-sm-offset-4 col-sm-6" role="group">
+                <button type="button" class="btn btn-default">
+                    <span class="glyphicon glyphicon-chevron-left"></span>
+                </button>
+                <button type="button" class="btn btn-default" disabled="true">Job name</button>
+                <button type="button" class="btn btn-default">
+                    <span class="glyphicon glyphicon-chevron-right"></span>
+                </button>
+            </div>
+        </div>
+
+        <div class="form-group">
             <label class="col-sm-4 control-label">{{ form.user_id.label }}</label>
             <div class="col-sm-6">{{ form.user_id(class="form-control", data_toggle="tooltip", title="Unique user identifier: either the user's master bitcoin address or Secure Identity Number", readonly=true) }}</div>
             {{ render_error(form.user_id) }}
+        </div>
+
+        <div class="form-group">
+            <div class="btn-group col-sm-offset-4 col-sm-6" role="group">
+                <button type="button" class="btn btn-default">
+                    <span class="glyphicon glyphicon-chevron-left"></span>
+                </button>
+                <button type="button" class="btn btn-default" disabled="true">User name</button>
+                <button type="button" class="btn btn-default">
+                    <span class="glyphicon glyphicon-chevron-right"></span>
+                </button>
+            </div>
         </div>
 
         <div class="form-group">

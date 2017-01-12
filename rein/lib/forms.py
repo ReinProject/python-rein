@@ -71,5 +71,5 @@ class RatingForm(Form):
     ]
     job_id = TextField('Job id', validators = [Required()], default='')
     user_id = TextField('User id', validators = [Required()], default='')
-    rating = RadioField('Rate user\' performance', choices=rating_choices, validators=[Required()], default=0)
+    rating = RadioField('Rate user\'s performance', choices=rating_choices, validators=[Required()], default=0)
     comments = TextAreaField('Comments', validators = [], default='')

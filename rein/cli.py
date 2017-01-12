@@ -1153,7 +1153,7 @@ def start(multi, identity, setup):
     simple UI to use Rein.
     """
     import webbrowser
-    from flask import Flask, request, redirect, url_for, flash, send_from_directory, render_template
+    from flask import Flask, request, redirect, url_for, flash, send_from_directory, render_template, jsonify
     from .lib.forms import JobPostForm, BidForm, JobOfferForm, DeliverForm, AcceptForm, DisputeForm, ResolveForm, AcceptResolutionForm, RatingForm
     from .lib.mediator import Mediator
     from .lib.crypto.bip32 import get_user_data, seed_to_key
@@ -1226,6 +1226,11 @@ def start(multi, identity, setup):
     @app.route('/<path:path>')
     def serve_static_file(path):
         return send_from_directory(tmpl_dir, path)
+
+    @app.route('/get-jobs', methods=['GET'])
+    def get_users():
+        user = request.args.get('user', 0, type=str)
+        return jsonify(result=user)
 
     @app.route('/rate', methods=['POST', 'GET'])
     def rate():
