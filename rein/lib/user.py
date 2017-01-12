@@ -1,4 +1,5 @@
 from sqlalchemy import Column, Integer, String, Float, Boolean
+from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
@@ -20,7 +21,7 @@ class User(Base):
     mediator_fee = Column(Float, nullable=False)
     enrolled = Column(Boolean, nullable=False)
     testnet = Column(Boolean, nullable=False)
-
+    
     def __init__(self, user_data):
         self.name = user_data['name']
         self.contact = user_data['contact']

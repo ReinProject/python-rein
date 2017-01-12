@@ -1,5 +1,7 @@
-from sqlalchemy import Column, String, Integer, Text
+from sqlalchemy import Column, String, Integer, Text, ForeignKey
+from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
+from .user import User
 
 Base = declarative_base()
 
@@ -9,9 +11,11 @@ class Rating(Base):
 
     id = Column(Integer, primary_key=True)
     rating = Column(Integer, nullable=False)
-    user_id = Column(String(64), nullable=False)
+    user_id = Column(String(64), ForeignKey(User.msin))
+    user = relationship(User, backref="ratings", foreign_keys=[user_id])
     job_id = Column(String(64), nullable=False)
-    rated_by_id = Column(String(64), nullable=False)
+    rated_by_id = Column(String(64), ForeignKey(User.msin))
+    rated_by = relationship(User, backref="has_rated", foreign_keys=[rated_by_id])
     comments = Column(Text, nullable=True)
 
     def __init__(self, rating, user_id, job_id, rated_by_id, comments):
