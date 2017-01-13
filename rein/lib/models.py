@@ -38,7 +38,4 @@ Base.metadata.create_all(engine)
 from .mediator import Base
 Base.metadata.create_all(engine)
 
-from .rating import Base
-Base.metadata.create_all(engine)
-
 log.info('database tables updated')

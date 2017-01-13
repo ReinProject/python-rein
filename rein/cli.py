@@ -42,7 +42,6 @@ from .lib.document import Document
 from .lib.placement import Placement
 from .lib.order import Order, STATE
 from .lib.mediator import Mediator
-from .lib.rating import Rating
 
 rein = config.Config()
 import bitcoin
@@ -953,6 +952,16 @@ def sync_core(log, user, key, urls):
         answer = safe_get(log, sel_url.format(user.maddr, nonce[url]))
         log.info('nonce cleared for %s' % (url))
 
+    # Download all ratings
+    sel_url = "{0}query?query={1}&testnet={2}"
+    ratings = safe_get(log, sel_url.format(url, 'ratings', rein.testnet))
+    if ratings and ratings['result'] != 'error':
+        rein.session.query(Document).filter(Document.doc_type == 'rating').delete()
+        for rating in ratings['ratings']:
+            d = Document(rein, 'rating', rating, sig_verified=True, testnet=rein.testnet)
+            rein.session.add(d)
+            rein.session.commit()
+
     click.echo('%s docs checked on %s servers, %s uploads done.' % (len(documents), len(urls), str(succeeded)))
 
 @cli.command()
@@ -1282,7 +1291,7 @@ def start(multi, identity, setup):
             store = True
             document = sign_and_store_document(rein, 'rating', document_text, user.daddr, user.dkey, store)
             if document and store:
-                click.echo("Posting created.")
+                click.echo("Rating created.")
                 sync_core(log, user, key, urls)
                 
             return redirect("/rate")
