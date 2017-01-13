@@ -1271,22 +1271,35 @@ def start(multi, identity, setup):
 
         if request.method == 'POST' and form.validate_on_submit():
             (rating, user_id, job_id, rated_by_id, comments) = (form.rating.data, form.user_id.data, form.job_id.data, form.rated_by_id.data, form.comments.data)
-            existing_rating = rein.session.query(Rating).filter(and_(Rating.user_id == user_id, Rating.job_id == job_id, Rating.rated_by_id ==rated_by_id)).first()
+            #existing_rating = rein.session.query(Rating).filter(and_(Rating.user_id == user_id, Rating.job_id == job_id, Rating.rated_by_id ==rated_by_id)).first()
+            fields = [
+                {'label': 'Rating',     'value': rating},
+                {'label': 'User id',    'value': user_id},
+                {'label': 'Job id',     'value': job_id},
+                {'label': 'Rater id',   'value': rated_by_id},
+                {'label': 'Comments',   'value': comments},
+             ]
+            document_text = assemble_document('Rating', fields)
+            store = True
+            document = sign_and_store_document(rein, 'rating', document_text, user.daddr, user.dkey, store)
+            if document and store:
+                click.echo("Posting created.")
+                sync_core(log, user, key, urls)
 
             # Update ranking, if this user has previously rated the user in question
             # For this job
-            if existing_rating:
-                existing_rating.rating = rating
-                existing_rating.user_id = user_id
-                existing_rating.job_id = job_id
-                existing_rating.comments = comments
+            #if existing_rating:
+             #   existing_rating.rating = rating
+              #  existing_rating.user_id = user_id
+               # existing_rating.job_id = job_id
+                #existing_rating.comments = comments
 
             # Otherwise, create a new ranking
-            else:
-                rating = Rating(rating, user_id, job_id, rated_by_id, comments)
-                rein.session.add(rating)
+            #else:
+             #   rating = Rating(rating, user_id, job_id, rated_by_id, comments)
+              #  rein.session.add(rating)
 
-            rein.session.commit()
+            #rein.session.commit()
             return redirect("/rate")
 
         elif request.method == 'POST':
