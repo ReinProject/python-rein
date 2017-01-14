@@ -3,6 +3,8 @@ from .validate import validate_enrollment, parse_document, filter_and_parse_vali
 from .bucket import Bucket 
 from .bitcoinecdsa import sign, verify, pubkey, pubkey_to_address
 from .order import Order
+from .io import safe_get
+from sqlalchemy import and_
 import os
 import click
 
@@ -39,7 +41,7 @@ def assemble_document(title, fields):
     return document[:-1]
 
 
-def sign_and_store_document(rein, doc_type, document, signature_address=None, signature_key=None, store=True):
+def sign_and_store_document(rein, doc_type, document, signature_address=None, signature_key=None, store=True, overwrite_hash=None, log=None, url=None, user=None):
     """
     Save document if no signature key provided. Otherwise sign document, then validate and store it.
     """
@@ -70,10 +72,32 @@ def sign_and_store_document(rein, doc_type, document, signature_address=None, si
         d = "-----END BITCOIN SIGNED MESSAGE-----"
         signed = "%s\n%s\n%s\n%s\n%s\n%s" % (b, document, c, signature_address, signature, d)
         click.echo('\n' + signed + '\n')
-        if store:
+        # If document doesn't already exist, create
+        if store and not overwrite_hash:
             d = Document(rein, doc_type, signed, sig_verified=True, testnet=rein.testnet)
             rein.session.add(d)
             rein.session.commit()
+
+        # If it does exist and is supposed to be overwritten, overwrite
+        elif store:
+            d = rein.session.query(Document).filter(and_(Document.doc_hash == overwrite_hash, Document.doc_type == doc_type)).first()
+            old_value = d.contents
+            d.contents = signed
+            rein.session.commit()
+
+            # Query rating documents from the server
+            sel_url = "{0}query?owner={1}&query={2}&testnet={3}"
+            ratings = safe_get(log, sel_url.format(url, user.maddr, 'ratings', rein.testnet))
+            replace_server_key = None
+            # Find the rating document that has to be replaced by value, note its key
+            if ratings and ratings['result'] != 'error':
+                for rating in ratings['ratings']:
+                    print(rating['value'])
+                    if rating['value'] == old_value:
+                        replace_server_key = rating['key']
+
+            
+
         return d
     return validated
 

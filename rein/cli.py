@@ -27,6 +27,7 @@ from .lib.util import unique
 from .lib.io import safe_get
 from .lib.script import build_2_of_3, build_mandatory_multisig, check_redeem_scripts
 from .lib.transaction import partial_spend_p2sh, spend_p2sh, spend_p2sh_mediator, partial_spend_p2sh_mediator, partial_spend_p2sh_mediator_2
+from .lib.rating import add_rating
 
 # Import config
 import rein.lib.config as config
@@ -856,7 +857,6 @@ def sync(multi, identity):
 
     sync_core(log, user, key, urls)
 
-
 def sync_core(log, user, key, urls):
     click.echo("User: " + user.name)
 
@@ -952,13 +952,12 @@ def sync_core(log, user, key, urls):
         answer = safe_get(log, sel_url.format(user.maddr, nonce[url]))
         log.info('nonce cleared for %s' % (url))
 
-    # Download all ratings
     sel_url = "{0}query?owner={1}&query={2}&testnet={3}"
     ratings = safe_get(log, sel_url.format(url, user.maddr, 'ratings', rein.testnet))
     if ratings and ratings['result'] != 'error':
         rein.session.query(Document).filter(Document.doc_type == 'rating').delete()
         for rating in ratings['ratings']:
-            d = Document(rein, 'rating', rating, sig_verified=True, testnet=rein.testnet)
+            d = Document(rein, 'rating', rating['value'], sig_verified=True, testnet=rein.testnet)
             rein.session.add(d)
             rein.session.commit()
 
@@ -1280,20 +1279,11 @@ def start(multi, identity, setup):
 
         if request.method == 'POST' and form.validate_on_submit():
             (rating, user_id, job_id, rated_by_id, comments) = (form.rating.data, form.user_id.data, form.job_id.data, form.rated_by_id.data, form.comments.data)
-            fields = [
-                {'label': 'Rating',     'value': rating},
-                {'label': 'User id',    'value': user_id},
-                {'label': 'Job id',     'value': job_id},
-                {'label': 'Rater id',   'value': rated_by_id},
-                {'label': 'Comments',   'value': comments},
-             ]
-            document_text = assemble_document('Rating', fields)
-            store = True
-            document = sign_and_store_document(rein, 'rating', document_text, user.daddr, user.dkey, store)
-            if document and store:
+            sync_rating = add_rating(rein, user, rein.testnet, log, url, rating, user_id, job_id, rated_by_id, comments)
+            if sync_rating:
                 click.echo("Rating created.")
                 sync_core(log, user, key, urls)
-                
+
             return redirect("/rate")
 
         elif request.method == 'POST':
