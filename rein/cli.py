@@ -953,8 +953,8 @@ def sync_core(log, user, key, urls):
         log.info('nonce cleared for %s' % (url))
 
     # Download all ratings
-    sel_url = "{0}query?query={1}&testnet={2}"
-    ratings = safe_get(log, sel_url.format(url, 'ratings', rein.testnet))
+    sel_url = "{0}query?owner={1}&query={2}&testnet={3}"
+    ratings = safe_get(log, sel_url.format(url, user.maddr, 'ratings', rein.testnet))
     if ratings and ratings['result'] != 'error':
         rein.session.query(Document).filter(Document.doc_type == 'rating').delete()
         for rating in ratings['ratings']:
