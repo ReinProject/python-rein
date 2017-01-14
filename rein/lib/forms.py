@@ -26,6 +26,10 @@ def validate_en(form, field):
     if not validate_enrollment(message):
         raise ValidationError("Invalid signature")
 
+def avoid_self_rating(form, field):
+    if field.data == form.rated_by_id.data:
+        raise ValidationError('You may not rate yourself!')
+
 class JobPostForm(Form):
     job_name = TextField('Job name', validators = [Required()])
     description = TextAreaField('Description', validators = [Required()])
@@ -70,7 +74,7 @@ class RatingForm(Form):
         ('5', 'Could not have been better')
     ]
     job_id = TextField('Job id', validators = [Required()], default='')
-    user_id = TextField('User id', validators = [Required()], default='')
+    user_id = TextField('User id', validators = [Required(), avoid_self_rating], default='')
     rated_by_id = TextField('Rated by id', validators = [Required()], default='')
     rating = RadioField('Rate user\'s performance', choices=rating_choices, validators=[Required()], default=0)
     comments = TextAreaField('Comments', validators = [], default='')
