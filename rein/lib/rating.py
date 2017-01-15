@@ -13,7 +13,7 @@ def rating_identifier(fields):
 
 	return identifier
 
-def add_rating(rein, user, testnet, log, url, rating, user_id, job_id, rated_by_id, comments):
+def add_rating(rein, user, testnet, rating, user_id, job_id, rated_by_id, comments):
     """Adds a rating to the database or updates it if an already existing
     rating is adjusted"""
     fields = [
@@ -32,7 +32,7 @@ def add_rating(rein, user, testnet, log, url, rating, user_id, job_id, rated_by_
     store = True
     document = None
     if update_rating:
-    	document = sign_and_store_document(rein, 'rating', document_text, user.daddr, user.dkey, store, update_rating.doc_hash, log, url, user)
+    	document = sign_and_store_document(rein, 'rating', document_text, user.daddr, user.dkey, store, update_rating.doc_hash)
 
     else:
     	document = sign_and_store_document(rein, 'rating', document_text, user.daddr, user.dkey, store)

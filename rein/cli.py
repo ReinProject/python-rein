@@ -893,8 +893,10 @@ def sync_core(log, user, key, urls):
                 if len(placements) == 0:
                     upload.append([doc, url])
                 else:
+                    # Also upload all ratings created locally to allow for rating updates
+                    is_own_rating = doc.doc_type == 'rating' and doc.source_url == 'local'
                     for plc in placements:
-                        if Placement.get_remote_document_hash(rein, plc) != doc.doc_hash:
+                        if Placement.get_remote_document_hash(rein, plc) != doc.doc_hash or is_own_rating:
                             upload.append([doc, url])
     
     failed = []
@@ -1279,7 +1281,7 @@ def start(multi, identity, setup):
 
         if request.method == 'POST' and form.validate_on_submit():
             (rating, user_id, job_id, rated_by_id, comments) = (form.rating.data, form.user_id.data, form.job_id.data, form.rated_by_id.data, form.comments.data)
-            sync_rating = add_rating(rein, user, rein.testnet, log, url, rating, user_id, job_id, rated_by_id, comments)
+            sync_rating = add_rating(rein, user, rein.testnet, rating, user_id, job_id, rated_by_id, comments)
             if sync_rating:
                 click.echo("Rating created.")
                 sync_core(log, user, key, urls)
