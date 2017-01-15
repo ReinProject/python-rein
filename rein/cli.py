@@ -27,7 +27,7 @@ from .lib.util import unique
 from .lib.io import safe_get
 from .lib.script import build_2_of_3, build_mandatory_multisig, check_redeem_scripts
 from .lib.transaction import partial_spend_p2sh, spend_p2sh, spend_p2sh_mediator, partial_spend_p2sh_mediator, partial_spend_p2sh_mediator_2
-from .lib.rating import add_rating
+from .lib.rating import add_rating, get_user_jobs
 
 # Import config
 import rein.lib.config as config
@@ -1240,11 +1240,6 @@ def start(multi, identity, setup):
     def serve_static_file(path):
         return send_from_directory(tmpl_dir, path)
 
-    @app.route('/get-jobs', methods=['GET'])
-    def get_jobs():
-        user = request.args.get('user', 0, type=str)
-        return jsonify(result=user)
-
     if rein.has_no_account() or setup:
         print('Open your browser to http://'+host+':' + str(port) + '/setup')
         app.run(host=host, port=port, debug=rein.debug)
@@ -1293,18 +1288,8 @@ def start(multi, identity, setup):
             return redirect("/rate")
 
         else:
-            relevant_orders = []
-
-            # Get user's jobs
-            Order.update_orders(rein, Document)
-            orders = Order.get_user_orders(rein, Document)
-            for o in orders:
-                setattr(o,'state',STATE[o.get_state(rein, Document)]['past_tense'])
-                # Enable rating only for jobs that are completed
-                if o.state == 'complete, work accepted' or o.state == 'dispute resolved':
-                    relevant_orders.append(o)
-            
-            return render_template("rate.html", form=form, user_sin=user.msin, user=user)
+            user_jobs = get_user_jobs(rein)
+            return render_template("rate.html", form=form, user_sin=user.msin, user=user, user_jobs=user_jobs)
 
     @app.route("/post", methods=['POST', 'GET'])
     def job_post():

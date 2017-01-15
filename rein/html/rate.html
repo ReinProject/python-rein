@@ -6,22 +6,7 @@
 <script type=text/javascript>
     $SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
     $USER_ID = "{{ user_sin }}";
-    $USER_JOBS = [
-        {
-            job_id: "test", 
-            job_name: "job 1",
-            employer: {ID: "test_employer", Name: "test employer"}, 
-            mediator: {ID: "test_mediator", Name: "test mediator"}, 
-            employee: {ID: "test_employee", Name: "test employee"}
-        }, 
-        {
-            job_id: "test_2", 
-            job_name: "job 2",
-            employer: {ID: "test_employer_2", Name: "test employer 2"}, 
-            mediator: {ID: "test_mediator_2", Name: "test mediator 2"}, 
-            employee: {ID: "test_employee_2", Name: "test employee 2"}
-        }
-    ];
+    $USER_JOBS = JSON.parse('{{ user_jobs|safe }}');
     $CURRENT_JOB = 0;
     $CURRENT_USER = 0;
 </script>

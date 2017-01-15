@@ -122,3 +122,18 @@ class Document(Base):
         text = text.decode('ascii')
         text = text.encode('utf8')
         return hashlib.sha256(text).hexdigest()
+
+    def to_dict(self):
+        content = self.contents
+        doc = {}
+        # Grab part of the document containing information
+        content = content.split('\n-----BEGIN SIGNATURE-----')[0]
+        # Remove heading
+        content = content.split('\n')[2:]
+        for line in content:
+            key_value = line.split(': ')
+            key = key_value[0]
+            value = key_value[1]
+            doc[key] = value
+
+        return doc
