@@ -13,14 +13,14 @@ def rating_identifier(fields):
 
 	return identifier
 
-def add_rating(rein, user, testnet, rating, user_id, job_id, rated_by_id, comments):
+def add_rating(rein, user, testnet, rating, user_msin, job_id, rated_by_msin, comments):
     """Adds a rating to the database or updates it if an already existing
     rating is adjusted"""
     fields = [
         {'label': 'Rating',     'value': rating},
-        {'label': 'User id',    'value': user_id},
+        {'label': 'User msin',    'value': user_msin},
         {'label': 'Job id',     'value': job_id},
-        {'label': 'Rater id',   'value': rated_by_id},
+        {'label': 'Rater msin',   'value': rated_by_msin},
         {'label': 'Comments',   'value': comments},
      ]
     

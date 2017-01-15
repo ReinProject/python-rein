@@ -1280,8 +1280,8 @@ def start(multi, identity, setup):
         form = RatingForm(request.form)
 
         if request.method == 'POST' and form.validate_on_submit():
-            (rating, user_id, job_id, rated_by_id, comments) = (form.rating.data, form.user_id.data, form.job_id.data, form.rated_by_id.data, form.comments.data)
-            sync_rating = add_rating(rein, user, rein.testnet, rating, user_id, job_id, rated_by_id, comments)
+            (rating, user_msin, job_id, rated_by_msin, comments) = (form.rating.data, form.user_id.data, form.job_id.data, form.rated_by_id.data, form.comments.data)
+            sync_rating = add_rating(rein, user, rein.testnet, rating, user_msin, job_id, rated_by_msin, comments)
             if sync_rating:
                 click.echo("Rating created.")
                 sync_core(log, user, key, urls)
@@ -1293,7 +1293,18 @@ def start(multi, identity, setup):
             return redirect("/rate")
 
         else:
-            return render_template("rate.html", form=form, user_sin=user.msin)
+            relevant_orders = []
+
+            # Get user's jobs
+            Order.update_orders(rein, Document)
+            orders = Order.get_user_orders(rein, Document)
+            for o in orders:
+                setattr(o,'state',STATE[o.get_state(rein, Document)]['past_tense'])
+                # Enable rating only for jobs that are completed
+                if o.state == 'complete, work accepted' or o.state == 'dispute resolved':
+                    relevant_orders.append(o)
+            
+            return render_template("rate.html", form=form, user_sin=user.msin, user=user)
 
     @app.route("/post", methods=['POST', 'GET'])
     def job_post():
