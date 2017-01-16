@@ -9,7 +9,7 @@ from .validate import validate_enrollment
 from .user import User, Base
 from .util import unique
 from .document import Document
-import rein.lib.crypto.bip32 as crypto.bip32
+import rein.lib.crypto.bip32 as bip32
 
 def shorten(text, length=60):
     if length - 3 < len(text) < length:
@@ -101,19 +101,19 @@ def create_account(rein):
 
     click.echo(highlight('\nHere is your 12 word mnemonic. Keep it secure - it is the key to\n'
                'accessing your Rein account, and is only showed once.\n', True, True))
-    mnemonic = crypto.bip32.generate_mnemonic(128)
+    mnemonic = bip32.generate_mnemonic(128)
     click.echo(' '.join(mnemonic))
     confirm_mnemonic = click.confirm(highlight('\nConfirm that you put down the mnemonic.\n', True, True),
                                      default=False)
     if confirm_mnemonic:
         click.echo(highlight('\nGenerating BIP32 data...\n', True, True))
         # TODO - Transform it into a class with all the properties
-        key = crypto.bip32.mnemonic_to_key(mnemonic)
-        mprv = crypto.bip32.get_master_private_key(key)
-        maddr = crypto.bip32.get_master_address(key)
-        daddr = crypto.bip32.get_delegate_address(key)
-        dkey = crypto.bip32.get_delegate_private_key(key)
-        dxprv = crypto.bip32.get_delegate_extended_key(key)
+        key = bip32.mnemonic_to_key(mnemonic)
+        mprv = bip32.get_master_private_key(key)
+        maddr = bip32.get_master_address(key)
+        daddr = bip32.get_delegate_address(key)
+        dkey = bip32.get_delegate_private_key(key)
+        dxprv = bip32.get_delegate_extended_key(key)
     else:
         click.echo(highlight('\nTo sign up for Rein you have to put down the mnemonic. Aborting.', False, True))
         quit()
@@ -196,8 +196,8 @@ def import_account(rein, mprv=None, mnemonic=None):
     # ---- Signing enrollment ----
 
     if mnemonic:
-        key = crypto.bip32.mnemonic_to_key(mnemonic)
-        mprv = crypto.bip32.get_master_private_key(key)
+        key = bip32.mnemonic_to_key(mnemonic)
+        mprv = bip32.get_master_private_key(key)
     elif mprv:
         if not privkey_to_address(mprv):
             raise Exception('Invalid master private key.')

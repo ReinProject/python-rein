@@ -6,10 +6,15 @@ from os import urandom
 from unicodedata import normalize
 import json
 import hmac
+import os
+import rein.lib.config as config
 
 # TODO Make Python index this file automatically
-WORDS_FILE = 'rein/lib/crypto/resources/english.json'
+script_dir = os.path.dirname(__file__)
+WORDS_FILE_rel = 'resources/english.json'
+WORDS_FILE = os.path.join(script_dir, WORDS_FILE_rel)
 
+rein = config.Config()
 
 def generate_mnemonic(strength):
     # Generate seed + checksum
@@ -35,7 +40,7 @@ def mnemonic_to_key(mnemonic):
     seed = PBKDF2(mnemonic, u'mnemonic', iterations=2048, macmodule=hmac, digestmodule=sha512).read(64)
     # Seed to key
     secret, chain = seed[:32], seed[32:]
-    key = BIP32Key(secret=secret, chain=chain, depth=0, index=0, fpr=b'\0\0\0\0', public=False, testnet=False)
+    key = BIP32Key(secret=secret, chain=chain, depth=0, index=0, fpr=b'\0\0\0\0', public=False, testnet=rein.testnet)
     return key
 
 
