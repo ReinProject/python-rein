@@ -968,6 +968,81 @@ def sync_core(log, user, key, urls):
 @cli.command()
 @click.option('--multi/--no-multi', default=False, help="prompt for identity to use")
 @click.option('--identity', type=click.Choice(['Alice', 'Bob', 'Charlie', 'Dan']), default=None, help="identity to use")
+def rate(multi, identity):
+    """Rate users that participated in past jobs"""
+    (log, user, key, urls) = init(multi, identity)
+    user_jobs = get_user_jobs(rein, True)
+
+    i = 1
+    for job in user_jobs:
+        click.echo('{}: {} - {}'.format(i, job['job_id'], job['job_name']))
+        i += 1
+
+    job_choice = click.prompt('Please select a job you wish to rate a user\'s performance for')
+    job = None
+    try:
+        job = user_jobs[int(job_choice) - 1]
+
+    except:
+        click.echo('Your choice was not valid.')
+        return
+
+    if not job:
+        click.echo('Something went wrong. Try again.')
+        return
+
+    i = 1
+    positions = ['employer', 'mediator', 'employee']
+    for rated_user in positions:
+        click.echo('{}: {} - {}'.format(i, job[rated_user]['SIN'], job[rated_user]['Name']))
+        i += 1
+
+    user_choice = click.prompt('Please select a user whose performance you\'d like to rate')
+    rated_user = None
+    try:
+        rated_user = job[positions[int(user_choice) - 1]]
+
+    except:
+        click.echo('Your choice was not valid.')
+        return
+
+    if not rated_user:
+        click.echo('Something went wrong. Try again.')
+        return
+
+    rating = click.prompt('Please enter a rating from 0 to 5 for {}'.format(rated_user['Name']))
+
+    valid = False
+    try:
+        if int(rating) in range(0, 6):
+            valid = True
+
+    except:
+        click.echo('Your choice was not valid.')
+        return
+
+    comments = click.prompt('If you so desire, you can add a comment (<100 characters) regarding the user\'s performance')
+
+    if len(comments) > 100:
+        click.echo('Your comment was too long. Please try again and stay below 100 characters.')
+        return
+
+    if rated_user['SIN'] == user.msin:
+        click.echo('You cannot rate yourself.')
+        return
+
+    if valid:
+        add_rating(rein, user, rein.testnet, rating, rated_user['SIN'], job['job_id'], user.msin, comments)
+        click.echo('The rating was successfully created. Please sync the changes to available servers by using rein sync.')
+        return
+
+    click.echo('Something went wrong. Please try again.')
+    return
+
+
+@cli.command()
+@click.option('--multi/--no-multi', default=False, help="prompt for identity to use")
+@click.option('--identity', type=click.Choice(['Alice', 'Bob', 'Charlie', 'Dan']), default=None, help="identity to use")
 @click.option('--jobid', default=None, help="ID of job, dumps documents to screen")
 def status(multi, identity, jobid):
     """
@@ -1271,7 +1346,7 @@ def start(multi, identity, setup):
         time_offset = abs(block_time - int(time.time()))
 
     @app.route('/rate', methods=['POST', 'GET'])
-    def rate():
+    def rate_web():
         form = RatingForm(request.form)
 
         if request.method == 'POST' and form.validate_on_submit():
