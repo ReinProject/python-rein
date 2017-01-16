@@ -13,7 +13,7 @@
 
 <br>
 <div class="well">
-    <form class="form-horizontal" role="form" method="POST" onsubmit="return confirm('This will be sync\'d immediately to available servers. Please confirm.');" action="{{ url_for('rate') }}">
+    <form class="form-horizontal" role="form" method="POST" onsubmit="return confirm('This will be sync\'d immediately to available servers. Please confirm.');" action="{{ url_for('rate_web') }}">
         {{ form.csrf_token }}
 
         <div class="form-group">

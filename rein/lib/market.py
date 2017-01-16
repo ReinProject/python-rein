@@ -204,7 +204,7 @@ def assemble_orders(rein, job_ids):
 
     for document in documents:
         doc_type = Document.get_document_type(document)
-        if not doc_type:
+        if not doc_type or doc_type == 'rating':
             rein.log.info('doc_type not detected')
             continue
         doc_hash = Document.calc_hash(document)

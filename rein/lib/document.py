@@ -32,7 +32,8 @@ class Document(Base):
               'Rein Dispute Delivery':   'creatordispute',
               'Rein Dispute Offer':      'workerdispute',
               'Rein Dispute Resolution': 'resolution',
-              'Rein Accept Resolution': 'acceptresolution'
+              'Rein Accept Resolution':  'acceptresolution',
+              'Rein Rating':             'rating'
              }
 
     def __init__(self, rein, doc_type, contents, order_id = None,
