@@ -733,6 +733,7 @@ def resolve(multi, identity, defaults, dry_run):
 @click.option('--defaults', '-d', default=None, help='file with form values')
 @click.option('--dry-run/--no-dry-run', '-n', default=False, help='generate but do not store document')
 def acceptresolution(multi, identity, defaults, dry_run):
+
     (log, user, key, urls) = init(multi, identity)
     form = {}
     if defaults:
@@ -741,15 +742,37 @@ def acceptresolution(multi, identity, defaults, dry_run):
             return click.echo("Input file type: " + form['Title'])
     store = False if dry_run else True
 
-    our_orders = get_in_process_orders(rein, Document, key, 'Job creator public key', True)
-    if len(our_orders) == 0:
+    #our_orders = get_in_process_orders(rein, Document, key, 'Job creator public key', True)+get_in_process_orders(rein, Document, key, 'Worker public key', True)
+
+    documents = Document.get_user_documents(rein)
+    job_ids = []
+    for document in documents:
+        job_id = Document.get_job_id(document.contents)
+        if job_id not in job_ids:
+            if document.source_url == 'local' and document.doc_type != 'enrollment':
+                job_ids.append(job_id)
+
+    urls = Bucket.get_urls(rein)
+    documents = []
+    job_ids_string = ','.join(job_ids)
+    valid_results = []
+    for url in urls:
+        sel_url = "{0}query?owner={1}&job_ids={2}&query=by_job_id&testnet={3}"
+        data = safe_get(log, sel_url.format(url, user.maddr, job_ids_string, rein.testnet))
+        if data and 'by_job_id' in data:
+            results = data['by_job_id']
+            valid_results += filter_and_parse_valid_sigs(rein, results, 'Resolution')
+        
+    valid_results = unique(valid_results, 'Job ID')
+                                                        
+    if len(valid_results) == 0:
         click.echo('None found')
         return
 
     if 'Job ID' in form.keys():
-        doc = select_by_form(our_orders, 'Job ID', form)
+        doc = select_by_form(valid_results, 'Job ID', form)
     else:
-        doc = acceptresolution_prompt(rein, our_orders, "Resolution")
+        doc = acceptresolution_prompt(rein, valid_results, "Resolution")
     if not doc:
         return
 
@@ -767,7 +790,7 @@ def acceptresolution(multi, identity, defaults, dry_run):
     sig_mediator = doc['Mediator payment signature']
 
     reverse_sigs = False
-    if key == delivery['Worker public key']:
+    if key == doc['Worker public key']:
         reverse_sigs = True
     (payment_txid,second_sig) = spend_p2sh(redeemScript,txins,[float(amount1),float(amount2)],[daddr1,daddr2],sig_primary,rein,reverse_sigs)
     (payment_txid_mediator,second_sig_mediator) = spend_p2sh_mediator(redeemScript_mediator,txins_mediator,[float(amount_mediator)],[daddr_mediator],sig_mediator,rein)

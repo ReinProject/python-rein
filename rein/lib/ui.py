@@ -417,11 +417,8 @@ def acceptresolution_prompt(rein, choices, detail='Description'):
         if 'Primary escrow redeem script' not in c:
             continue
         if detail in c:
-            click.echo('%s: %s - %s - %s - %s - %s' % (c['state'].title(), str(i),
-                        c['Job name'], c['Job ID'], shorten(c[detail],'Client gets '+c['Primary client payment amount'])))
-        else:
-            click.echo('%s: %s - %s - %s - %s' % (c['state'].title(), str(i),
-                        c['Job name'], c['Job ID'], shorten(c['Description'])))
+            click.echo('%s: %s - %s - %s - %s - %s' % ("Resolution", str(i),
+                        c['Job name'], c['Job ID'], shorten(c[detail]),'Client gets '+c['Primary client payment amount']))
         i += 1
     choice = get_choice(choices, 'resolution')
     if choice == 'q':
@@ -431,7 +428,7 @@ def acceptresolution_prompt(rein, choices, detail='Description'):
         contents = chosen[detail]
     else:
         contents = chosen['Description']
-    click.echo('You have chosen to accept the following resolution. \n\n%s: %s\nAccepted Bid amount (BTC): %s\n'
+    click.echo('You have chosen to accept the following resolution. \n\n%s: %s\n'
                'Primary escrow redeem script: %s\n'
                'Worker address: %s\n\n'
                'Mediator escrow redeem script: %s\n'
@@ -440,7 +437,7 @@ def acceptresolution_prompt(rein, choices, detail='Description'):
                '\nPlease review carefully before accepting. Once you upload your signed statement, the mediator should no '
                'longer provide a refund. (Ctrl-c to abort)\n' % 
                (detail,
-                contents, chosen['Bid amount (BTC)'],
+                contents,
                 chosen['Primary escrow redeem script'],
                 pubkey_to_address(chosen['Worker public key']),
                 chosen['Mediator escrow redeem script'],
