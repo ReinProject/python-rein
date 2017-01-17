@@ -409,6 +409,48 @@ def accept_prompt(rein, choices, detail='Description'):
               )
     return chosen
 
+def acceptresolution_prompt(rein, choices, detail='Description'):
+    i = 0
+    click.echo("Resolutions")
+    click.echo("---------------------")
+    for c in choices:
+        if 'Primary escrow redeem script' not in c:
+            continue
+        if detail in c:
+            click.echo('%s: %s - %s - %s - %s - %s' % (c['state'].title(), str(i),
+                        c['Job name'], c['Job ID'], shorten(c[detail],'Client gets '+c['Primary client payment amount'])))
+        else:
+            click.echo('%s: %s - %s - %s - %s' % (c['state'].title(), str(i),
+                        c['Job name'], c['Job ID'], shorten(c['Description'])))
+        i += 1
+    choice = get_choice(choices, 'resolution')
+    if choice == 'q':
+        return None
+    chosen = choices[choice]
+    if detail in chosen:
+        contents = chosen[detail]
+    else:
+        contents = chosen['Description']
+    click.echo('You have chosen to accept the following resolution. \n\n%s: %s\nAccepted Bid amount (BTC): %s\n'
+               'Primary escrow redeem script: %s\n'
+               'Worker address: %s\n\n'
+               'Mediator escrow redeem script: %s\n'
+               'Mediator address: %s\n'
+               'Client payment amount: %s\n'
+               '\nPlease review carefully before accepting. Once you upload your signed statement, the mediator should no '
+               'longer provide a refund. (Ctrl-c to abort)\n' % 
+               (detail,
+                contents, chosen['Bid amount (BTC)'],
+                chosen['Primary escrow redeem script'],
+                pubkey_to_address(chosen['Worker public key']),
+                chosen['Mediator escrow redeem script'],
+                pubkey_to_address(chosen['Mediator public key']),
+                chosen['Primary client payment amount']
+               )
+              )
+    return chosen
+
+    
 
 def dispute_prompt(rein, choices, detail='Description'):
     i = 0

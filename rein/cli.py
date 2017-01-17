@@ -727,6 +727,81 @@ def resolve(multi, identity, defaults, dry_run):
         click.echo("Dispute resolution signed by mediator. Run 'rein sync' to push to available servers.")
     log.info('resolve signed') if res else log.error('resolve failed')
 
+@cli.command()
+@click.option('--multi/--no-multi', default=False, help="prompt for identity to use")
+@click.option('--identity', type=click.Choice(['Alice', 'Bob', 'Charlie', 'Dan']), default=None, help="identity to use")
+@click.option('--defaults', '-d', default=None, help='file with form values')
+@click.option('--dry-run/--no-dry-run', '-n', default=False, help='generate but do not store document')
+def acceptresolution(multi, identity, defaults, dry_run):
+    (log, user, key, urls) = init(multi, identity)
+    form = {}
+    if defaults:
+        form = parse_document(open(defaults).read())
+        if 'Title' in form and form['Title'] != 'Rein Accept Resolution':
+            return click.echo("Input file type: " + form['Title'])
+    store = False if dry_run else True
+
+    our_orders = get_in_process_orders(rein, Document, key, 'Job creator public key', True)
+    if len(our_orders) == 0:
+        click.echo('None found')
+        return
+
+    if 'Job ID' in form.keys():
+        doc = select_by_form(our_orders, 'Job ID', form)
+    else:
+        doc = acceptresolution_prompt(rein, our_orders, "Resolution")
+    if not doc:
+        return
+
+    redeemScript = doc['Primary escrow redeem script']
+    txins = doc['Primary payment inputs']
+    amount1 = doc['Primary worker payment amount']
+    daddr1 = doc['Primary worker payment address']
+    amount2 = doc['Primary client payment amount']
+    daddr2 = doc['Primary client payment address']
+    sig_primary = doc['Primary payment signature']
+    redeemScript_mediator = doc['Mediator escrow redeem script']
+    txins_mediator = doc['Mediator payment inputs']
+    amount_mediator = doc['Mediator payment amount']
+    daddr_mediator = doc['Mediator payment address']
+    sig_mediator = doc['Mediator payment signature']
+
+    reverse_sigs = False
+    if key == delivery['Worker public key']:
+        reverse_sigs = True
+    (payment_txid,second_sig) = spend_p2sh(redeemScript,txins,[float(amount1),float(amount2)],[daddr1,daddr2],sig_primary,rein,reverse_sigs)
+    (payment_txid_mediator,second_sig_mediator) = spend_p2sh_mediator(redeemScript_mediator,txins_mediator,[float(amount_mediator)],[daddr_mediator],sig_mediator,rein)
+
+    fields = [
+        {'label': 'Job name',                       'value_from': doc},
+        {'label': 'Job ID',                         'value_from': doc},
+        {'label': 'Primary escrow redeem script',   'value_from': doc},
+        {'label': 'Mediator escrow redeem script',  'value_from': doc},
+        {'label':'Primary payment inputs','value_from':doc},
+        {'label':'Primary worker payment amount','value_from':doc},
+        {'label':'Primary worker payment address','value_from':doc},
+        {'label':'Primary client payment amount','value_from':doc},
+        {'label':'Primary client payment address','value_from':doc},
+        {'label':'Primary payment signature','value_from':doc},
+        {'label':'Primary payment txid','value':payment_txid},
+        {'label':'Primary payment second signature','value':second_sig},
+        {'label':'Mediator payment inputs','value_from':doc},
+        {'label':'Mediator payment amount','value_from':doc},
+        {'label':'Mediator payment address','value_from':doc},
+        {'label':'Mediator payment signature','value_from':doc},
+        {'label':'Mediator payment txid','value':payment_txid_mediator},
+        {'label':'Mediator payment second signature','value':second_sig_mediator}
+    ]
+    
+    document = assemble_document('Accept Resolution', fields)
+    click.echo('\n'+document+'\n')
+    if click.confirm("Are you sure?"):
+        res = sign_and_store_document(rein, 'acceptresolution', document, user.daddr, user.dkey, store)
+        if res and store:
+            click.echo("Accepted resolution. Run 'rein sync' to push to available servers.")
+        log.info('accept resolution signed') if res else log.error('accept resolution failed')
+    else:
+        click.echo("Accept resolution aborted.")
 
 @cli.command()
 @click.option('--multi/--no-multi', default=False, help="prompt for identity to use")
