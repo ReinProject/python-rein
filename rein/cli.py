@@ -1258,7 +1258,7 @@ def start(multi, identity, setup):
     from .lib.bitcoinecdsa import sign
 
     host = '127.0.0.1'
-    port = 5003
+    port = 5001
 
     tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'html')
 
@@ -1293,7 +1293,7 @@ def start(multi, identity, setup):
     def register_user():
         try:
             # Generate user data
-            key = bip32.mnemonic_to_key(str(request.form['mnemonic']))
+            key = bip32.mnemonic_to_key(str(request.form['mnemonic']).decode('unicode-escape'))
             mprv = bip32.get_master_private_key(key)
             maddr = bip32.get_master_address(key)
             daddr = bip32.get_delegate_address(key)
