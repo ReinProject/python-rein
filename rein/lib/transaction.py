@@ -72,7 +72,7 @@ def partial_spend_p2sh (redeemScript,rein,daddr=None,alt_amount=None,alt_daddr=N
     for txid,vout in txins:
         txins_str += " "+txid+"-"+str(vout)
         txins_obj.append(CMutableTxIn(COutPoint(lx(txid),vout)))                
-    fee = 0.0005
+    fee = 0.00025
     amount = round(total_value-fee,8)
     if alt_amount:
         amount = round(amount-alt_amount,8)
@@ -109,7 +109,7 @@ def partial_spend_p2sh_mediator (redeemScript,rein,mediator_address,mediator_sig
     for txid,vout in txins:
         txins_str += " "+txid+"-"+str(vout)
         txins_obj.append(CMutableTxIn(COutPoint(lx(txid),vout)))
-    fee = 0.0005
+    fee = 0.00025
     amount = round(total_value-fee,8)
     if amount<=0:
         raise ValueError('Not enough value in the inputs')
