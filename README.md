@@ -1,5 +1,7 @@
 ## Python-Rein
 
+[![Build Status](https://travis-ci.org/ReinProject/python-rein.svg?branch=master)](https://travis-ci.org/ReinProject/python-rein)
+
 Rein is designed to help you and others work together with Bitcoin. The Rein model of commerce mirrors that of internet at large through the use of paid microhosting to store data about users, jobs, and payments. Since little storage and bandwidth are needed, a high amount of redundancy and censorship-resistance may be acheived at low cost (on par with the cost of a gourmet coffee for a year of redundant hosting on several servers).
 
 Servers can be paid for their services but they do not communicate with each other, and while the client attempts to validate what it sees, this validation is not complete nor has the software seen a security review. As such, you are advised to limit use of Rein to small jobs where loss of funds or time spent would not present a significant burden.
