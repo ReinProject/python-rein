@@ -1258,7 +1258,7 @@ def start(multi, identity, setup):
     from .lib.bitcoinecdsa import sign
 
     host = '127.0.0.1'
-    port = 5002
+    port = 5003
 
     tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'html')
 
@@ -1277,12 +1277,23 @@ def start(multi, identity, setup):
     def web_setup():
         return render_template('setup.html')
 
+    @app.route('/generate-mnemonic', methods=['GET'])
+    def generate_mnemonic_url():
+        try:
+            return json.dumps({'mnemonic':(' '.join(bip32.generate_mnemonic(128)))})
+        except Exception as exc:
+            import traceback
+            print(traceback.format_exc())
+            to_return = {'enrolled': False,
+                         'exception': str(exc)}
+            print(exc)
+            return json.dumps(to_return)
+    
     @app.route('/register-user', methods=['POST'])
     def register_user():
         try:
-            print("register user!")
             # Generate user data
-            key = bip32.seed_to_key(str(request.form['seed']))
+            key = bip32.mnemonic_to_key(str(request.form['mnemonic']))
             mprv = bip32.get_master_private_key(key)
             maddr = bip32.get_master_address(key)
             daddr = bip32.get_delegate_address(key)
@@ -1305,8 +1316,6 @@ def start(multi, identity, setup):
             rein.user = new_identity
             rein.session.add(new_identity)
             rein.session.commit()
-
-            print("enroll")
             
             # Enroll user
             enrollment = build_enrollment_from_dict(user_data)

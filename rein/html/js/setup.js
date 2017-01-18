@@ -36,20 +36,7 @@ function storeUserData() {
         return true;
     }
 }
-// -------------------------
-function getMnemonic() {
-    var mnemonics = { "english": new Mnemonic("english") }["english"];
-    var mnemonic = mnemonics.generate();
-    document.getElementById('ajax-header').innerText = "Generating access keys"
-    document.getElementById('ajax-description').innerHTML = "<span style='font-size: 12pt'>Put down on paper these 12 words. They are the key to accessing and recovering your Rein account.</span><br>"
-    document.getElementById('ajax-elements').innerHTML = "<br><p style='font-size: 13pt'>" + mnemonic + "</p>";
-    document.getElementById('ajax-button').removeAttribute('class')
-    document.getElementById('ajax-button').setAttribute('class', 'col-sm-6')
-    document.getElementById('ajax-button').innerHTML = "<br><button onclick='renderConfirmationPage()'>Next</button>"
-    sessionStorage.mnemonic = mnemonic;
-    sessionStorage.seed = mnemonics.toSeed(mnemonic);
-}
-// -------------------------
+
 function renderConfirmationPage() {
     document.getElementById('ajax-header').innerText = "Confirm that you wrote down the mnemonic";
     document.getElementById('ajax-description').innerText = '';
@@ -80,7 +67,7 @@ function confirmMnemonic() {
     }
     for (var i = 0; i < conditions.length; i++) {
         if (conditions[i] == false) {
-            errors = "Some of the words you entered is incorrect. Try again.\n";
+            errors = "Some of the words you entered are incorrect. Try again.\n";
             document.getElementById('errors').innerText = errors;
             return
         }
@@ -91,7 +78,7 @@ function confirmMnemonic() {
 function submitData() {
     urlEncodedDataPairs = ['name=' + sessionStorage.name, 'contact=' + sessionStorage.contact, 
                            'mediate=' + sessionStorage.mediate, 'mediatorFee=' + sessionStorage.mediatorFee, 
-                           'seed=' + sessionStorage.seed];
+                           'mnemonic=' + sessionStorage.mnemonic];
     urlEncodedData = urlEncodedDataPairs.join('&').replace(/%20/g, '+');
     var xhttp = new XMLHttpRequest();
     xhttp.open('POST', '/register-user', true);
@@ -107,4 +94,28 @@ function submitData() {
             }
         }
     };
+}
+
+function getMnemonic() {
+    var xhttp = new XMLHttpRequest();
+    xhttp.open('GET', '/generate-mnemonic', true);
+    xhttp.send();
+    xhttp.onreadystatechange = function() {
+	if (this.readyState == 4 && this.status == 200) {
+	    var response = JSON.parse(this.responseText);
+	    var mnemonic = response.mnemonic;
+	    if (mnemonic) {
+		document.getElementById('ajax-header').innerText = "Generating access keys"
+		document.getElementById('ajax-description').innerHTML = "<span style='font-size: 12pt'>Put down on paper these 12 words. They are the key to accessing and recovering your Rein account.</span><br>"
+		document.getElementById('ajax-elements').innerHTML = "<br><p style='font-size: 13pt'>" + mnemonic + "</p>";
+		document.getElementById('ajax-button').removeAttribute('class')
+		document.getElementById('ajax-button').setAttribute('class', 'col-sm-6')
+		document.getElementById('ajax-button').innerHTML = "<br><button onclick='renderConfirmationPage()'>Next</button>"
+		sessionStorage.mnemonic = mnemonic;
+	    } else {
+		alert('Error generating mnemonic')
+	    }
+	}
+    };
+    document.getElementById('ajax-description').innerHTML = "<span style='font-size: 12pt'>Generating mnemonic...</span><br>";
 }
