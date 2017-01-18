@@ -1258,7 +1258,7 @@ def start(multi, identity, setup):
     from .lib.bitcoinecdsa import sign
 
     host = '127.0.0.1'
-    port = 5001
+    port = 5002
 
     tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'html')
 
@@ -1280,13 +1280,14 @@ def start(multi, identity, setup):
     @app.route('/register-user', methods=['POST'])
     def register_user():
         try:
+            print("register user!")
             # Generate user data
-            key = crypto.bip32.seed_to_key(str(request.form['seed']))
-            mprv = crypto.bip32.get_master_private_key(key)
-            maddr = crypto.bip32.get_master_address(key)
-            daddr = crypto.bip32.get_delegate_address(key)
-            dkey = crypto.bip32.get_delegate_private_key(key)
-            dxprv = crypto.bip32.get_delegate_extended_key(key)
+            key = bip32.seed_to_key(str(request.form['seed']))
+            mprv = bip32.get_master_private_key(key)
+            maddr = bip32.get_master_address(key)
+            daddr = bip32.get_delegate_address(key)
+            dkey = bip32.get_delegate_private_key(key)
+            dxprv = bip32.get_delegate_extended_key(key)
             if request.form['mediate'] == "True":
                 will_mediate = True
             else:
@@ -1305,6 +1306,8 @@ def start(multi, identity, setup):
             rein.session.add(new_identity)
             rein.session.commit()
 
+            print("enroll")
+            
             # Enroll user
             enrollment = build_enrollment_from_dict(user_data)
             signed_enrollment = '-----BEGIN BITCOIN SIGNED MESSAGE-----\n' + \
@@ -1353,7 +1356,7 @@ def start(multi, identity, setup):
 
 
     if rein.has_no_account() or setup:
-        #print('Open your browser to http://'+host+':' + str(port) + '/setup')
+        print('Open your browser to http://'+host+':' + str(port) + '/setup')
         app.run(host=host, port=port, debug=rein.debug)
         return
     else:
@@ -2019,7 +2022,7 @@ def start(multi, identity, setup):
             time_left = str(days) + 'd ' + str(hours) + 'h'
 
             if state in ['job_posting', 'bid'] and j['Job creator public key'] != key:
-                row = '<a href="http://localhost:5001/job/{}">{}</a></td><td>{}</td><td>{}</td><td><span title="{}">{}</span>'
+                row = '<a href="http://localhost:'+str(port)+'/job/{}">{}</a></td><td>{}</td><td>{}</td><td><span title="{}">{}</span>'
                 job_ids.append((j['Job ID'], row.format(j['Job ID'],
                                                         j['Job name'],
                                                         j['Description'],
@@ -2203,6 +2206,7 @@ def start(multi, identity, setup):
                         orders=orders)
 
     print('Open your browser to http://'+host+':' + str(port))
+    print("testnet = "+str(rein.testnet))
     app.run(host=host, port=port, debug=rein.debug)
 
     # testing steps: Disable tor. Then turn on debug because debug doesn't work when socket is overriden

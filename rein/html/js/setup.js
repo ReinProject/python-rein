@@ -94,14 +94,14 @@ function submitData() {
                            'seed=' + sessionStorage.seed];
     urlEncodedData = urlEncodedDataPairs.join('&').replace(/%20/g, '+');
     var xhttp = new XMLHttpRequest();
-    xhttp.open('POST', 'http://127.0.0.1:5001/register-user', true);
+    xhttp.open('POST', '/register-user', true);
     xhttp.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
     xhttp.send(urlEncodedData);
     xhttp.onreadystatechange = function() {
         if (this.readyState == 4 && this.status == 200) {
             var response = JSON.parse(this.responseText);
             if (response.enrolled) {
-                window.location.replace('http://127.0.0.1:5001/done');
+                window.location.replace('/done');
             } else {
                 alert('Try restarting "rein start" or submit the form again.')
             }
