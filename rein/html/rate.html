@@ -60,14 +60,8 @@
 
         <div class="form-group">
             <label class="col-sm-4 control-label">{{ form.rating.label }}</label>
-            <div class="col-sm-6">
-            {% for subfield in form.rating %}
-                <tr>
-                    <td>{{ subfield }}</td>
-                    <td>{{ subfield.label }}</td>
-                </tr>
-                <br>
-            {% endfor %}
+            {{ form.rating(class="form-control") }}
+            <div class="col-sm-6 ratingdiv">
             </div>
             {{ render_error(form.rating) }}
         </div>

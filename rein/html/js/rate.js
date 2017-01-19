@@ -71,6 +71,10 @@ function nextJob() {
 
 document.addEventListener("DOMContentLoaded", function(event) {
 	// Initialize contents of the job and user id fields and their labels
+	$(".ratingdiv").raty();
+	$(".ratingdiv").click(function() {
+		$("input[name='rating']").val($(".ratingdiv").raty('score'));
+	});
 	$("input[name='rated_by_id']").val($USER_ID);
 	$("input[name='job_id']").val($USER_JOBS[$CURRENT_JOB].job_id);
 	$("button.job_name").text($USER_JOBS[$CURRENT_JOB].job_name);

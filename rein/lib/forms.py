@@ -1,7 +1,8 @@
 from flask import Flask
 from flask_wtf import Form
-from wtforms import TextField, TextAreaField, RadioField, PasswordField, HiddenField
+from wtforms import TextField, TextAreaField, RadioField, PasswordField
 from wtforms.validators import Required, ValidationError
+from wtforms.widgets import HiddenInput
 import rein.lib.config as config
 from .mediator import Mediator
 from .document import Document
@@ -65,16 +66,8 @@ class AcceptResolutionForm(Form):
     resolution_id = RadioField('Resolution')
 
 class RatingForm(Form):
-    rating_choices = [
-        ('0', 'Could not have been worse'),
-        ('1', 'Bad'),
-        ('2', 'Acceptable'),
-        ('3', 'Good'),
-        ('4', 'Very good'),
-        ('5', 'Could not have been better')
-    ]
     job_id = TextField('Job id', validators = [Required()], default='')
     user_id = TextField('User SIN', validators = [Required(), avoid_self_rating], default='')
     rated_by_id = TextField('Rated by SIN', validators = [Required()], default='')
-    rating = RadioField('Rating', choices=rating_choices, validators=[Required()], default=0)
+    rating = TextField('Rating', validators=[Required()], default=0, widget=HiddenInput())
     comments = TextAreaField('Comments', validators = [], default='')
