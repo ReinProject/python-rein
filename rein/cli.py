@@ -1258,7 +1258,7 @@ def start(multi, identity, setup):
     from .lib.bitcoinecdsa import sign
 
     host = '127.0.0.1'
-    port = 5001
+    port = 5002
 
     tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'html')
 
@@ -1914,7 +1914,7 @@ def start(multi, identity, setup):
         else:
             found = True
 
-        mediator_fee_btc = str(round(float(combined['Bid amount (BTC}'])*float(combined['Mediator fee']),8))
+        mediator_fee_btc = str(round(float(combined['Bid amount (BTC)'])*float(combined['Mediator fee'])/100.,8))
 
         return render_template('job.html',
                             rein=rein,
@@ -1924,7 +1924,7 @@ def start(multi, identity, setup):
                             found=found,
                             unique=unique_documents,
                                job=combined,
-                               mediator_fee_btc)
+                               mediator_fee_btc=mediator_fee_btc)
 
 
     @app.route("/dispute", methods=['POST', 'GET'])
