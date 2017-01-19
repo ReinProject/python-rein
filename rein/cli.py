@@ -1293,7 +1293,9 @@ def start(multi, identity, setup):
     def register_user():
         try:
             # Generate user data
-            key = bip32.mnemonic_to_key(str(request.form['mnemonic']).decode('unicode-escape'))
+            mnemonic_list = str(request.form['mnemonic']).split()
+            mnemonic_list_unicode = [s.decode('unicode-escape') for s in mnemonic_list]
+            key = bip32.mnemonic_to_key(mnemonic_list_unicode)
             mprv = bip32.get_master_private_key(key)
             maddr = bip32.get_master_address(key)
             daddr = bip32.get_delegate_address(key)

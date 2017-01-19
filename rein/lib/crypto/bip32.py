@@ -8,6 +8,7 @@ import json
 import hmac
 import os
 import rein.lib.config as config
+import unittest
 
 # TODO Make Python index this file automatically
 script_dir = os.path.dirname(__file__)
@@ -85,3 +86,34 @@ def get_delegate_private_key(mxprv):
 def get_delegate_extended_key(mxprv):
     delegate_key = get_delegate_key(mxprv)
     return delegate_key.ExtendedKey()
+
+class BitcoinAddressTest(unittest.TestCase):
+    def test_check_bitcoin_address(self):
+
+        mnemonic_list_initial = [u'correct',u'horse',u'battery',u'staple']
+        key = mnemonic_to_key(mnemonic_list_initial)
+        wifkey_master = get_master_private_key(key)
+        address_master = get_master_address(key)
+        wifkey_delegate = get_delegate_private_key(key)
+        address_delegate = get_delegate_address(key)
+
+        from rein.lib.bitcoinecdsa import privkey_to_address
+        
+        self.assertEqual(privkey_to_address(wifkey_master),address_master)
+        self.assertEqual(privkey_to_address(wifkey_delegate),address_delegate)
+
+        mnemonic = "correct horse battery staple"
+        mnemonic_list = str(mnemonic).split()
+        mnemonic_list_unicode = [s.decode('unicode-escape') for s in mnemonic_list]
+
+        self.assertEqual(mnemonic_list,mnemonic_list_initial)
+        
+        key2 = mnemonic_to_key(mnemonic_list_unicode)
+        wifkey_master2 = get_master_private_key(key2)
+        address_master2 = get_master_address(key2)
+        wifkey_delegate2 = get_delegate_private_key(key2)
+        address_delegate2 = get_delegate_address(key2)
+
+        self.assertEqual(privkey_to_address(wifkey_master2),address_master2)
+        self.assertEqual(privkey_to_address(wifkey_delegate2),address_delegate2)
+        
