@@ -33,8 +33,8 @@ class BitcoinAddressTest(unittest.TestCase):
         self.assertTrue(check_bitcoin_address('3746f7fjJ6fG1pQXDjA8xy9WAzf4968WWv'))
         self.assertFalse(check_bitcoin_address('2746f7fjJ6fG1pQXDjA8xy9WAzf4968WWv'))
 
-    def check_sin(self):
-        self.assertEqual(sin_type_2('02F840A04114081690223B7069071A70D6DABB891763B638CC20C7EC3BD58E6C86', 'TfG4ScDgysrSpodWD4Re5UtXmcLbY5CiUHA'))
+    def test_check_sin(self):
+        self.assertEqual(generate_sin('02F840A04114081690223B7069071A70D6DABB891763B638CC20C7EC3BD58E6C86'), 'TfG4ScDgysrSpodWD4Re5UtXmcLbY5CiUHA')
 
 def generate_sin(master_key):
     """Generates a type 2 'Secure Identity Number' using the bip32 master public key"""

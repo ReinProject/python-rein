@@ -12,6 +12,12 @@ function setUser() {
 		user_id = $USER_JOBS[$CURRENT_JOB].employee.SIN;
 		user_name = $USER_JOBS[$CURRENT_JOB].employee.Name;
 	}
+	if (user_id == $USER_ID) {
+		if ($CURRENT_USER != 2) {
+			return nextUser();
+		}
+		return lastUser();
+	}
 	$("input[name='user_id']").val(user_id);
 	$("button.user_name").text(user_name);
 	return true;
@@ -65,9 +71,8 @@ function nextJob() {
 
 document.addEventListener("DOMContentLoaded", function(event) {
 	// Initialize contents of the job and user id fields and their labels
-	$("input[name='job_id']").val($USER_JOBS[0].job_id);
-	$("input[name='user_id']").val($USER_JOBS[0].employer.SIN);
 	$("input[name='rated_by_id']").val($USER_ID);
-	$("button.job_name").text($USER_JOBS[0].job_name);
-	$("button.user_name").text($USER_JOBS[0].employer.Name);
+	$("input[name='job_id']").val($USER_JOBS[$CURRENT_JOB].job_id);
+	$("button.job_name").text($USER_JOBS[$CURRENT_JOB].job_name);
+	setUser();
 });
