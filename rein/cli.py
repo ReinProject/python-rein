@@ -1914,6 +1914,8 @@ def start(multi, identity, setup):
         else:
             found = True
 
+        mediator_fee_btc = str(round(float(combined['Bid amount (BTC}'])*float(combined['Mediator fee']),8))
+
         return render_template('job.html',
                             rein=rein,
                             user=user,
@@ -1921,7 +1923,8 @@ def start(multi, identity, setup):
                             state=state,
                             found=found,
                             unique=unique_documents,
-                            job=combined)
+                               job=combined,
+                               mediator_fee_btc)
 
 
     @app.route("/dispute", methods=['POST', 'GET'])

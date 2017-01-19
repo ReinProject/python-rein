@@ -71,7 +71,7 @@ Description: {{ job['Description'] }}<br />
 
 <div class="row" style="margin-top: 10px;">
 	<div class="col-xs-6 well" style="margin-right:10px; margin-left:10px;">
-        Mediator escrow: <b>{{ job['Mediator escrow address'] }}</b><icon class="qrcode"> should be funded with <b>{{ round(float(job['Bid amount (BTC}'])*float(job['Mediator fee']),8) }} ({{ float(job['Mediator fee']) }}%</b> of the above).
+        Mediator escrow: <b>{{ job['Mediator escrow address'] }}</b><icon class="qrcode"> should be funded with <b>{{ mediator_fee_btc }} BTC ({{ float(job['Mediator fee']) }}%</b> of the above).
     </div>
     <div class="col-xs-2" style="margin-right:10px">
         <div class="qrcode">
