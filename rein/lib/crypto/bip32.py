@@ -117,3 +117,11 @@ class BitcoinAddressTest(unittest.TestCase):
         self.assertEqual(privkey_to_address(wifkey_master2),address_master2)
         self.assertEqual(privkey_to_address(wifkey_delegate2),address_delegate2)
         
+        key3 = mnemonic_to_key(mnemonic.decode('unicode-escape'))
+        wifkey_master3 = get_master_private_key(key3)
+        address_master3 = get_master_address(key3)
+        wifkey_delegate3 = get_delegate_private_key(key3)
+        address_delegate3 = get_delegate_address(key3)
+        
+        self.assertEqual(privkey_to_address(wifkey_master3),address_master3)
+        self.assertEqual(privkey_to_address(wifkey_delegate3),address_delegate3)
