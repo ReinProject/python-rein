@@ -1258,7 +1258,7 @@ def start(multi, identity, setup):
     from .lib.bitcoinecdsa import sign
 
     host = '127.0.0.1'
-    port = 5002
+    port = 5001
 
     tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'html')
 
