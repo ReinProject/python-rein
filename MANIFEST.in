@@ -1,1 +1,2 @@
 recursive-include rein/html *
+recursive-include rein/lib/crypto/resources *
