@@ -136,10 +136,9 @@ def partial_spend_p2sh_mediator_2 (redeemScript,txins_str,amount,daddr,rein):
     tx = CMutableTransaction(txins_obj,[txout])
     seckey = CBitcoinSecret(rein.user.dkey)
     ntxins = len(txins_obj)
-    sig = ""
     for i in range(0,ntxins):
         sighash = SignatureHash(txin_redeemScript,tx,i,SIGHASH_ALL)
-        sig += " "+b2x(seckey.sign(sighash)+x("01"))
+        sig = seckey.sign(sighash)+x("01")
         txins_obj[i].scriptSig = CScript([OP_0, sig, txin_redeemScript])
         #VerifyScript(txins_obj[i].scriptSig, txin_scriptPubKey, tx, i, (SCRIPT_VERIFY_P2SH,))
     tx_bytes = tx.serialize()
