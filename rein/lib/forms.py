@@ -26,6 +26,12 @@ def validate_en(form, field):
     if not validate_enrollment(message):
         raise ValidationError("Invalid signature")
 
+def validate_mediator_fee(form, field):
+    try:
+        float(field.data)
+    except ValueError:
+        raise ValidationError("Invalid mediator fee")
+
 class SetupForm(Form):
     name = TextField('Name / Handle', validators = [Required()])
     contact = TextField('Email / Bitmessage', validators = [Required()])
@@ -33,7 +39,7 @@ class SetupForm(Form):
     daddr = TextField('Delegate Bitcoin address', validators = [Required(), validate_address])
     dkey = PasswordField('Delegate Bitcoin private Key', validators = [Required(), validate_privkey])
     will_mediate = RadioField('Register as a mediator?', choices = [('1','Yes'), ('0', 'No')])
-    mediator_fee = TextField('Mediator Fee')  # TODO make required only if Yes above
+    mediator_fee = TextField('Mediator Fee', validators = [validate_mediator_fee])  # TODO make required only if Yes above
 
 class SignForm(Form):
     identity_id = HiddenField("identity_id")

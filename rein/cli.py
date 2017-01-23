@@ -1914,7 +1914,10 @@ def start(multi, identity, setup):
         else:
             found = True
 
-        mediator_fee_btc = str(round(float(combined['Bid amount (BTC)'])*float(combined['Mediator fee'])/100.,8))
+        try:
+            mediator_fee_btc = str(round(float(combined['Bid amount (BTC)'])*float(combined['Mediator fee'])/100.,8))
+        except ValueError:
+            mediator_fee_btc = "NaN"
 
         return render_template('job.html',
                             rein=rein,
