@@ -506,7 +506,7 @@ def accept(multi, identity, defaults, dry_run):
     amount_mediator = doc['Mediator payment amount']
     daddr_mediator = doc['Mediator payment address']
     (payment_txid,client_sig) = spend_p2sh(redeemScript,txins,[float(amount)],[daddr],worker_sig,rein)
-    client_sig_for_mediator = partial_spend_p2sh_mediator_2(redeemScript_mediator,txins_mediator,float(amount_mediator),daddr_mediator,rein)
+    tx_for_mediator = partial_spend_p2sh_mediator_2(redeemScript_mediator,txins_mediator,float(amount_mediator),daddr_mediator,rein)
     
     fields = [
         {'label': 'Job name',                       'value_from': doc},
@@ -522,7 +522,7 @@ def accept(multi, identity, defaults, dry_run):
         {'label':'Mediator payment inputs','value_from':doc},
         {'label':'Mediator payment amount','value_from':doc},
         {'label':'Mediator payment address','value_from':doc},
-        {'label':'Mediator payment client signature','value':client_sig_for_mediator}
+        {'label':'Mediator payment client signature','value':tx_for_mediator}
     ]
     document = assemble_document('Accept Delivery', fields)
     click.echo('\n'+document+'\n')
@@ -1626,7 +1626,7 @@ def start(multi, identity, setup):
             amount_mediator = delivery['Mediator payment amount']
             daddr_mediator = delivery['Mediator payment address']
             (payment_txid,client_sig) = spend_p2sh(redeemScript,txins,[float(amount)],[daddr],worker_sig,rein)
-            client_sig_for_mediator = partial_spend_p2sh_mediator_2(redeemScript_mediator,txins_mediator,float(amount_mediator),daddr_mediator,rein)
+            tx_for_mediator = partial_spend_p2sh_mediator_2(redeemScript_mediator,txins_mediator,float(amount_mediator),daddr_mediator,rein)
             fields = [
                 {'label': 'Job name',                       'value_from': delivery},
                 {'label': 'Job ID',                         'value_from': delivery},
@@ -1641,7 +1641,7 @@ def start(multi, identity, setup):
                 {'label':'Mediator payment inputs','value_from':delivery},
                 {'label':'Mediator payment amount','value_from':delivery},
                 {'label':'Mediator payment address','value_from':delivery},
-                {'label':'Mediator payment client signature','value':client_sig_for_mediator}
+                {'label':'Mediator payment client signature','value':tx_for_mediator}
                      ]
 
             document_text = assemble_document('Accept Delivery', fields)
