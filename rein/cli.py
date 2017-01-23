@@ -1915,7 +1915,10 @@ def start(multi, identity, setup):
             found = True
 
         try:
-            mediator_fee_btc = str(round(float(combined['Bid amount (BTC)'])*float(combined['Mediator fee'])/100.,8))
+            if 'Bid amount (BTC)' in combined:
+                mediator_fee_btc = str(round(float(combined['Bid amount (BTC)'])*float(combined['Mediator fee'])/100.,8))
+            else:
+                mediator_fee_btc = "NaN"
         except ValueError:
             mediator_fee_btc = "NaN"
 
