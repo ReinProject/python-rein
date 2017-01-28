@@ -2,15 +2,15 @@ from flask import Flask
 from flask_wtf import Form
 from wtforms import TextField, TextAreaField, RadioField, PasswordField, HiddenField
 from wtforms.validators import Required, ValidationError
-import config
-from mediator import Mediator
-from document import Document
-from order import Order
-from bitcoinecdsa import privkey_to_address
-from bitcoinaddress import check_bitcoin_address
+import rein.lib.config as config
+from .mediator import Mediator
+from .document import Document
+from .order import Order
+from .bitcoinecdsa import privkey_to_address
+from .bitcoinaddress import check_bitcoin_address
 
-from ui import build_enrollment
-from validate import validate_enrollment
+from .ui import build_enrollment
+from .validate import validate_enrollment
 
 
 def validate_privkey(form, field):
@@ -26,6 +26,12 @@ def validate_en(form, field):
     if not validate_enrollment(message):
         raise ValidationError("Invalid signature")
 
+def validate_mediator_fee(form, field):
+    try:
+        float(field.data)
+    except ValueError:
+        raise ValidationError("Invalid mediator fee")
+
 class SetupForm(Form):
     name = TextField('Name / Handle', validators = [Required()])
     contact = TextField('Email / Bitmessage', validators = [Required()])
@@ -33,7 +39,7 @@ class SetupForm(Form):
     daddr = TextField('Delegate Bitcoin address', validators = [Required(), validate_address])
     dkey = PasswordField('Delegate Bitcoin private Key', validators = [Required(), validate_privkey])
     will_mediate = RadioField('Register as a mediator?', choices = [('1','Yes'), ('0', 'No')])
-    mediator_fee = TextField('Mediator Fee')  # TODO make required only if Yes above
+    mediator_fee = TextField('Mediator Fee', validators = [validate_mediator_fee])  # TODO make required only if Yes above
 
 class SignForm(Form):
     identity_id = HiddenField("identity_id")
@@ -63,12 +69,12 @@ class DisputeForm(Form):
     order_id = RadioField('Choose job')
 
 class AcceptForm(Form):
-    signed_primary_payment = TextAreaField('Signed primary payment', validators = [Required()])
-    signed_mediator_payment = TextAreaField('Signed mediator payment', validators = [Required()])
     deliverable_id = RadioField('Deliverables')
 
 class ResolveForm(Form):
-    signed_primary_payment = TextAreaField('Signed primary payment', validators = [Required()])
-    signed_mediator_payment = TextAreaField('Signed mediator payment', validators = [Required()])
     resolution = TextAreaField('Resolution', validators = [Required()])
+    client_payment_amount = TextField('Client payment amount', validators = [Required()])
     dispute_id = RadioField('Disputes')
+
+class AcceptResolutionForm(Form):
+    resolution_id = RadioField('Resolution')

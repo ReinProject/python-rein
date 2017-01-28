@@ -48,6 +48,18 @@ If you want detailed information about pending jobs, click on the job in questio
 
 ## Addresses and Payments
 
+### Address generation
+
+Rein generates your Bitcoin addresses automatically at setup. It uses BIP32/39 to first generate a secret phrase, then transform it into a main private key and derive child keys from it.
+
+Here is the derivation path:
+m/0 - master address, private, and public keys
+m/1'/0 - delegate address, private, and public keys
+
+The mnemonic should be kept private as it is the key to accessing your Rein account and signing escrow release.
+
+-----
+
 Rein uses two types of escrow in order to protect funds that are to go to the worker or job creator (depending upon the success of the transaction) as well as the mediator. 
 
 ### Primary payment
