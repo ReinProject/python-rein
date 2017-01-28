@@ -62,12 +62,17 @@ choosing a mediator. Your choice may affect the number and quality of bids"""),
                         },
         'resolve':   {
                     'pre': ['creatordispute', 'workerdispute'],
-                    'next': ['complete'],
+                    'next': ['acceptresolution'],
                     'endpoint': '/resolve',
                     'past_tense': _('complete, dispute resolved'),
-                        },
+        },
+        'acceptresolution': {
+                    'pre': ['resolve'],
+                    'next': ['complete'],
+                    'endpoint': '/acceptresolution',
+                    'past_tense': _('complete, resolution accepted'),
        }
-
+}
 
 class Order(Base):
     __tablename__ = 'order'
@@ -154,7 +159,7 @@ class Order(Base):
 
     @classmethod
     def update_orders(self, rein, Document):
-        from market import assemble_orders
+        from .market import assemble_orders
         documents = Document.get_user_documents(rein)
         job_ids = []
         for document in documents:

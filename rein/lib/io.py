@@ -1,9 +1,9 @@
 import requests
 import click
 
-from util import unique
+from .util import unique
 
-import config
+import rein.lib.config as config
 rein = config.Config()
 
 def safe_get(log, url):

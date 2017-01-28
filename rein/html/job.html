@@ -58,9 +58,48 @@ Description: {{ job['Description'] }}<br />
 
 <h5>Payments</h5>
 
-<p>Before starting work, worker should verify the following:<br /><br />
-Primary escrow: <b>{{ job['Primary escrow address'] }}</b> should be funded with <b>{{ job['Bid amount (BTC)'] }} BTC</b>.<br />
-Mediator escrow: <b>{{ job['Mediator escrow address'] }}</b> should be funded with <b>{{ job['Mediator fee'] }}%</b> of the above.<br />
+<p>Before starting work, worker should verify the following:</p>
+
+<div class="row">
+    <div class="col-xs-2" style="width:175px">
+        <div id="primary"></div>
+    </div>
+	<div class="col-xs-6 well" style="margin-right:10px; margin-left:10px;">
+        Primary escrow: <b>{{ job['Primary escrow address'] }}</b><icon class="qrcode"> should be funded with <b>{{ job['Bid amount (BTC)'] }} BTC</b>.
+    </div>
+</div>
+
+<div class="row" style="margin-top: 10px;">
+	<div class="col-xs-6 well" style="margin-right:10px; margin-left:10px;">
+        Mediator escrow: <b>{{ job['Mediator escrow address'] }}</b><icon class="qrcode"> should be funded with <b>{{ mediator_fee_btc }} BTC ({{ job['Mediator fee'] }}%</b> of the above).
+    </div>
+    <div class="col-xs-2" style="margin-right:10px">
+        <div class="qrcode">
+            <div id="mediator"></div>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    new QRCode(document.getElementById("primary"),
+                {
+                  text: "bitcoin:{{ job['Primary escrow address'] }}",
+                  width: 148,
+                  height: 148,
+                  colorDark : "#000000",
+                  colorLight : "#ffffff",
+                  correctLevel : QRCode.CorrectLevel.H
+                });
+    new QRCode(document.getElementById("mediator"),
+                {
+                  text: "bitcoin:{{ job['Mediator escrow address'] }}",
+                  width: 148,
+                  height: 148,
+                  colorDark : "#000000",
+                  colorLight : "#ffffff",
+                  correctLevel : QRCode.CorrectLevel.H
+                });
+</script>
 
 {% endif %}<br />
     </div>

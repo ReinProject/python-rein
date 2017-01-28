@@ -2,7 +2,7 @@ from sqlalchemy import Column, Integer, String, Boolean, and_
 from sqlalchemy.ext.declarative import declarative_base
 import hashlib
 import requests
-import config
+import rein.lib.config as config
 
 rein = config.Config()
 

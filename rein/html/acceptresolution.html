@@ -9,14 +9,14 @@
 		</a>
 		<ol class="breadcrumb pull-left">
 			<li><a href="/">Job Creators</a></li>
-			<li><a href="/accept">Accept Delivery</a></li>
+			<li><a href="/accept">Accept Resolution</a></li>
 		</ol>
     </div>
 </div>
 <div class="well">
 <div class="row">
 	<div class="col-xs-12">
-<h4>Accept Delivery</h4>
+<h4>Accept Resolution</h4>
 {% with messages = get_flashed_messages() %}
   {% if messages %}
     {% for message in messages %}
@@ -28,7 +28,7 @@
 
 {% if no_choices %}
 <h5>None found.</h5>
-<p>It looks like you haven't awarded a job to anyone. Possible next steps: <a href="/offer">Review bids</a> or <a href="/post">Post a job</a>.</p>
+<p>It looks like your mediator hasn't proposed a resolution.
 {% else %}
 <p>Block time (12 blocks ago): {{ block_time }} UTC
 {% if time_offset > 3600*4 %}
@@ -36,7 +36,7 @@
 {% endif %}
 </p>
 
-<form class="form-horizontal" role="form" method="POST" onsubmit="return confirm('This will be sync\'d immediately to available servers. Please confirm.');" action="{{ url_for('job_accept') }}">
+<form class="form-horizontal" role="form" method="POST" onsubmit="return confirm('This will be sync\'d immediately to available servers. Please confirm.');" action="{{ url_for('job_acceptresolution') }}">
     {{ form.csrf_token }}
 
 <table class="table">
@@ -44,11 +44,11 @@
     <tr>
         <th></th>
         <th>Job name</th>
-        <th>Delivery</th>
+        <th>Resolution</th>
     </tr>
 </thead>
 <tbody>
-{% for subfield in form.deliverable_id %}
+{% for subfield in form.resolution_id %}
 
     <tr>
         <td>{{ subfield }}</td>
@@ -58,8 +58,8 @@
 </tbody>
 </table>
 
-Click accept to release the funds from the escrow addresses for this job.<br /><br />
-<input type="submit" value="Accept!">
+Click accept to release the funds from the escrow addresses according to the terms written by the mediator in the resolution document.<br /><br >
+<input type="submit" value="Accept">
 </form>
 {% endif %}
     </div>
