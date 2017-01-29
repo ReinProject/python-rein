@@ -1367,7 +1367,7 @@ def start(multi, identity, setup):
 
 
     if rein.has_no_account() or setup:
-        print('Open your browser to http://'+host+':' + str(port) + '/setup')
+        webbrowser.open('http://'+host+':' + str(port) + '/setup')
         app.run(host=host, port=port, debug=rein.debug)
         return
     else:
@@ -2226,7 +2226,7 @@ def start(multi, identity, setup):
                         documents=documents,
                         orders=orders)
 
-    print('Open your browser to http://'+host+':' + str(port))
+    webbrowser.open('http://'+host+':' + str(port))
     print("testnet = "+str(rein.testnet))
     app.run(host=host, port=port, debug=rein.debug)
 
