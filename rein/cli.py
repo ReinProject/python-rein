@@ -201,6 +201,7 @@ def post(multi, identity, defaults, dry_run):
                 {'label': 'Job creator contact',            'value': user.contact},
                 {'label': 'Job creator public key',         'value': key},
                 {'label': 'Job creator master address',     'value': user.maddr},
+                {'label': 'Job creator delegate address',   'value': user.daddr},
              ]
     document_text = assemble_document('Job', fields)
     if not rein.testnet:
@@ -287,6 +288,7 @@ def bid(multi, identity, defaults, dry_run):
                 {'label': 'Worker',                         'value': user.name},
                 {'label': 'Worker contact',                 'value': user.contact},
                 {'label': 'Worker master address',          'value': user.maddr},
+                {'label': 'Worker delegate address',        'value': user.daddr},
                 {'label': 'Description',                    'not_null': form},
                 {'label': 'Bid amount (BTC)',               'not_null': form},
                 {'label': 'Primary escrow address',         'value': primary_addr},
@@ -1448,10 +1450,12 @@ def start(multi, identity, setup):
                 {'label': 'Mediator contact',               'value': mediator.contact},
                 {'label': 'Mediator fee',                   'value': str(mediator.mediator_fee)},
                 {'label': 'Mediator public key',            'value': mediator.dpubkey},
+                {'label': 'Mediator delegate address',      'value': mediator.daddr},
                 {'label': 'Mediator master address',        'value': mediator.maddr},
                 {'label': 'Job creator',                    'value': user.name},
                 {'label': 'Job creator contact',            'value': user.contact},
                 {'label': 'Job creator public key',         'value': key},
+                {'label': 'Job creator delegate address',   'value': user.daddr},
                 {'label': 'Job creator master address',     'value': user.maddr},
                      ]
             document_text = assemble_document('Job', fields)
@@ -2077,6 +2081,7 @@ def start(multi, identity, setup):
                 {'label': 'Job name',                       'value_from': job},
                 {'label': 'Worker',                         'value': user.name},
                 {'label': 'Worker contact',                 'value': user.contact},
+                {'label': 'Worker delegate address',        'value': user.daddr},
                 {'label': 'Worker master address',          'value': user.maddr},
                 {'label': 'Description',                    'value': form.description.data},
                 {'label': 'Bid amount (BTC)',               'value': form.bid_amount.data},
