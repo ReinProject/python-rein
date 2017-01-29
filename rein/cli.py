@@ -1962,7 +1962,7 @@ def start(multi, identity, setup):
             else:
                 role = 'Worker'
 
-            if o['state'] in ['offer', 'delivery']:
+            if o['state'] in ['offer', 'delivery', 'creatordispute', 'workerdispute']:
                 orders.append((str(id), '{}</td><td>{}'.format( job_link(o),
                                                                 role,
                                                               )))

@@ -139,7 +139,7 @@ def get_in_process_orders(rein, Document, key, match_field, should_match):
     orders = Order.get_user_orders(rein, Document)
     for order in orders:
         state = order.get_state(rein, Document)
-        if state in ['offer', 'delivery']:
+        if state in ['offer', 'delivery', 'creatordispute', 'workerdispute']:
             documents += order.get_documents(rein, Document, state)
 
     # attach raw contents of all order's documents
