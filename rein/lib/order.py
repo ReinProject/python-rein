@@ -63,13 +63,13 @@ STATE = {
                     'next': ['acceptresolution'],
                     'endpoint': '/resolve',
                     'past_tense': 'dispute resolved'
-        },
-    'acceptresolution': {
-        'pre': ['resolve'],
-        'next': ['complete'],
-        'endpoint': '/acceptresolution',
-        'past_tense': 'complete, resolution accepted'
-       }
+                        },
+        'acceptresolution': {
+                    'pre': ['resolve'],
+                    'next': ['complete'],
+                    'endpoint': '/acceptresolution',
+                    'past_tense': 'complete, resolution accepted'
+                        }
 }
 
 class Order(Base):
