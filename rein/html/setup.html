@@ -1,79 +1,61 @@
 {% extends "minimal-layout.html" %}
-{% from "_form_helpers.html" import render_error %}
 {% block body %}
 
-<h3>&nbsp;</h3>
+<script src="js/setup.js"></script>
+<script src="js/jsbip39.js"></script>
+<script src="js/sjcl-bip39.js"></script>
+<script src="js/wordlist_english.js"></script>
+
+<br>
 <div class="well">
-<div class="row">
-	<div class="col-xs-12 col-sm-12">
-        
-<h3>Sign Up</h3>
-<br />
-{% with messages = get_flashed_messages() %}
-  {% if messages %}
-    {% for message in messages %}
-      <p  class="txt-danger"><b>{{ message }}</b></p>
-    {% endfor %}
-  {% endif %}
-{% endwith %}
-
-<form class="form-horizontal" role="form" method="POST" action="{{ url_for('start_setup') }}">
-    {{ form.csrf_token }}
-    <div class="form-group">
-        <label class="col-sm-3 control-label">{{ form.name.label }}</label>
-        <div class="col-sm-6">{{ form.name(rows=1, cols=40, class="form-control", data_toggle="tooltip", title="Enter your name or handle.") }}
-            <span class="txt-danger">{{ render_error(form.name) }}</span>
-        </div>
-    </div>
-    <div class="form-group">
-        <label class="col-sm-3 control-label">{{ form.contact.label }}</label>
-        <div class="col-sm-6">{{ form.contact(rows=1, cols=80, class="form-control", title="Enter info for your preferred contact method. This will be shared publicly.") }}
-            <span class="txt-danger">{{ render_error(form.contact) }}</span>
-        </div>
-    </div>
-    <div class="form-group">
-        <label class="col-sm-3 control-label">{{ form.maddr.label }}</label>
-        <div class="col-sm-6">{{ form.maddr(rows=1, cols=80, class="form-control", data_toggle="tooltip", title="In Rein, all activity - including setting contact info, creating a job, or getting paid - is linked to a master Bitcoin address. You should keep the private key that corresponds to this address offline unless you need to update your main user record.") }}
-            <span class="txt-danger">{{ render_error(form.maddr) }}</span>
-        </div>
-    </div>
-    <div class="form-group">
-        <label class="col-sm-3 control-label">{{ form.daddr.label }}</label>
-        <div class="col-sm-6">{{ form.daddr(rows=1, cols=80, class="form-control", data_toggle="tooltip", title="Instead of the Master address, python-rein uses another address that you authorize for day-to-day activities. The private key for this address will be stored locally to sign documents and auth to microhosting servers. If this computer or its local database are lost or stolen, you will use the private key for your master address to revoke and replace the delegate address.") }}
-            <span class="txt-danger">{{ render_error(form.daddr) }}</span>
-        </div>
-    </div>
-    <div class="form-group">
-        <label class="col-sm-3 control-label">{{ form.dkey.label }}</label>
-        <div class="col-sm-8">{{ form.dkey(rows=1, cols=80, class="form-control", title="In order for python-rein to authenticate on your behalf, it will store the delegate\'s private key in the local database.") }}
-            <span class="txt-danger">{{ render_error(form.dkey) }}</span>
-        </div>
-    </div>
-
-
-    <div class="form-group">
-        <label class="col-sm-3 control-label">{{ form.will_mediate.label }}</label>
-        <div class="col-sm-9">
-    {% for subfield in form.will_mediate %}
-    {{ subfield }} &nbsp; {{ subfield.label }} &nbsp; &nbsp;
-    {% endfor %}
-            <span class="txt-danger">{{ render_error(form.will_mediate) }}</span>
-        </div>
-    </div>
-
-    <div class="form-group">
-        <label class="col-sm-3 control-label">{{ form.mediator_fee.label }}</label>
-        <div class="col-sm-3">{{ form.mediator_fee(rows=1, cols=10, class="form-control", title="Fee you would charge as a medaitor.") }}
-        <span class="txt-danger">{{ render_error(form.mediator_fee) }}</span>
-        </div>
-    </div>
-
+    <h3 id="ajax-header">Enter your contact data</h3>
+    <br>
     <div class="row">
-        <div class="col-sm-3"></div>
-        <div class="col-sm-3"><input type="submit" value="Next"></div>
+        <div id="ajax-description" class="col-sm-12" style="color: darkred">
+        </div>
     </div>
-</form>
+    <div class="row" style="color: red">
+        <div class="col-sm-offset-1 col-sm-6" id="errors">
+        </div>
+    </div>
+    <div id="ajax-elements">
+        <div class="row">
+            <div class="col-xs-12 col-sm-12">
+                <form class="form-horizontal">
+                    <div class="form-group">
+                        <label class="col-sm-3 control-label">Name</label>
+                        <div class="col-sm-6">
+                            <input type="text" id="name" title="Name">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-sm-3 control-label">Contact</label>
+                        <div class="col-sm-6">
+                            <input type="text" id="contact" title="Contact">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-sm-3 control-label">Are you willing to mediate?</label>
+                        <div class="col-sm-6">
+                            <input type="radio" title="MedYes" value="True" name="mediator">Yes<br>
+                            <input type="radio" title="MedNo" value="False" name="mediator">No<br>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="col-sm-3 control-label">Mediator fee</label>
+                        <div class="col-sm-6">
+                            <input type="text" id="fee" title="MedFee">
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-offset-3 col-sm-6" id="ajax-button">
+            <button onclick="if (storeUserData()) { getMnemonic(); }">Next</button>
+        </div>
     </div>
 </div>
-</div>
+
 {% endblock %}

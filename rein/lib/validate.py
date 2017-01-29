@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 import re
-import bitcoinecdsa
+import rein.lib.bitcoinecdsa as bitcoinecdsa
 import unittest
 import click
 import time
-from io import safe_get
-from util import unique
-from block import Block
+from .io import safe_get
+from .util import unique
+from .block import Block
 
 def filter_out_expired(rein, user, urls, jobs):
     live = []

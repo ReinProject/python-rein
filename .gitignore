@@ -1,10 +1,12 @@
 build/
 dist/
 c/
+.idea/
+venv/
+.vscode/
 *.txt
 *.sig
 *.log
-*.json
 *.db
 *.pyc
 rein.egg-info

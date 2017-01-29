@@ -3,26 +3,28 @@ import sys
 import json
 import click
 import getpass
-from bitcoinecdsa import privkey_to_address, pubkey
-from bitcoinaddress import check_bitcoin_address
-from validate import validate_enrollment
-from user import User, Base
-from util import unique
-from document import Document
-
+from .bitcoinecdsa import privkey_to_address, pubkey, pubkey_to_address, sign
+from .bitcoinaddress import check_bitcoin_address
+from .validate import validate_enrollment
+from .user import User, Base
+from .util import unique
+from .document import Document
+import rein.lib.crypto.bip32 as bip32
 
 def shorten(text, length=60):
-    if len(text) > length - 3 and len(text) < length:
+    if length - 3 < len(text) < length:
         return text[0:length-1]
     elif len(text) > length - 3:
         return text[0:length-1] + '...'
     else:
         return text
 
+
 def short_addr(text):
     return text[0:10] + '...' + text[-8:]
 
-def hilight(string, status, bold):
+
+def highlight(string, status, bold):
     attr = []
     if status:
         # green
@@ -50,24 +52,24 @@ def get_choice(choices, name):
     return choice
 
 
-def btc_addr_prompt(name):
-    title = hilight(name.capitalize() + " Bitcoin address", True, True)
-    addr = click.prompt(title, type=str)
-    while not check_bitcoin_address(addr.strip()):
-        addr = click.prompt("Invalid.\n" + title, type=str)
-    return addr
+# def btc_addr_prompt(name):
+#     title = hilight(name.capitalize() + " Bitcoin address", True, True)
+#     addr = click.prompt(title, type=str)
+#     while not check_bitcoin_address(addr.strip()):
+#         addr = click.prompt("Invalid.\n" + title, type=str)
+#     return addr
 
 
-def btc_privkey_prompt(name, addr=None):
-    title = hilight(name.capitalize() + " Bitcoin private key: ", True, True)
-    privkey = getpass.getpass(title)
-    if addr:
-        while privkey_to_address(privkey.strip()) != addr:
-            privkey = getpass.getpass("Not valid or corresponding to target address.\n" + title)
-    else:
-        while not privkey_to_address(privkey.strip()):
-            privkey = getpass.getpass("Invalid private key.\n" + title)
-    return privkey.strip()
+# def btc_privkey_prompt(name, addr=None):
+#     title = hilight(name.capitalize() + " Bitcoin private key: ", True, True)
+#     privkey = getpass.getpass(title)
+#     if addr:
+#         while privkey_to_address(privkey.strip()) != addr:
+#             privkey = getpass.getpass("Not valid or corresponding to target address.\n" + title)
+#     else:
+#         while not privkey_to_address(privkey.strip()):
+#             privkey = getpass.getpass("Invalid private key.\n" + title)
+#     return privkey.strip()
 
 
 def identity_prompt(rein):
@@ -84,53 +86,82 @@ def identity_prompt(rein):
     rein.user = rein.session.query(User).filter(User.name == users[i - 1].name).first()
     return rein.user
 
+# ---- Account creation and import ----
+
 
 def create_account(rein):
     Base.metadata.create_all(rein.engine)
-    name = click.prompt(hilight("\nEnter name or handle", True, True), type=str)
-    contact = click.prompt(hilight("Email or BitMessage address", True, True), type=str)
-    click.echo('\nIn Rein, all activity - including setting contact info, creating\n'
-               'a job, or getting paid - is linked to a master Bitcoin address.\n\n'
-               'You should keep the private key that corresponds to this address\n'
-               'offline unless you need to update your main user record.\n')
-    maddr = btc_addr_prompt('Master')
 
-    click.echo('\nInstead of the Master address, python-rein uses another address\n'
-               'that you authorize for day-to-day activities. The private key for\n'
-               'this address will be stored locally to sign documents and auth to\n'
-               'microhosting servers.\n\n'
-               'If this computer or its local database are lost or stolen, you\n'
-               'will use the private key for your master address to revoke and\n'
-               'replace the delegate address.\n')
-    daddr = btc_addr_prompt('Delegate')
-    click.echo('\nIn order for python-rein to authenticate on your behalf, it\n'
-               'will store the delegate\'s private key in the local database.\n')
-    dkey = btc_privkey_prompt('Delegate', daddr)
-    click.echo('\nRein requires three parties to every transaction: a job creator,\n'
-               'mediator and worker. Mediators are called upon to resolve disputes\n'
-               'and may use their delegate key to do so.\n\n'
-               'In exchange, mediators may charge a fee, the funds for which  are\n'
-               'sent to an address that ensures those funds will go only to the\n'
-               'mediator.\n')
-    will_mediate = click.confirm(hilight('Are you willing to mediate?', True, True), default=False)
+    # ---- Contact data ----
+
+    name = click.prompt(highlight("\nEnter name or handle", True, True), type=str)
+    contact = click.prompt(highlight("Email or BitMessage address", True, True), type=str)
+
+    # ---- Mnemonic ----
+
+    click.echo(highlight('\nHere is your 12 word mnemonic. Keep it secure - it is the key to\n'
+               'accessing your Rein account, and is only showed once.\n', True, True))
+    mnemonic = bip32.generate_mnemonic(128)
+    click.echo(' '.join(mnemonic))
+    confirm_mnemonic = click.confirm(highlight('\nConfirm that you put down the mnemonic.\n', True, True),
+                                     default=False)
+    if confirm_mnemonic:
+        click.echo(highlight('\nGenerating BIP32 data...\n', True, True))
+        # TODO - Transform it into a class with all the properties
+        key = bip32.mnemonic_to_key(mnemonic)
+        mprv = bip32.get_master_private_key(key)
+        maddr = bip32.get_master_address(key)
+        daddr = bip32.get_delegate_address(key)
+        dkey = bip32.get_delegate_private_key(key)
+        dxprv = bip32.get_delegate_extended_key(key)
+    else:
+        click.echo(highlight('\nTo sign up for Rein you have to put down the mnemonic. Aborting.', False, True))
+        quit()
+
+    # ---- Mediator ----
+
+    will_mediate = click.confirm(highlight('Are you willing to mediate?', True, True), default=False)
     mediator_fee = 1
     if will_mediate:
-        mediator_fee = click.prompt(hilight("Mediator fee (%)", True, True), default=1.0)
-    new_identity = User(name, contact, maddr, daddr, dkey, will_mediate, mediator_fee, rein.testnet)
+        mediator_fee = click.prompt(highlight("Mediator fee (%)", True, True), default=1.0)
+
+    # ---- Registering user ----
+
+    user_data = {'name': name,
+                 'contact': contact,
+                 'maddr': maddr,
+                 'daddr': daddr,
+                 'dkey': dkey,
+                 'dxprv': dxprv,
+                 'will_mediate': will_mediate,
+                 'mediator_fee': mediator_fee,
+                 'testnet': rein.testnet}
+    new_identity = User(user_data)
     rein.session.add(new_identity)
     rein.session.commit()
-    data = {'name': name,
-            'contact': contact,
-            'maddr': maddr,
-            'daddr': daddr,
-            'dkey': dkey,
-            'will_mediate': will_mediate,
-            'mediator_fee': mediator_fee,
-            'testnet': rein.testnet}
+
+    # ---- Signing enrollment document ----
+    # No signature verification necessary as enrollment is signed by a Rein-generated key.
+
+    rein.user = new_identity
+    enrollment = build_enrollment_from_dict(user_data)
+    signed_enrollment = '-----BEGIN BITCOIN SIGNED MESSAGE-----\n' + \
+                        enrollment + \
+                        '\n-----BEGIN SIGNATURE-----\n' + \
+                        maddr + '\n' + \
+                        sign(mprv, enrollment) + \
+                        '\n-----END BITCOIN SIGNED MESSAGE-----\n'
+    User.set_enrolled(rein, new_identity)
+    document = Document(rein, 'enrollment', signed_enrollment, sig_verified=True, testnet=rein.testnet)
+    rein.session.add(document)
+    rein.session.commit()
+
+    # ---- Writing to backup file ----
+
     if not os.path.isfile(rein.backup_filename):
         f = open(rein.backup_filename, 'w')
         try:
-            f.write(json.dumps(data))
+            f.write(json.dumps(user_data))
             click.echo("Backup saved successfully to %s" % rein.backup_filename)
         except:
             raise RuntimeError('Problem writing user details to json backup file.')
@@ -138,35 +169,50 @@ def create_account(rein):
     else:
         click.echo("Backup file already exists. Please run with --backup to save "
                    "user details to file.")
-    rein.user = new_identity
     return rein.user
 
 
-def import_account(rein):
+def import_account(rein, mprv=None, mnemonic=None):
     Base.metadata.create_all(rein.engine)
     backup_filename = click.prompt("Enter backup file name", type=str, default=rein.backup_filename)
     f = open(backup_filename, 'r')
     try:
-        data = json.loads(f.read())
+        user_data = json.loads(f.read())
     except:
         raise RuntimeError('Backup file %s not valid json.' % backup_filename)
-    if not check_bitcoin_address(data['maddr']) or not check_bitcoin_address(data['daddr']):
+    if not check_bitcoin_address(user_data['maddr']) or not check_bitcoin_address(user_data['daddr']):
         click.echo("Invalid Bitcoin address(es) in backup file.")
         sys.exit()
-    if 'testnet' not in data:
-        click.echo("Warning: testnet not set in backup. Setting to "+ str(rein.testnet))
-        data['testnet'] = rein.testnet
-    new_identity = User(data['name'],
-                        data['contact'],
-                        data['maddr'],
-                        data['daddr'],
-                        data['dkey'],
-                        data['will_mediate'],
-                        data['mediator_fee'],
-                        data['testnet'])
+    if 'testnet' not in user_data:
+        click.echo("Warning: testnet not set in backup. Setting to " + str(rein.testnet))
+        user_data['testnet'] = rein.testnet
+    if 'dxprv' not in user_data:
+        user_data['dxprv'] = None
+    new_identity = User(user_data)
     rein.session.add(new_identity)
     rein.session.commit()
     rein.user = new_identity
+
+    # ---- Signing enrollment ----
+
+    if mnemonic:
+        key = bip32.mnemonic_to_key(mnemonic)
+        mprv = bip32.get_master_private_key(key)
+    elif mprv:
+        if not privkey_to_address(mprv):
+            raise Exception('Invalid master private key.')
+
+    enrollment = build_enrollment_from_dict(user_data)
+    signed_enrollment = '-----BEGIN BITCOIN SIGNED MESSAGE-----\n' + \
+                        enrollment + \
+                        '\n-----BEGIN SIGNATURE-----\n' + \
+                        user_data['maddr'] + '\n' + \
+                        sign(mprv, enrollment) + \
+                        '\n-----END BITCOIN SIGNED MESSAGE-----\n'
+    User.set_enrolled(rein, new_identity)
+    document = Document(rein, 'enrollment', signed_enrollment, sig_verified=True, testnet=rein.testnet)
+    rein.session.add(document)
+    rein.session.commit()
     return rein.user
 
 
@@ -184,20 +230,21 @@ def build_enrollment(rein):
     return enrollment
 
 
-def build_enrollment_from_dict(data):
+def build_enrollment_from_dict(user_data):
     mediator_extras = ''
-    if data['will_mediate']:
+    if user_data['will_mediate']:
         mediator_extras = "\nMediator public key: %s\nMediator fee: %s%%" % \
-                          (pubkey(data['dkey']), data['mediator_fee'])
+                          (pubkey(user_data['dkey']), user_data['mediator_fee'])
     enrollment = "Rein User Enrollment\nUser: %s\nContact: %s\nMaster signing address: %s" \
                  "\nDelegate signing address: %s\nWilling to mediate: %s%s" % \
-                 (data['name'], data['contact'], data['maddr'], data['daddr'], data['will_mediate'], mediator_extras)
-    if data['testnet']:
+                 (user_data['name'], user_data['contact'], user_data['maddr'], user_data['daddr'], user_data['will_mediate'], mediator_extras)
+    if user_data['testnet']:
         enrollment += '\nTestnet: True'
     return enrollment
 
 
 def enroll(rein):
+    user = rein.user
     Base.metadata.create_all(rein.engine)
     enrollment = build_enrollment(rein)
     f = open(rein.enroll_filename, 'w')
@@ -206,7 +253,7 @@ def enroll(rein):
     click.echo("%s\n" % enrollment)
     done = False
     while not done:
-        filename = click.prompt(hilight("File containing signed statement", True, True), type=str, default=rein.sig_enroll_filename)
+        filename = click.prompt(highlight("File containing signed statement", True, True), type=str, default=rein.sig_enroll_filename)
         if os.path.isfile(filename):
             done = True
         else:
@@ -221,6 +268,8 @@ def enroll(rein):
         rein.session.add(document)
         rein.session.commit()
     return res
+
+# ---- Jobs | Mediators | Workers ----
 
 
 def mediator_prompt(rein, eligible_mediators):
@@ -360,6 +409,45 @@ def accept_prompt(rein, choices, detail='Description'):
               )
     return chosen
 
+def acceptresolution_prompt(rein, choices, detail='Description'):
+    i = 0
+    click.echo("Resolutions")
+    click.echo("---------------------")
+    for c in choices:
+        if 'Primary escrow redeem script' not in c:
+            continue
+        if detail in c:
+            click.echo('%s: %s - %s - %s - %s - %s' % ("Resolution", str(i),
+                        c['Job name'], c['Job ID'], shorten(c[detail]),'Client gets '+c['Primary client payment amount']))
+        i += 1
+    choice = get_choice(choices, 'resolution')
+    if choice == 'q':
+        return None
+    chosen = choices[choice]
+    if detail in chosen:
+        contents = chosen[detail]
+    else:
+        contents = chosen['Description']
+    click.echo('You have chosen to accept the following resolution. \n\n%s: %s\n'
+               'Primary escrow redeem script: %s\n'
+               'Worker address: %s\n\n'
+               'Mediator escrow redeem script: %s\n'
+               'Mediator address: %s\n'
+               'Client payment amount: %s\n'
+               '\nPlease review carefully before accepting. Once you upload your signed statement, the mediator should no '
+               'longer provide a refund. (Ctrl-c to abort)\n' % 
+               (detail,
+                contents,
+                chosen['Primary escrow redeem script'],
+                pubkey_to_address(chosen['Worker public key']),
+                chosen['Mediator escrow redeem script'],
+                pubkey_to_address(chosen['Mediator public key']),
+                chosen['Primary client payment amount']
+               )
+              )
+    return chosen
+
+    
 
 def dispute_prompt(rein, choices, detail='Description'):
     i = 0
