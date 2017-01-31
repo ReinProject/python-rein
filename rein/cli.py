@@ -2057,7 +2057,7 @@ def start(multi, identity, setup):
             hours = (seconds_left - days * 86400) / 3600
             time_left = str(days) + 'd ' + str(hours) + 'h'
 
-            if state in ['job_posting', 'bid'] and j['Job creator public key'] != key:
+            if state in ['job_posting', 'bid'] and key not in [j['Job creator public key'], j['Mediator public key']]:
                 row = '<a href="http://localhost:'+str(port)+'/job/{}">{}</a></td><td>{}</td><td>{}</td><td><span title="{}">{}</span>'
                 job_ids.append((j['Job ID'], row.format(j['Job ID'],
                                                         j['Job name'],
