@@ -2177,8 +2177,13 @@ def start(multi, identity, setup):
             redeemScript = doc['Primary escrow redeem script']
             mediatorRedeemScript = doc['Mediator escrow redeem script']
             mediator_daddr = str(P2PKHBitcoinAddress.from_pubkey(x(doc['Mediator public key'])))
-            (payment_txins,payment_amount,payment_address,payment_sig) = partial_spend_p2sh(redeemScript,rein)
-            (mediator_payment_txins,mediator_payment_amount,mediator_payment_address) = partial_spend_p2sh_mediator(mediatorRedeemScript,rein,mediator_daddr)
+            try:
+                (payment_txins,payment_amount,payment_address,payment_sig) = partial_spend_p2sh(redeemScript,rein)
+                (mediator_payment_txins,mediator_payment_amount,mediator_payment_address) = partial_spend_p2sh_mediator(mediatorRedeemScript,rein,mediator_daddr)
+            except ValueError as e:
+                form.deliverable.errors.append(e.message)
+                flash_errors(form)
+                return redirect("/deliver")
             fields = [
                 {'label': 'Job name',                       'value_from': doc},
                 {'label': 'Job ID',                         'value_from': doc},

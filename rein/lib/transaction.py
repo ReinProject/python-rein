@@ -66,7 +66,7 @@ def partial_spend_p2sh (redeemScript,rein,daddr=None,alt_amount=None,alt_daddr=N
     txin_p2sh_address = CBitcoinAddress.from_scriptPubKey(txin_scriptPubKey)
     (txins,total_value) = unspent_txins(txin_p2sh_address,rein.testnet)
     if len(txins)==0:
-        raise ValueError('No unspent txins found')
+        raise ValueError('Primary escrow is empty. Please inform client to add funds.')
     txins_str = ""
     txins_obj = []
     for txid,vout in txins:
@@ -78,8 +78,7 @@ def partial_spend_p2sh (redeemScript,rein,daddr=None,alt_amount=None,alt_daddr=N
         amount = round(amount-alt_amount,8)
     if amount<=0. or alt_amount>total_value-fee:
         click.echo("amount: "+str(amount)+" alt_amount: "+str(alt_amount)+" total_value: "+str(total_value))
-
-        raise ValueError('Not enough value in the inputs')
+        raise ValueError('Primary escrow balance too low. Please inform client to add funds.')
     txouts = []
     txout = CMutableTxOut(amount*COIN, CBitcoinAddress(daddr).to_scriptPubKey())
     txouts.append(txout)
@@ -103,7 +102,7 @@ def partial_spend_p2sh_mediator (redeemScript,rein,mediator_address,mediator_sig
     txin_p2sh_address = CBitcoinAddress.from_scriptPubKey(txin_scriptPubKey)
     (txins,total_value) = unspent_txins(txin_p2sh_address,rein.testnet)
     if len(txins)==0:
-        raise ValueError('No unspent txins found')
+        raise ValueError('Mediator escrow is empty. Please inform client to add funds.')
     txins_str = ""
     txins_obj = []
     for txid,vout in txins:
@@ -112,7 +111,7 @@ def partial_spend_p2sh_mediator (redeemScript,rein,mediator_address,mediator_sig
     fee = 0.00025
     amount = round(total_value-fee,8)
     if amount<=0:
-        raise ValueError('Not enough value in the inputs')
+        raise ValueError('Mediator escrow balance too low. Please inform client to add funds.')
     if mediator_sig:
         txout = CMutableTxOut(amount*COIN,CBitcoinAddress(mediator_address).to_scriptPubKey())
         tx = CMutableTransaction(txins_obj,[txout])
