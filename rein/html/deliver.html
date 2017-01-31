@@ -26,8 +26,8 @@
 {% endwith %}
 
 {% if no_choices %}
-<h5>None found.</h5>
-<p>Deliveries only make sense if you've been offered a job. Have you <a href="/bid">submitted any bids</a>, yet?</p>
+<h5>No in-process jobs found.</h5>
+<p>Before you can deliver, you will need to <a href="/bid">bid</a> and be offered a job.</p>
 {% else %}
 <p>Block time (12 blocks ago): {{ block_time }} UTC
 {% if time_offset > 3600*4 %}
