@@ -1672,6 +1672,7 @@ def start(multi, identity, setup):
                             no_choices=no_choices,
                             time_offset=time_offset
                             )
+
     @app.route("/acceptresolution", methods=['POST', 'GET'])
     def job_acceptresolution():
 
@@ -1700,8 +1701,18 @@ def start(multi, identity, setup):
 
         resolutions = []
         for result in valid_results:
-            if "Resolution" in result:
+            order = Order.get_by_job_id(rein, result['Job ID'])
+
+            if not order:
+                order = Order(result['Job ID'], testnet=rein.testnet)
+                rein.session.add(order)
+                rein.session.commit()
+
+            state = order.get_state(rein, Document)
+
+            if state in ['resolve']:
                 resolutions.append((result['Job ID'], '{}</td><td>{}'.format( job_link(result), result['Resolution'] )))
+
                 
         no_choices = len(resolutions) == 0
         form.resolution_id.choices = unique(resolutions)
@@ -2152,7 +2163,7 @@ def start(multi, identity, setup):
 
             state = order.get_state(rein, Document)
 
-            if state in ['offer', 'deliver', 'accept', 'creatordispute', 'workerdispute']:
+            if state in ['offer', 'deliver', 'creatordispute', 'workerdispute']:
                 job_ids.append((str(j['Job ID']), job_link(j)))
 
         no_choices = len(job_ids) == 0
