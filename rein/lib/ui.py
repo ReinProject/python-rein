@@ -11,6 +11,7 @@ from .util import unique
 from .document import Document
 import rein.lib.crypto.bip32 as bip32
 
+
 def shorten(text, length=60):
     if length - 3 < len(text) < length:
         return text[0:length-1]
@@ -86,8 +87,8 @@ def identity_prompt(rein):
     rein.user = rein.session.query(User).filter(User.name == users[i - 1].name).first()
     return rein.user
 
-# ---- Account creation and import ----
 
+# ---- Account creation and import ----
 
 def create_account(rein):
     Base.metadata.create_all(rein.engine)
@@ -157,7 +158,6 @@ def create_account(rein):
     rein.session.commit()
 
     # ---- Writing to backup file ----
-
     if not os.path.isfile(rein.backup_filename):
         f = open(rein.backup_filename, 'w')
         try:
@@ -170,6 +170,21 @@ def create_account(rein):
         click.echo("Backup file already exists. Please run with --backup to save "
                    "user details to file.")
     return rein.user
+
+
+def build_enrollment_from_dict(user_data):
+    mediator_extras = ''
+    if user_data['will_mediate']:
+        mediator_extras = "\nMediator public key: %s\nMediator fee: %s%%" % \
+                          (pubkey(user_data['dkey']), user_data['mediator_fee'])
+    enrollment = "Rein User Enrollment\nUser: %s\nContact: %s\nMaster signing address: %s\n" \
+                 "Secure Identity Number: %s\nDelegate signing address: %s\n" \
+                 "Willing to mediate: %s%s" % \
+                 (user_data['name'], user_data['contact'], user_data['maddr'], user_data['msin'],\
+                 user_data['daddr'], user_data['will_mediate'], mediator_extras)
+    if user_data['testnet']:
+        enrollment += '\nTestnet: True'
+    return enrollment
 
 
 def import_account(rein, mprv=None, mnemonic=None):
@@ -188,6 +203,7 @@ def import_account(rein, mprv=None, mnemonic=None):
         user_data['testnet'] = rein.testnet
     if 'dxprv' not in user_data:
         user_data['dxprv'] = None
+
     new_identity = User(user_data)
     rein.session.add(new_identity)
     rein.session.commit()
@@ -230,19 +246,6 @@ def build_enrollment(rein):
     return enrollment
 
 
-def build_enrollment_from_dict(user_data):
-    mediator_extras = ''
-    if user_data['will_mediate']:
-        mediator_extras = "\nMediator public key: %s\nMediator fee: %s%%" % \
-                          (pubkey(user_data['dkey']), user_data['mediator_fee'])
-    enrollment = "Rein User Enrollment\nUser: %s\nContact: %s\nMaster signing address: %s" \
-                 "\nDelegate signing address: %s\nWilling to mediate: %s%s" % \
-                 (user_data['name'], user_data['contact'], user_data['maddr'], user_data['daddr'], user_data['will_mediate'], mediator_extras)
-    if user_data['testnet']:
-        enrollment += '\nTestnet: True'
-    return enrollment
-
-
 def enroll(rein):
     user = rein.user
     Base.metadata.create_all(rein.engine)
@@ -269,8 +272,8 @@ def enroll(rein):
         rein.session.commit()
     return res
 
-# ---- Jobs | Mediators | Workers ----
 
+# ---- Jobs | Mediators | Workers ----
 
 def mediator_prompt(rein, eligible_mediators):
     mediators = unique(eligible_mediators, 'Mediator public key')

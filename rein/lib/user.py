@@ -1,4 +1,5 @@
 from sqlalchemy import Column, Integer, String, Float, Boolean
+from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
@@ -11,6 +12,7 @@ class User(Base):
     name = Column(String(250), nullable=False)
     contact = Column(String(250), nullable=False)
     maddr = Column(String(64), nullable=False)
+    msin = Column(String(64), nullable=True)
     daddr = Column(String(64), nullable=False)
     dkey = Column(String(64), nullable=False)
     # Temporary nullable to keep backwards compatibility with v0.2.0 backup files
@@ -19,11 +21,12 @@ class User(Base):
     mediator_fee = Column(Float, nullable=False)
     enrolled = Column(Boolean, nullable=False)
     testnet = Column(Boolean, nullable=False)
-
+    
     def __init__(self, user_data):
         self.name = user_data['name']
         self.contact = user_data['contact']
         self.maddr = user_data['maddr']
+        self.msin = user_data['msin']
         self.daddr = user_data['daddr']
         self.dkey = user_data['dkey']
         self.dxprv = user_data['dxprv']

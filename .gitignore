@@ -12,3 +12,4 @@ venv/
 rein.egg-info
 backup-rein.json*
 !requirements.txt
+task.txt
