@@ -12,7 +12,11 @@ To read more about the project, visit http://reinproject.org. Our development ro
 
 ## Getting started
 
-Please see the [setup guide](https://github.com/ReinProject/python-rein/blob/master/doc/HOWTO-setup-rein.md). In a nutshell, run `rein start` to be guided through a web-based setup process.
+Please see the [setup guide](doc/HOWTO-setup-rein.md). In a nutshell, run `rein start` to be guided through a web-based setup process.
+
+## Upgrade
+
+If you have 0.2 already installed and setup, please see our [note on upgrading](doc/Upgrading-v0.2-to-v0.3.md).
 
 ## Installation
 
