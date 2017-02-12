@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/ReinProject/python-rein.svg?branch=master)](https://travis-ci.org/ReinProject/python-rein)
 
-Rein helps you do freelancing in exchange for Bitcoin. The simple, web-based python-rein client helps create jobs and bids as well as multisig escrows that keep funds safe. You don't need to stay online for others to find, bid or deliver on jobs.
+Rein makes freelancing for Bitcoin easier than ever. The simple, web-based python-rein client helps create jobs and bids as well as multisig escrows that keep funds safe. You don't need to stay online for others to find, bid or deliver on jobs.
 
 We achieve decentralization by following the internet at large: cheap hosting paid for with bitcoin enables users to store data across a number of servers that may or may not be connected to one another. Since not a lot of data or bandwidth are required, we can have redundancy, reliability and censorship-resistance at low cost. Think $5 in bitcoin per year to have your data on 10 independently-run servers.
 
