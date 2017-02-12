@@ -1367,6 +1367,7 @@ def start(multi, identity, setup):
     import rein.lib.crypto.bip32 as bip32
     from .lib.ui import build_enrollment_from_dict
     from .lib.bitcoinecdsa import sign
+    from .lib.bitcoinaddress import generate_sin
 
     host = '127.0.0.1'
     port = 5001
