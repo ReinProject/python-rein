@@ -1,4 +1,4 @@
-from bip32utils import BIP32Key
+from bip32utils import BIP32Key, BIP32_HARDEN
 from hashlib import sha256, sha512
 from binascii import hexlify
 from pbkdf2 import PBKDF2
@@ -56,7 +56,7 @@ def get_child_key(parent, depth):
 
 
 def get_delegate_key(mxprv):
-    master_key = get_child_key(mxprv, 1 + 0x80000000)
+    master_key = get_child_key(mxprv, 1 + BIP32_HARDEN)
     delegate_key = get_child_key(master_key, 0)
     return delegate_key
 
