@@ -8,6 +8,7 @@ import hashlib
 import click
 import time
 import os
+import traceback
 from pprint import pprint
 from datetime import datetime
 from sqlalchemy import and_
@@ -26,6 +27,7 @@ from .lib.util import unique
 from .lib.io import safe_get
 from .lib.script import build_2_of_3, build_mandatory_multisig, check_redeem_scripts
 from .lib.transaction import partial_spend_p2sh, spend_p2sh, spend_p2sh_mediator, partial_spend_p2sh_mediator, partial_spend_p2sh_mediator_2
+from .lib.rating import add_rating, get_user_jobs
 
 # Import config
 import rein.lib.config as config
@@ -955,7 +957,6 @@ def sync(multi, identity):
 
     sync_core(log, user, key, urls)
 
-
 def sync_core(log, user, key, urls):
     click.echo("User: " + user.name)
 
@@ -992,8 +993,10 @@ def sync_core(log, user, key, urls):
                 if len(placements) == 0:
                     upload.append([doc, url])
                 else:
+                    # Also upload all ratings created locally to allow for rating updates
+                    is_own_rating = doc.doc_type == 'rating' and doc.source_url == 'local'
                     for plc in placements:
-                        if Placement.get_remote_document_hash(rein, plc) != doc.doc_hash:
+                        if Placement.get_remote_document_hash(rein, plc) != doc.doc_hash or is_own_rating:
                             upload.append([doc, url])
     
     failed = []
@@ -1051,7 +1054,91 @@ def sync_core(log, user, key, urls):
         answer = safe_get(log, sel_url.format(user.maddr, nonce[url]))
         log.info('nonce cleared for %s' % (url))
 
+    sel_url = "{0}query?owner={1}&query={2}&testnet={3}"
+    ratings = safe_get(log, sel_url.format(url, user.maddr, 'ratings', rein.testnet))
+    if ratings and ratings['result'] != 'error':
+        rein.session.query(Document).filter(Document.doc_type == 'rating').delete()
+        for rating in ratings['ratings']:
+            d = Document(rein, 'rating', rating['value'], sig_verified=True, testnet=rein.testnet)
+            rein.session.add(d)
+            rein.session.commit()
+
     click.echo('%s docs checked on %s servers, %s uploads done.' % (len(documents), len(urls), str(succeeded)))
+
+@cli.command()
+@click.option('--multi/--no-multi', default=False, help="prompt for identity to use")
+@click.option('--identity', type=click.Choice(['Alice', 'Bob', 'Charlie', 'Dan']), default=None, help="identity to use")
+def rate(multi, identity):
+    """Rate users that participated in past jobs"""
+    (log, user, key, urls) = init(multi, identity)
+    user_jobs = get_user_jobs(rein, True)
+
+    i = 1
+    for job in user_jobs:
+        click.echo('{}: {} - {}'.format(i, job['job_id'], job['job_name']))
+        i += 1
+
+    job_choice = click.prompt('Please select a job you wish to rate a user\'s performance for')
+    job = None
+    try:
+        job = user_jobs[int(job_choice) - 1]
+
+    except:
+        click.echo('Your choice was not valid.')
+        return
+
+    if not job:
+        click.echo('Something went wrong. Try again.')
+        return
+
+    i = 1
+    positions = ['employer', 'mediator', 'employee']
+    for rated_user in positions:
+        click.echo('{}: {} - {}'.format(i, job[rated_user]['SIN'], job[rated_user]['Name']))
+        i += 1
+
+    user_choice = click.prompt('Please select a user whose performance you\'d like to rate')
+    rated_user = None
+    try:
+        rated_user = job[positions[int(user_choice) - 1]]
+
+    except:
+        click.echo('Your choice was not valid.')
+        return
+
+    if not rated_user:
+        click.echo('Something went wrong. Try again.')
+        return
+
+    rating = click.prompt('Please enter a rating from 0 to 5 for {}'.format(rated_user['Name']))
+
+    valid = False
+    try:
+        if int(rating) in range(0, 6):
+            valid = True
+
+    except:
+        click.echo('Your choice was not valid.')
+        return
+
+    comments = click.prompt('If you so desire, you can add a comment (<100 characters) regarding the user\'s performance')
+
+    if len(comments) > 100:
+        click.echo('Your comment was too long. Please try again and stay below 100 characters.')
+        return
+
+    if rated_user['SIN'] == user.msin:
+        click.echo('You cannot rate yourself.')
+        return
+
+    if valid:
+        add_rating(rein, user, rein.testnet, rating, rated_user['SIN'], job['job_id'], user.msin, comments)
+        click.echo('The rating was successfully created. Please sync the changes to available servers by using rein sync.')
+        return
+
+    click.echo('Something went wrong. Please try again.')
+    return
+
 
 @cli.command()
 @click.option('--multi/--no-multi', default=False, help="prompt for identity to use")
@@ -1274,10 +1361,10 @@ def start(multi, identity, setup):
     simple UI to use Rein.
     """
     import webbrowser
-    from flask import Flask, request, redirect, url_for, flash, send_from_directory, render_template
-    from .lib.forms import SetupForm, JobPostForm, BidForm, JobOfferForm, DeliverForm, AcceptForm, DisputeForm, ResolveForm, AcceptResolutionForm
+    from flask import Flask, request, redirect, url_for, flash, send_from_directory, render_template, jsonify
+    from .lib.forms import JobPostForm, BidForm, JobOfferForm, DeliverForm, AcceptForm, DisputeForm, ResolveForm, AcceptResolutionForm, RatingForm
     from .lib.mediator import Mediator
-    import rein.lib.crypto.bip32 as bip32
+    import .lib.crypto.bip32 as bip32
     from .lib.ui import build_enrollment_from_dict
     from .lib.bitcoinecdsa import sign
 
@@ -1292,10 +1379,10 @@ def start(multi, identity, setup):
     def flash_errors(form):
         for field, errors in form.errors.items():
             for error in errors:
-                 flash(u"Error in the %s field - %s" % (
-                       getattr(form, field).label.text,
-                       error
-                       ))
+                flash(u"Error in the %s field - %s" % (
+                    getattr(form, field).label.text,
+                    error
+                ))
 
     @app.route('/setup')
     def web_setup():
@@ -1325,10 +1412,14 @@ def start(multi, identity, setup):
             daddr = bip32.get_delegate_address(key)
             dkey = bip32.get_delegate_private_key(key)
             dxprv = bip32.get_delegate_extended_key(key)
+            msin = generate_sin(maddr)
+
+            # Check mediator status
             if request.form['mediate'] == "True":
                 will_mediate = True
             else:
                 will_mediate = False
+
             user_data = {'name': request.form['name'],
                         'contact': request.form['contact'],
                         'maddr': maddr,
@@ -1337,6 +1428,7 @@ def start(multi, identity, setup):
                         'dxprv': dxprv,
                         'will_mediate': will_mediate,
                         'mediator_fee': request.form['mediatorFee'],
+                        'msin': msin,
                         'testnet': rein.testnet}
             new_identity = User(user_data)
             rein.user = new_identity
@@ -1368,7 +1460,6 @@ def start(multi, identity, setup):
     def setup2():
         return render_template('setup.html')
 
-
     def shutdown_server():
         func = request.environ.get('werkzeug.server.shutdown')
         if func is None:
@@ -1388,7 +1479,6 @@ def start(multi, identity, setup):
     @app.route('/<path:path>')
     def serve_static_file(path):
         return send_from_directory(tmpl_dir, path)
-
 
     if rein.has_no_account() or setup:
         webbrowser.open('http://'+host+':' + str(port) + '/setup')
@@ -1419,6 +1509,27 @@ def start(multi, identity, setup):
         dst_offset = 3600 * t.tm_isdst
         str_block_time = datetime.fromtimestamp(block_time + time.timezone - dst_offset).strftime('%Y-%m-%d %H:%M:%S %Z')
         time_offset = abs(block_time - int(time.time()))
+
+    @app.route('/rate', methods=['POST', 'GET'])
+    def rate_web():
+        form = RatingForm(request.form)
+
+        if request.method == 'POST' and form.validate_on_submit():
+            (rating, user_msin, job_id, rated_by_msin, comments) = (form.rating.data, form.user_id.data, form.job_id.data, form.rated_by_id.data, form.comments.data)
+            sync_rating = add_rating(rein, user, rein.testnet, rating, user_msin, job_id, rated_by_msin, comments)
+            if sync_rating:
+                click.echo("Rating created.")
+                sync_core(log, user, key, urls)
+
+            return redirect("/rate")
+
+        elif request.method == 'POST':
+            flash_errors(form)
+            return redirect("/rate")
+
+        else:
+            user_jobs = get_user_jobs(rein)
+            return render_template("rate.html", form=form, user_sin=user.msin, user=user, user_jobs=user_jobs)
 
     @app.route("/post", methods=['POST', 'GET'])
     def job_post():

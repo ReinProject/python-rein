@@ -87,6 +87,7 @@ def get_delegate_extended_key(mxprv):
     delegate_key = get_delegate_key(mxprv)
     return delegate_key.ExtendedKey()
 
+
 class BitcoinAddressTest(unittest.TestCase):
     def test_check_bitcoin_address(self):
 
