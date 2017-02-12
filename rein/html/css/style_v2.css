@@ -2014,6 +2014,9 @@ ul.DTTT_dropdown.dropdown-menu > li:hover > a {
 .likebox .fa-thumbs-down {
   color:#D15E5E;
 }
+.btn-group.col-sm-offset-4.col-sm-6 > button.btn.btn-default {
+  width: 33.333%;
+}
 #modalbox {
   display:none;
   position: fixed;
