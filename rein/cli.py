@@ -1078,8 +1078,8 @@ def status(multi, identity, jobid):
         click.echo("Registered servers: ")
         for url in urls:
             click.echo("  " + url)
-        click.echo("Testnet: %s" % PersistConfig.get_testnet(rein))
-        click.echo("Tor: %s" % PersistConfig.get_tor(rein))
+        click.echo("Testnet: %s" % PersistConfig.get(rein, 'testnet'))
+        click.echo("Tor: %s" % PersistConfig.get(rein, 'tor'))
         click.echo('')
         click.echo('ID  Job ID                 Status')
         click.echo('-----------------------------------------------------')
@@ -1114,6 +1114,28 @@ def status(multi, identity, jobid):
 
 
 @cli.command()
+@click.argument('key', required=True)
+@click.argument('value', required=True)
+def config(key, value):
+    """
+    Set configuration variable. Parses true/false, on/off, and passes
+    anything else unaltered to the db.
+    """
+    keys = ['testnet', 'tor', 'debug', 'fee']
+    if key not in keys:
+        click.echo("Invalid config setting. Try one of " + ', '.join(keys))
+        return
+
+    if value and value.lower() in ['on', 'true', 'enabled']:
+        PersistConfig.set(rein, key, 'true')
+    elif value and value.lower() in ['off', 'false', 'disabled']:
+        PersistConfig.set(rein, key, 'false')
+    else:
+        PersistConfig.set(rein, key, value)
+
+
+# leave specific config commands in for backwards compatibility, remove in 0.4
+@cli.command()
 @click.argument('testnet', required=True)
 def testnet(testnet):
     """
@@ -1124,11 +1146,11 @@ def testnet(testnet):
     for testing, and non-binding.
     """
     if testnet and testnet.lower() == 'true':
-        PersistConfig.set_testnet(rein, 'true')
-        click.echo("Testnet enabled. Run 'rein testnet false' to go back to mainnet")
+        PersistConfig.set(rein, 'testnet', 'true')
+        click.echo("Testnet enabled.")
     else:
-        PersistConfig.set_testnet(rein, 'false')
-        click.echo("Testnet disabled. Run 'rein testnet true' to go back to testnet")
+        PersistConfig.set(rein, 'testnet', 'false')
+        click.echo("Testnet disabled.")
     return
 
 
@@ -1139,10 +1161,10 @@ def tor(tor):
     Enter 'true' / 'false' etc to toggle connection through Tor.
     """
     if tor and tor.lower() in ['on', 'true', 'enabled']:
-        PersistConfig.set_tor(rein, 'true')
+        PersistConfig.set(rein, 'tor', 'true')
         click.echo("Tor enabled.")
     elif tor and tor.lower() in ['off', 'false', 'disabled']:
-        PersistConfig.set_tor(rein, 'false')
+        PersistConfig.set(rein, 'tor', 'false')
         click.echo("Tor disabled.")
     else:
         click.echo("Invalid option.")
@@ -1155,10 +1177,10 @@ def debug(debug):
     Enter 'true' / 'false' etc to toggle debug mode on startup.
     """
     if debug and debug.lower() in ['on', 'true', 'enabled']:
-        PersistConfig.set_debug(rein, 'true')
+        PersistConfig.set(rein, 'debug', 'true')
         click.echo("Debug enabled.")
     elif debug and debug.lower() in ['off', 'false', 'disabled']:
-        PersistConfig.set_debug(rein, 'false')
+        PersistConfig.set(rein, 'debug', 'false')
         click.echo("Debug disabled.")
     else:
         click.echo("Invalid option.")
@@ -1943,6 +1965,7 @@ def start(multi, identity, setup):
                             order=o,
                             state=state,
                             found=found,
+                            fee=PersistConfig.get(rein, 'fee', 0.00025),
                             unique=unique_documents,
                                job=combined,
                                mediator_fee_btc=mediator_fee_btc)

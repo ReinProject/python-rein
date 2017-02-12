@@ -65,13 +65,13 @@ Description: {{ job['Description'] }}<br />
         <div id="primary"></div>
     </div>
 	<div class="col-xs-6 well" style="margin-right:10px; margin-left:10px;">
-        Primary escrow: <b>{{ job['Primary escrow address'] }}</b><icon class="qrcode"> should be funded with <b>{{ job['Bid amount (BTC)'] }} BTC</b> plus an estimated fee for the closing transaction.
+        Primary escrow: <b>{{ job['Primary escrow address'] }}</b><icon class="qrcode"> should be funded with <b>{{ job['Bid amount (BTC)'] }} BTC</b> plus <b>{{ fee }}</b> for the closing transaction fee.
     </div>
 </div>
 
 <div class="row" style="margin-top: 10px;">
 	<div class="col-xs-6 well" style="margin-right:10px; margin-left:10px;">
-        Mediator escrow: <b>{{ job['Mediator escrow address'] }}</b><icon class="qrcode"> should be funded with <b>{{ mediator_fee_btc }} BTC</b> ({{ job['Mediator fee'] }}% of the above) plus an estimated fee for the closing transaction.
+        Mediator escrow: <b>{{ job['Mediator escrow address'] }}</b><icon class="qrcode"> should be funded with <b>{{ mediator_fee_btc }} BTC</b> ({{ job['Mediator fee'] }}% of the above) plus <b>{{ fee }}</b> for the closing transaction fee.
     </div>
     <div class="col-xs-2" style="margin-right:10px">
         <div class="qrcode">

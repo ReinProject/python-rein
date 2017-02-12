@@ -18,60 +18,24 @@ class PersistConfig(Base):
         session.add(self)
         session.commit()
 
+    @classmethod
+    def get(self, rein, key, default=False):
+        res = rein.session.query(PersistConfig).filter(PersistConfig.key == key).first()
+        if res and res.value == 'true':
+            return True
+        elif res and res.value == 'false':
+            return False
+        elif res:
+            return res.value
+        else:
+            return default
+
+    @classmethod
     def set(self, rein, key, value=''):
-        self.key = value
-        rein.session.commit()
-
-    @classmethod
-    def set_testnet(self, rein, value):
-        res = rein.session.query(PersistConfig).filter(PersistConfig.key == 'testnet').first()
+        res = rein.session.query(PersistConfig).filter(PersistConfig.key == key).first()
         if res:
             res.value = value
         else:
-            p = PersistConfig(rein.session, 'testnet', value)
+            p = PersistConfig(rein.session, key, value)
             rein.session.add(p)
         rein.session.commit()
-
-    @classmethod
-    def get_testnet(self, rein):
-        res = rein.session.query(PersistConfig).filter(PersistConfig.key == 'testnet').first()
-        if res and res.value == 'true':
-            return True
-        else:
-            return False
-
-    @classmethod
-    def set_tor(self, rein, value):
-        res = rein.session.query(PersistConfig).filter(PersistConfig.key == 'tor').first()
-        if res:
-            res.value = value
-        else:
-            p = PersistConfig(rein.session, 'tor', value)
-            rein.session.add(p)
-        rein.session.commit()
-
-    @classmethod
-    def get_tor(self, rein):
-        res = rein.session.query(PersistConfig).filter(PersistConfig.key == 'tor').first()
-        if res and res.value == 'true':
-            return True
-        else:
-            return False
-
-    @classmethod
-    def set_debug(self, rein, value):
-        res = rein.session.query(PersistConfig).filter(PersistConfig.key == 'debug').first()
-        if res:
-            res.value = value
-        else:
-            p = PersistConfig(rein.session, 'debug', value)
-            rein.session.add(p)
-        rein.session.commit()
-
-    @classmethod
-    def get_debug(self, rein):
-        res = rein.session.query(PersistConfig).filter(PersistConfig.key == 'debug').first()
-        if res and res.value == 'true':
-            return True
-        else:
-            return False
