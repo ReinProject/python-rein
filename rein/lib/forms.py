@@ -73,7 +73,7 @@ class AcceptForm(Form):
 
 class ResolveForm(Form):
     resolution = TextAreaField('Resolution', validators = [Required()])
-    client_payment_amount = TextField('Client payment amount', validators = [Required()])
+    client_payment_amount = TextField('Client payment amount in BTC (remainder sent to worker)', validators = [Required()])
     dispute_id = RadioField('Disputes')
 
 class AcceptResolutionForm(Form):

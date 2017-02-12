@@ -201,6 +201,7 @@ def post(multi, identity, defaults, dry_run):
                 {'label': 'Job creator contact',            'value': user.contact},
                 {'label': 'Job creator public key',         'value': key},
                 {'label': 'Job creator master address',     'value': user.maddr},
+                {'label': 'Job creator delegate address',   'value': user.daddr},
              ]
     document_text = assemble_document('Job', fields)
     if not rein.testnet:
@@ -287,6 +288,7 @@ def bid(multi, identity, defaults, dry_run):
                 {'label': 'Worker',                         'value': user.name},
                 {'label': 'Worker contact',                 'value': user.contact},
                 {'label': 'Worker master address',          'value': user.maddr},
+                {'label': 'Worker delegate address',        'value': user.daddr},
                 {'label': 'Description',                    'not_null': form},
                 {'label': 'Bid amount (BTC)',               'not_null': form},
                 {'label': 'Primary escrow address',         'value': primary_addr},
@@ -1367,7 +1369,7 @@ def start(multi, identity, setup):
 
 
     if rein.has_no_account() or setup:
-        print('Open your browser to http://'+host+':' + str(port) + '/setup')
+        webbrowser.open('http://'+host+':' + str(port) + '/setup')
         app.run(host=host, port=port, debug=rein.debug)
         return
     else:
@@ -1448,10 +1450,12 @@ def start(multi, identity, setup):
                 {'label': 'Mediator contact',               'value': mediator.contact},
                 {'label': 'Mediator fee',                   'value': str(mediator.mediator_fee)},
                 {'label': 'Mediator public key',            'value': mediator.dpubkey},
+                {'label': 'Mediator delegate address',      'value': mediator.daddr},
                 {'label': 'Mediator master address',        'value': mediator.maddr},
                 {'label': 'Job creator',                    'value': user.name},
                 {'label': 'Job creator contact',            'value': user.contact},
                 {'label': 'Job creator public key',         'value': key},
+                {'label': 'Job creator delegate address',   'value': user.daddr},
                 {'label': 'Job creator master address',     'value': user.maddr},
                      ]
             document_text = assemble_document('Job', fields)
@@ -1668,6 +1672,7 @@ def start(multi, identity, setup):
                             no_choices=no_choices,
                             time_offset=time_offset
                             )
+
     @app.route("/acceptresolution", methods=['POST', 'GET'])
     def job_acceptresolution():
 
@@ -1696,8 +1701,18 @@ def start(multi, identity, setup):
 
         resolutions = []
         for result in valid_results:
-            if "Resolution" in result:
+            order = Order.get_by_job_id(rein, result['Job ID'])
+
+            if not order:
+                order = Order(result['Job ID'], testnet=rein.testnet)
+                rein.session.add(order)
+                rein.session.commit()
+
+            state = order.get_state(rein, Document)
+
+            if state in ['resolve']:
                 resolutions.append((result['Job ID'], '{}</td><td>{}'.format( job_link(result), result['Resolution'] )))
+
                 
         no_choices = len(resolutions) == 0
         form.resolution_id.choices = unique(resolutions)
@@ -1958,7 +1973,7 @@ def start(multi, identity, setup):
             else:
                 role = 'Worker'
 
-            if o['state'] in ['offer', 'delivery']:
+            if o['state'] in ['offer', 'delivery', 'creatordispute', 'workerdispute']:
                 orders.append((str(id), '{}</td><td>{}'.format( job_link(o),
                                                                 role,
                                                               )))
@@ -2042,7 +2057,7 @@ def start(multi, identity, setup):
             hours = (seconds_left - days * 86400) / 3600
             time_left = str(days) + 'd ' + str(hours) + 'h'
 
-            if state in ['job_posting', 'bid'] and j['Job creator public key'] != key:
+            if state in ['job_posting', 'bid'] and key not in [j['Job creator public key'], j['Mediator public key']]:
                 row = '<a href="http://localhost:'+str(port)+'/job/{}">{}</a></td><td>{}</td><td>{}</td><td><span title="{}">{}</span>'
                 job_ids.append((j['Job ID'], row.format(j['Job ID'],
                                                         j['Job name'],
@@ -2077,6 +2092,7 @@ def start(multi, identity, setup):
                 {'label': 'Job name',                       'value_from': job},
                 {'label': 'Worker',                         'value': user.name},
                 {'label': 'Worker contact',                 'value': user.contact},
+                {'label': 'Worker delegate address',        'value': user.daddr},
                 {'label': 'Worker master address',          'value': user.maddr},
                 {'label': 'Description',                    'value': form.description.data},
                 {'label': 'Bid amount (BTC)',               'value': form.bid_amount.data},
@@ -2147,7 +2163,7 @@ def start(multi, identity, setup):
 
             state = order.get_state(rein, Document)
 
-            if state in ['offer', 'deliver', 'accept', 'creatordispute', 'workerdispute']:
+            if state in ['offer', 'deliver', 'creatordispute', 'workerdispute']:
                 job_ids.append((str(j['Job ID']), job_link(j)))
 
         no_choices = len(job_ids) == 0
@@ -2161,8 +2177,13 @@ def start(multi, identity, setup):
             redeemScript = doc['Primary escrow redeem script']
             mediatorRedeemScript = doc['Mediator escrow redeem script']
             mediator_daddr = str(P2PKHBitcoinAddress.from_pubkey(x(doc['Mediator public key'])))
-            (payment_txins,payment_amount,payment_address,payment_sig) = partial_spend_p2sh(redeemScript,rein)
-            (mediator_payment_txins,mediator_payment_amount,mediator_payment_address) = partial_spend_p2sh_mediator(mediatorRedeemScript,rein,mediator_daddr)
+            try:
+                (payment_txins,payment_amount,payment_address,payment_sig) = partial_spend_p2sh(redeemScript,rein)
+                (mediator_payment_txins,mediator_payment_amount,mediator_payment_address) = partial_spend_p2sh_mediator(mediatorRedeemScript,rein,mediator_daddr)
+            except ValueError as e:
+                form.deliverable.errors.append(e.message)
+                flash_errors(form)
+                return redirect("/deliver")
             fields = [
                 {'label': 'Job name',                       'value_from': doc},
                 {'label': 'Job ID',                         'value_from': doc},
@@ -2226,7 +2247,7 @@ def start(multi, identity, setup):
                         documents=documents,
                         orders=orders)
 
-    print('Open your browser to http://'+host+':' + str(port))
+    webbrowser.open('http://'+host+':' + str(port))
     print("testnet = "+str(rein.testnet))
     app.run(host=host, port=port, debug=rein.debug)
 

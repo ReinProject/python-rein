@@ -21,7 +21,7 @@ function storeUserData() {
     var mediatorFee = document.getElementById('fee').value;
     if (mediate === "True") {
         if (isNaN(parseInt(mediatorFee))) {
-            errors += "Invalid fee, should be number.\n\n";
+            errors += "Invalid fee: Must be numeric.\n\n";
         } else {
             sessionStorage.mediatorFee = mediatorFee;
         }
@@ -38,7 +38,7 @@ function storeUserData() {
 }
 
 function renderConfirmationPage() {
-    document.getElementById('ajax-header').innerText = "Confirm that you wrote down the mnemonic";
+    document.getElementById('ajax-header').innerText = "Confirm the mnemonic phrase";
     document.getElementById('ajax-description').innerText = '';
     var wordsToCheck = [1, 2, 3, 10, 11, 12];
     sessionStorage.wordsToCheck = wordsToCheck;
@@ -106,7 +106,7 @@ function getMnemonic() {
 	    var mnemonic = response.mnemonic;
 	    if (mnemonic) {
 		document.getElementById('ajax-header').innerText = "Generating access keys"
-		document.getElementById('ajax-description').innerHTML = "<span style='font-size: 12pt'>Put down on paper these 12 words. They are the key to accessing and recovering your Rein account.</span><br>"
+		document.getElementById('ajax-description').innerHTML = "<span style='font-size: 12pt'>Attention! Write down these 12 words. They are the key to recovering your Rein account and wallet.</span><br>"
 		document.getElementById('ajax-elements').innerHTML = "<br><p style='font-size: 13pt'>" + mnemonic + "</p>";
 		document.getElementById('ajax-button').removeAttribute('class')
 		document.getElementById('ajax-button').setAttribute('class', 'col-sm-6')

@@ -63,13 +63,13 @@ STATE = {
                     'next': ['acceptresolution'],
                     'endpoint': '/resolve',
                     'past_tense': 'dispute resolved'
-        },
-    'acceptresolution': {
-        'pre': ['resolve'],
-        'next': ['complete'],
-        'endpoint': '/acceptresolution',
-        'past_tense': 'complete, resolution accepted'
-       }
+                        },
+        'acceptresolution': {
+                    'pre': ['resolve'],
+                    'next': ['complete'],
+                    'endpoint': '/acceptresolution',
+                    'past_tense': 'complete, resolution accepted'
+                        }
 }
 
 class Order(Base):
@@ -111,11 +111,13 @@ class Order(Base):
         documents = rein.session.query(Document).filter(and_(Document.order_id == self.id,
                                                              Document.testnet == rein.testnet)).all()
         current = 'job_posting'
+        path = [current]
         while 1:
             moved = False
             for document in documents:
-                if document.doc_type in STATE[current]['next']:
+                if document.doc_type in STATE[current]['next'] and document.doc_type not in path:
                     current = document.doc_type
+                    path.append(current)
                     moved = True
             if not moved:
                 return current

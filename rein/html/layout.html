@@ -157,13 +157,27 @@
 		<!--Start Content-->
 		<div id="content" class="col-xs-12 col-sm-10">
 			<div id="about">
-				<div class="about-inner">
-					<h4 class="page-header">Decentralized Freelance Market</h4>
-					<p>ReinProject</p>
-					<p>Homepage - <a href="http://reinproject.org" target="_blank">http://reinproject.org</a></p>
-					<p>Email - <a href="mailto:davids@exchb.com">davids@exchb.com</a></p>
-					<p>Twitter - <a href="http://twitter.com/reinproject" target="_blank">http://twitter.com/reinproject</a></p>
-					<p>Donate for DevOOPs UI - BTC 123Ci1ZFK5V7gyLsyVU36yPNWSB5TDqKn3</p>
+                <div class="about-inner">
+                    <h4>User Information</h4>
+                    <p><b>Master bitcoin address:</b> {{ user.maddr }}<br />
+                    <b>Delegate bitcoin address:</b> <a href="https://blockchain.info/address/{{ user.daddr }}">{{ user.daddr }}</a><br />
+                    <b>Delegate public key:</b> {{ key }}<br />
+                    <b>Willing to mediate:</b> {{ user.will_mediate }}<br />
+                    {% if user.will_mediate %}
+                    <b>Mediator fee:</b> {{ user.mediator_fee }}<br />
+                    {% endif %}
+                    <b>Registered servers:</b><br />
+                    {% for url in urls %}
+                    <a href="{{url}}">{{ url }}</a><br />
+                    {% endfor %}<br /></p>
+
+					<h4>ReinProject</h4>
+                    <p>Need help? Have a suggestion? Found a bug? Join us on IRC Chat: #Rein on freenode<br />
+                    Website - <a href="http://reinproject.org" target="_blank">http://reinproject.org</a><br />
+					Twitter - <a href="http://twitter.com/reinproject" target="_blank">http://twitter.com/reinproject</a><br />
+                    Donate to Rein development - BTC 1ReincqnUHz5tTbQCvXWYExjxcU5NpGAq<br />
+                    <div id="donate"></div><br />
+                    Donate for DevOOPs UI - BTC 123Ci1ZFK5V7gyLsyVU36yPNWSB5TDqKn3</p>
 				</div>
 			</div>
             <div>
@@ -176,6 +190,17 @@
 <!--End Container-->
 <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
 <!--<script src="http://code.jquery.com/jquery.js"></script>-->
+<script type="text/javascript">
+    new QRCode(document.getElementById("donate"),
+                {
+                  text: "bitcoin:1ReincqnUHz5tTbQCvXWYExjxcU5NpGAq",
+                  width: 148,
+                  height: 148,
+                  colorDark : "#000000",
+                  colorLight : "#ffffff",
+                  correctLevel : QRCode.CorrectLevel.H
+                  });
+</script>
 <script src="/plugins/jquery/jquery.min.js"></script>
 <script src="/plugins/jquery-ui/jquery-ui.min.js"></script>
 <!-- Include all compiled plugins (below), or include individual files as needed -->

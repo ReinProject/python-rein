@@ -42,7 +42,7 @@
     <tr>
         <th></th>
         <th>Job name</th>
-        <th>Delivery</th>
+        <th>Detail</th>
     </tr>
 </thead>
 <tbody>
@@ -57,11 +57,11 @@
 
     <div class="form-group">
         <label class="col-sm-4 control-label">{{ form.resolution.label }}</label>
-        <div class="col-sm-8">{{ form.resolution(rows=5, cols=80, class="form-control", title="Provide details of how the decision.") }}</div>
+        <div class="col-sm-8">{{ form.resolution(rows=5, cols=80, class="form-control", title="Provide details of the decision.") }}</div>
         {{ render_error(form.resolution) }}
     </div>
     <div class="form-group">
-        <label class="col-sm-3 control-label">{{ form.client_payment_amount.label }}</label>
+        <label class="col-sm-4 control-label">{{ form.client_payment_amount.label }}</label>
         <div class="col-sm-7">{{ form.client_payment_amount(rows=6, cols=60, class="form-control", title="Put the amount of bitcoins to give to the client. The rest will go to the worker.") }}</div>
         {{ render_error(form.client_payment_amount) }}
     </div>

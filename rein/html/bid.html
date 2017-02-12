@@ -26,8 +26,8 @@
 {% endwith %}
 
 {% if no_choices %}
-<h5>None found.</h5>
-<p>It looks like no jobs are currently accepting bids. Consider adding more servers to your installation with `rein request` or `rein buy` or check back later.</p>
+<h5>No jobs available.</h5>
+<p>Consider adding more servers to your installation with `rein request` or `rein buy` or check back later.</p>
 {% else %}
 <p>Block time (12 blocks ago): {{ block_time }} UTC
 {% if time_offset > 3600*4 %}
