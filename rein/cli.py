@@ -156,7 +156,7 @@ def post(multi, identity, defaults, dry_run):
             click.echo('None found')
         if data['block_info']:
             blocks.append(data['block_info'])
-        eligible_mediators += filter_and_parse_valid_sigs(rein, data['mediators'])
+        eligible_mediators += filter_and_parse_valid_sigs(rein, data['mediators'], 'Secure Identity Number')
     (block_hash, block_time) = choose_best_block(blocks)
     if block_hash is None:
         click.echo("None of your servers responded with block info.")
@@ -1541,7 +1541,9 @@ def start(multi, identity, setup):
             sel_url = "{0}query?owner={1}&query=mediators&testnet={2}"
             data = safe_get(log, sel_url.format(url, user.maddr, rein.testnet))
             if data:
-                eligible_mediators += filter_and_parse_valid_sigs(rein, data['mediators'])
+                eligible_mediators += filter_and_parse_valid_sigs(rein,
+                                                                  data['mediators'],
+                                                                  "Secure Identity Number")
 
         for e in eligible_mediators:
             if not Mediator.get(e['Master signing address'], rein.testnet):
