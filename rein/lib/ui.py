@@ -9,7 +9,7 @@ from .validate import validate_enrollment
 from .user import User, Base
 from .util import unique
 from .document import Document
-import .lib.crypto.bip32 as bip32
+import rein.lib.crypto.bip32 as bip32
 
 
 def shorten(text, length=60):

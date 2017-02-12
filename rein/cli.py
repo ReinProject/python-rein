@@ -1364,7 +1364,7 @@ def start(multi, identity, setup):
     from flask import Flask, request, redirect, url_for, flash, send_from_directory, render_template, jsonify
     from .lib.forms import JobPostForm, BidForm, JobOfferForm, DeliverForm, AcceptForm, DisputeForm, ResolveForm, AcceptResolutionForm, RatingForm
     from .lib.mediator import Mediator
-    import .lib.crypto.bip32 as bip32
+    import rein.lib.crypto.bip32 as bip32
     from .lib.ui import build_enrollment_from_dict
     from .lib.bitcoinecdsa import sign
 
