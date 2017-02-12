@@ -967,7 +967,7 @@ def sync_core(log, user, key, urls):
     mediators = remote_query(rein, user, urls, log, 'mediators', 'Mediator public key')
     for m in mediators:
         from pprint import pprint
-        if not Mediator.get(m['Master signing address'], rein.testnet):
+        if 'Secure Identity Number' in m and not Mediator.get(m['Master signing address'], rein.testnet):
             newMediator = Mediator(m, testnet)
             rein.session.add(newMediator)
             rein.session.commit()
