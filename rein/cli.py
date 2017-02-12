@@ -1991,8 +1991,13 @@ def start(multi, identity, setup):
             worker_payment_daddr = str(P2PKHBitcoinAddress.from_pubkey(x(dispute['Worker public key'])));
             client_payment_daddr = str(P2PKHBitcoinAddress.from_pubkey(x(dispute['Job creator public key'])));
             client_payment_amount = float(form.client_payment_amount.data)
-            (payment_txins,payment_amount_1,payment_address_1,payment_amount_2,payment_address_2,payment_sig) = partial_spend_p2sh(redeemScript,rein,worker_payment_daddr,client_payment_amount,client_payment_daddr)
-            (mediator_payment_txins,mediator_payment_amount,mediator_payment_address,mediator_payment_sig) = partial_spend_p2sh_mediator(mediatorRedeemScript,rein,mediator_daddr,True)
+            try:
+                (payment_txins,payment_amount_1,payment_address_1,payment_amount_2,payment_address_2,payment_sig) = partial_spend_p2sh(redeemScript,rein,worker_payment_daddr,client_payment_amount,client_payment_daddr)
+                (mediator_payment_txins,mediator_payment_amount,mediator_payment_address,mediator_payment_sig) = partial_spend_p2sh_mediator(mediatorRedeemScript,rein,mediator_daddr,True)
+            except ValueError as e:
+                form.resolution.errors.append(e.message)
+                flash_errors(form)
+                return redirect("/resolve")
             fields = [
                 {'label': 'Job name',                       'value_from': dispute},
                 {'label': 'Job ID',                         'value_from': dispute},
@@ -2083,8 +2088,46 @@ def start(multi, identity, setup):
                             found=found,
                             fee=PersistConfig.get(rein, 'fee', 0.00025),
                             unique=unique_documents,
-                               job=combined,
-                               mediator_fee_btc=mediator_fee_btc)
+                            job=combined,
+                            mediator_fee_btc=mediator_fee_btc)
+
+
+    @app.route('/mediator')
+    def mediator_page():
+        Order.update_orders(rein, Document)
+        remote_documents = []
+        for url in urls:
+            sel_url = "{0}query?query=review&owner={1}&testnet={2}&mediator={3}"
+            data = safe_get(log, sel_url.format(url, user.maddr, rein.testnet, key))
+            if data and 'review' in data:
+                remote_documents += filter_and_parse_valid_sigs(rein, data['review'])
+        unique_documents = unique(remote_documents)
+        job_ids = []
+        for doc in unique_documents:
+            if 'Job ID' in doc:
+                job_ids.append(doc['Job ID'])
+        job_ids_string = ','.join(job_ids)
+
+        remote_documents = []
+        for url in urls:
+            sel_url = "{0}query?owner={1}&query=by_job_id&job_ids={2}&testnet={3}"
+            data = safe_get(log, sel_url.format(url, user.maddr, job_ids_string, rein.testnet))
+            if data and 'by_job_id' in data:
+                remote_documents += filter_and_parse_valid_sigs(rein, data['by_job_id'])
+        unique_documents = unique(remote_documents)
+
+        if len(unique_documents) == 0:
+            found = False
+        else:
+            found = True
+
+        return render_template('mediator.html',
+                               rein=rein,
+                               user=user,
+                               key=key,
+                               urls=urls,
+                               found=found,
+                               unique=unique_documents)
 
 
     @app.route("/dispute", methods=['POST', 'GET'])
