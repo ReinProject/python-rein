@@ -47,7 +47,7 @@ class SetupForm(Form):
     mediator_fee = TextField('Mediator Fee', validators = [validate_mediator_fee])  # TODO make required only if Yes above
 
 class SignForm(Form):
-    identity_id = HiddenField("identity_id")
+    identity_id = HiddenInput("identity_id")
     signed = TextAreaField('Signed enrollment', validators = [Required(), validate_en])
 
 class JobPostForm(Form):
