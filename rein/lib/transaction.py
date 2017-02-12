@@ -8,6 +8,7 @@ from hashlib import sha256
 api = "blocktrail" #handle this
 from .bucket import Bucket
 from .io import safe_get
+from .persistconfig import PersistConfig
 import click
 
 def unspent_txins(address,testnet):
@@ -72,7 +73,7 @@ def partial_spend_p2sh (redeemScript,rein,daddr=None,alt_amount=None,alt_daddr=N
     for txid,vout in txins:
         txins_str += " "+txid+"-"+str(vout)
         txins_obj.append(CMutableTxIn(COutPoint(lx(txid),vout)))                
-    fee = 0.00025
+    fee = PersistConfig.get(rein, 'fee', 0.00025)
     amount = round(total_value-fee,8)
     if alt_amount:
         amount = round(amount-alt_amount,8)
@@ -108,7 +109,7 @@ def partial_spend_p2sh_mediator (redeemScript,rein,mediator_address,mediator_sig
     for txid,vout in txins:
         txins_str += " "+txid+"-"+str(vout)
         txins_obj.append(CMutableTxIn(COutPoint(lx(txid),vout)))
-    fee = 0.00025
+    fee = PersistConfig.get(rein, 'fee', 0.00025)
     amount = round(total_value-fee,8)
     if amount<=0:
         raise ValueError('Mediator escrow balance too low. Please inform client to add funds.')
