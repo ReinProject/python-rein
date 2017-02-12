@@ -1963,6 +1963,8 @@ def start(multi, identity, setup):
                             rein=rein,
                             user=user,
                             order=o,
+                            key=key,
+                            urls=urls,
                             state=state,
                             found=found,
                             fee=PersistConfig.get(rein, 'fee', 0.00025),
