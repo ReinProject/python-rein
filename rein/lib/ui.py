@@ -177,9 +177,11 @@ def build_enrollment_from_dict(user_data):
     if user_data['will_mediate']:
         mediator_extras = "\nMediator public key: %s\nMediator fee: %s%%" % \
                           (pubkey(user_data['dkey']), user_data['mediator_fee'])
-    enrollment = "Rein User Enrollment\nUser: %s\nContact: %s\nMaster signing address: %s" \
-                 "\nDelegate signing address: %s\nMaster Secure Identity Number: %s\nWilling to mediate: %s%s" % \
-                 (user_data['name'], user_data['contact'], user_data['maddr'], user_data['daddr'], user_data['msin'], user_data['will_mediate'], mediator_extras)
+    enrollment = "Rein User Enrollment\nUser: %s\nContact: %s\nMaster signing address: %s\n" \
+                 "Secure Identity Number: %s\nDelegate signing address: %s\n" \
+                 "Willing to mediate: %s%s" % \
+                 (user_data['name'], user_data['contact'], user_data['maddr'], user_data['msin'],\
+                 user_data['daddr'], user_data['will_mediate'], mediator_extras)
     if user_data['testnet']:
         enrollment += '\nTestnet: True'
     return enrollment
@@ -240,19 +242,6 @@ def build_enrollment(rein):
                  "\nDelegate signing address: %s\nWilling to mediate: %s%s" % \
                  (user.name, user.contact, user.maddr, user.daddr, user.will_mediate, mediator_extras)
     if rein.testnet:
-        enrollment += '\nTestnet: True'
-    return enrollment
-
-
-def build_enrollment_from_dict(user_data):
-    mediator_extras = ''
-    if user_data['will_mediate']:
-        mediator_extras = "\nMediator public key: %s\nMediator fee: %s%%" % \
-                          (pubkey(user_data['dkey']), user_data['mediator_fee'])
-    enrollment = "Rein User Enrollment\nUser: %s\nContact: %s\nMaster signing address: %s" \
-                 "\nDelegate signing address: %s\nWilling to mediate: %s%s" % \
-                 (user_data['name'], user_data['contact'], user_data['maddr'], user_data['daddr'], user_data['will_mediate'], mediator_extras)
-    if user_data['testnet']:
         enrollment += '\nTestnet: True'
     return enrollment
 
