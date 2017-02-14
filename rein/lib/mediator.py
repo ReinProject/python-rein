@@ -2,10 +2,10 @@ from sqlalchemy import Column, Integer, String, Float, Boolean, and_
 from sqlalchemy.ext.declarative import declarative_base
 
 import click
-import config
+import rein.lib.config as config
 
-from validate import filter_and_parse_valid_sigs
-from util import unique
+from .validate import filter_and_parse_valid_sigs
+from .util import unique
 
 Base = declarative_base()
 rein = config.Config()
@@ -17,6 +17,7 @@ class Mediator(Base):
     username = Column(String(250), nullable=False)
     contact = Column(String(250), nullable=False)
     maddr = Column(String(64), nullable=False)
+    msin = Column(String(64), nullable=False)
     daddr = Column(String(64), nullable=False)
     dpubkey = Column(String(64), nullable=False)
     will_mediate = Column(Boolean, nullable=False)
@@ -27,6 +28,7 @@ class Mediator(Base):
         self.username = m[u'User']
         self.contact = m[u'Contact']
         self.maddr = m['Master signing address']
+        self.msin = m['Secure Identity Number']
         self.daddr = m['Delegate signing address']
         self.dpubkey = m['Mediator public key']
         self.will_mediate = 1 if m['Willing to mediate'] else 0

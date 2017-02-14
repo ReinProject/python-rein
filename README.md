@@ -1,29 +1,34 @@
 ## Python-Rein
 
-Rein is designed to help you and others work together with Bitcoin. The Rein model of commerce mirrors that of internet at large through the use of paid microhosting to store data about users, jobs, and payments. Since little storage and bandwidth are needed, a high amount of redundancy and censorship-resistance may be acheived at low cost (on par with the cost of a gourmet coffee for a year of redundant hosting on several servers).
+[![Build Status](https://travis-ci.org/ReinProject/python-rein.svg?branch=master)](https://travis-ci.org/ReinProject/python-rein)
 
-Servers can be paid for their services but they do not communicate with each other, and while the client attempts to validate what it sees, this validation is not complete nor has the software seen a security review. As such, you are advised to limit use of Rein to small jobs where loss of funds or time spent would not present a significant burden.
+Rein makes freelancing for Bitcoin easier than ever. The simple, web-based python-rein client helps create jobs and bids as well as multisig escrows that keep funds safe. You don't need to stay online for others to find, bid or deliver on jobs.
 
-To read more about the project, visit http://reinproject.org
+We achieve decentralization by following the internet at large: cheap hosting paid for with bitcoin enables users to store data across a number of servers that may or may not be connected to one another. Since not a lot of data or bandwidth are required, we can have redundancy, reliability and censorship-resistance at low cost. Think $5 in bitcoin per year to have your data on 10 independently-run servers.
 
-Python-rein is a command-line and under construction web-interface client to the Rein market.
+Servers can be paid for their services but they do not necessarily need to communicate with one other, and while the client attempts to validate what it sees, this validation is not complete nor has the software seen a security review. As such, you are advised to limit use of Rein to small jobs where loss of funds or time spent would not present a significant burden.
+
+To read more about the project, visit http://reinproject.org. Our development roadmap can be found at: https://bitcointalk.org/index.php?topic=1232915.msg17244400#msg17244400
+
+## Getting started
+
+Please see the [setup guide](doc/HOWTO-setup-rein.md). In a nutshell, run `rein start` to be guided through a web-based setup process.
+
+## Upgrade
+
+If you have 0.2 already installed and setup, please see our [note on upgrading](doc/Upgrading-v0.2-to-v0.3.md).
 
 ## Installation
+
+Production:
+
+    python setup.py install
 
 Development:
 
     pip install --editable .
 
 With the --editable switch, your edits immediately become live in your environment.
-
-Production:
-
-    python setup.py install
-
-
-## Getting started
-
-Please see the [setup guide](https://github.com/ReinProject/python-rein/blob/master/doc/HOWTO-setup-rein.md). In a nutshell, run `rein start` to be guided through a web-based setup process.
 
 ### Mediators
 
@@ -46,6 +51,18 @@ Python-rein currently cannot query for unspent outputs or assemble transactions 
 If you want detailed information about pending jobs, click on the job in question after running `rein start`. 
 
 ## Addresses and Payments
+
+### Address generation
+
+Rein generates your Bitcoin addresses automatically at setup. It uses BIP32/39 to first generate a secret phrase, then transform it into a main private key and derive child keys from it.
+
+Here is the derivation path:
+m/0 - master address, private, and public keys
+m/1'/0 - delegate address, private, and public keys
+
+The mnemonic should be kept private as it is the key to accessing your Rein account and signing escrow release.
+
+-----
 
 Rein uses two types of escrow in order to protect funds that are to go to the worker or job creator (depending upon the success of the transaction) as well as the mediator. 
 
@@ -71,9 +88,9 @@ To generate or update pot files for translation, run the following from the root
 
 ## Testing
 
-To help test, download and run [a server](https://github.com/ReinProject/causeway) locally. Run `rein testnet true`, then `rein setup`. You can use the address/key pairs on [this sheet](https://docs.google.com/spreadsheets/d/1IRDvu-24LCDOTM1B3lwW9cfQM-zSCK1eds5Sb4QhpWY/edit#gid=691104568) for convenience to setup Alice, Bob, and Charlie with the right keys/identities. 
+We have [a quick Vagrant-based setup](https://github.com/ReinProject/devsetup) that gives you a virtual machine with the python-rein client, Causway server and its Bitcoin Core (testnet) node all configured to work together. Testing usually involves creating users and walking through jobs so a virtual machine that has all components going, even allowing payments to be sent is very helpful.
 
-Then run using nose:
+Tests are run using nose:
 
     $ nosetests
     ..
@@ -82,7 +99,7 @@ Then run using nose:
 
     OK
 
-There are also some tests that run via unittest2:
+And unittest2:
 
     $ make test
     python -m unittest2 rein/lib/*.py

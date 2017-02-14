@@ -4,8 +4,8 @@ import click
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
-from user import User
-from persistconfig import PersistConfig, Base
+from .user import User
+from .persistconfig import PersistConfig, Base
 
 
 class Config():
@@ -22,9 +22,9 @@ class Config():
         self.log.info('starting python-rein')
         self.setup_db()
         self.log.info('database connected')
-        self.testnet = 1 if PersistConfig.get_testnet(self) else 0
-        self.tor = 1 if PersistConfig.get_tor(self) else 0
-        self.debug = 1 if PersistConfig.get_debug(self) else 0
+        self.testnet = 1 if PersistConfig.get(self, 'testnet') else 0
+        self.tor = 1 if PersistConfig.get(self, 'tor') else 0
+        self.debug = 1 if PersistConfig.get(self, 'debug') else 0
         if self.tor:
             self.proxies = { 'http': 'socks5://127.0.0.1:9150' }
         else:

@@ -1,12 +1,15 @@
 build/
 dist/
 c/
+.idea/
+venv/
+.vscode/
 *.txt
 *.sig
 *.log
-*.json
 *.db
 *.pyc
 rein.egg-info
 backup-rein.json*
 !requirements.txt
+task.txt

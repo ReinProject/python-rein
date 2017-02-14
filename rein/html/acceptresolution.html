@@ -8,15 +8,15 @@
 			<i class="fa fa-bars"></i>
 		</a>
 		<ol class="breadcrumb pull-left">
-			<li><a href="/">Workers</a></li>
-			<li><a href="/deliver">Deliver</a></li>
+			<li><a href="/">Job Creators</a></li>
+			<li><a href="/accept">Accept Resolution</a></li>
 		</ol>
     </div>
 </div>
 <div class="well">
 <div class="row">
 	<div class="col-xs-12">
-<h4>Deliver</h4>
+<h4>Accept Resolution</h4>
 {% with messages = get_flashed_messages() %}
   {% if messages %}
     {% for message in messages %}
@@ -25,17 +25,21 @@
   {% endif %}
 {% endwith %}
 
+
 {% if no_choices %}
-<h5>No in-process jobs found.</h5>
-<p>Before you can deliver, you will need to <a href="/bid">bid</a> and be offered a job.</p>
+<h5>None found.</h5>
+<p>You either don't have a job in dispute or your mediator hasn't posted a resolution.
 {% else %}
 <p>Block time (12 blocks ago): {{ block_time }} UTC
 {% if time_offset > 3600*4 %}
 <span class="txt-danger">Off by more than 4 hours!</span>
+
+<br />
+Click on the job name to view the resolution document. <b>Verify the amounts and addresses before accepting.</b>
 {% endif %}
 </p>
 
-<form class="form-horizontal" role="form" method="POST" onsubmit="return confirm('This will be sync\'d immediately to available servers. Please confirm.');" action="{{ url_for('job_deliver') }}">
+<form class="form-horizontal" role="form" method="POST" onsubmit="return confirm('This will be sync\'d immediately to available servers. Please confirm.');" action="{{ url_for('job_acceptresolution') }}">
     {{ form.csrf_token }}
 
 <table class="table">
@@ -43,11 +47,11 @@
     <tr>
         <th></th>
         <th>Job name</th>
-        <th>Delivery</th>
+        <th>Resolution</th>
     </tr>
 </thead>
 <tbody>
-{% for subfield in form.job_id %}
+{% for subfield in form.resolution_id %}
 
     <tr>
         <td>{{ subfield }}</td>
@@ -57,13 +61,8 @@
 </tbody>
 </table>
 
-    <div class="form-group">
-        <label class="col-sm-3 control-label">{{ form.deliverable.label }}</label>
-        <div class="col-sm-7">{{ form.deliverable(rows=6, cols=80, class="form-control", data_toggle="tooltip", title="Provide links to files or evidence of sending deliverables to the client.") }}</div>
-        {{ render_error(form.deliverable) }}
-    </div>
-    
-<input type="submit" value="Deliver!">
+Click accept to release the funds from the escrow addresses according to the terms written by the mediator in the resolution document.<br /><br >
+<input type="submit" value="Accept">
 </form>
 {% endif %}
     </div>

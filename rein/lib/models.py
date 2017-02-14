@@ -1,6 +1,6 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from user import Base
+from .user import Base
 import os
 import logging
 
@@ -17,25 +17,25 @@ log.info('database connected')
 
 Base.metadata.create_all(engine)
 
-from bucket import Base
+from .bucket import Base
 Base.metadata.create_all(engine)
 
-from order import Base
+from .order import Base
 Base.metadata.create_all(engine)
 
-from placement import Base
+from .placement import Base
 Base.metadata.create_all(engine)
 
-from document import Base
+from .document import Base
 Base.metadata.create_all(engine)
 
-from persistconfig import Base
+from .persistconfig import Base
 Base.metadata.create_all(engine)
 
-from block import Base
+from .block import Base
 Base.metadata.create_all(engine)
 
-from mediator import Base
+from .mediator import Base
 Base.metadata.create_all(engine)
 
 log.info('database tables updated')

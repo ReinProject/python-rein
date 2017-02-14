@@ -3,11 +3,12 @@ A decentralized professional services marketplace.
 """
 from setuptools import find_packages, setup
 
-dependencies = ['click', 'requests>=2.10', 'flask', 'flask-wtf', 'python-bitcoinlib', 'sqlalchemy', 'pysocks']
+dependencies = ['click', 'requests>=2.10', 'flask', 'flask-wtf', 'python-bitcoinlib', 'sqlalchemy', 'pysocks',
+                'bip32utils', 'pbkdf2']
 
 setup(
     name='rein',
-    version='0.2.0',
+    version='0.3.0',
     url='https://github.com/ReinProject/python-rein',
     license='BSD',
     author='David Sterry',
@@ -27,9 +28,9 @@ setup(
     classifiers=[
         # As from http://pypi.python.org/pypi?%3Aaction=list_classifiers
         # 'Development Status :: 1 - Planning',
-         'Development Status :: 2 - Pre-Alpha',
+        # 'Development Status :: 2 - Pre-Alpha',
         # 'Development Status :: 3 - Alpha',
-        # 'Development Status :: 4 - Beta',
+         'Development Status :: 4 - Beta',
         # 'Development Status :: 5 - Production/Stable',
         # 'Development Status :: 6 - Mature',
         # 'Development Status :: 7 - Inactive',

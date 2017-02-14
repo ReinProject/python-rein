@@ -62,12 +62,17 @@ choosing a mediator. Your choice may affect the number and quality of bids"""),
                         },
         'resolve':   {
                     'pre': ['creatordispute', 'workerdispute'],
-                    'next': ['complete'],
+                    'next': ['acceptresolution'],
                     'endpoint': '/resolve',
                     'past_tense': _('complete, dispute resolved'),
                         },
-       }
-
+        'acceptresolution': {
+                    'pre': ['resolve'],
+                    'next': ['complete'],
+                    'endpoint': '/acceptresolution',
+                    'past_tense': 'complete, resolution accepted'
+                        }
+}
 
 class Order(Base):
     __tablename__ = 'order'
@@ -108,11 +113,13 @@ class Order(Base):
         documents = rein.session.query(Document).filter(and_(Document.order_id == self.id,
                                                              Document.testnet == rein.testnet)).all()
         current = 'job_posting'
+        path = [current]
         while 1:
             moved = False
             for document in documents:
-                if document.doc_type in STATE[current]['next']:
+                if document.doc_type in STATE[current]['next'] and document.doc_type not in path:
                     current = document.doc_type
+                    path.append(current)
                     moved = True
             if not moved:
                 return current
@@ -154,13 +161,13 @@ class Order(Base):
 
     @classmethod
     def update_orders(self, rein, Document):
-        from market import assemble_orders
+        from .market import assemble_orders
         documents = Document.get_user_documents(rein)
         job_ids = []
         for document in documents:
             job_id = Document.get_job_id(document.contents)
             if job_id not in job_ids:
-                if document.source_url == 'local' and document.doc_type != 'enrollment':
+                if document.source_url == 'local' and document.doc_type != 'enrollment' and document.doc_type != 'rating':
                     job_ids.append(job_id)
-
+                    
         assemble_orders(rein, job_ids)

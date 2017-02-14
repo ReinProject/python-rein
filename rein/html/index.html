@@ -12,7 +12,6 @@
 			<li><a href="#">Dashboard</a></li>
 		</ol>
 		<div id="social" class="pull-right">
-			<a href="https://twitter.com/ReinProject"><i class="fa fa-twitter"></i></a>
 		</div>
 	</div>
 </div>
@@ -39,7 +38,7 @@
 <div class="well">
     <p>
     <b>Master bitcoin address:</b> {{ user.maddr }}<br />
-    <b>Delegate bitcoin address:</b> {{ user.daddr }}<br />
+    <b>Delegate bitcoin address:</b> <a href="https://blockchain.info/address/{{ user.daddr }}">{{ user.daddr }}</a><br />
     <b>Delegate public key:</b> {{ key }}<br />
     <b>Willing to mediate:</b> {{ user.will_mediate }}<br />
     {% if user.will_mediate %}

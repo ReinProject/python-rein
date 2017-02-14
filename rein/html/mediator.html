@@ -1,0 +1,52 @@
+{% extends "layout.html" %}
+{% from "_form_helpers.html" import render_error %}
+{% block body %}
+
+<div class="row">
+	<div id="breadcrumb" class="col-xs-12">
+		<a href="#" class="show-sidebar">
+			<i class="fa fa-bars"></i>
+		</a>
+		<ol class="breadcrumb pull-left">
+			<li><a href="/">Mediators</a></li>
+			<li><a href="#">Mediation Jobs</a></li>
+		</ol>
+    </div>
+</div>
+<div class="well">
+<div class="row">
+	<div class="col-xs-12">
+<h4>Mediation Jobs</h4>
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+    {% for message in messages %}
+      <p  class="txt-danger"><b>{{ message }}</b></p>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+
+{% if found %}
+<p>Below are the raw documents for all jobs you're mediating. Search for Accept Delivery to find mediator
+payments you can claim.</p>
+
+<p>To claim them, copy the <i>Mediator payment client signature</i> to Rein's version of Coinb.in, review 
+and sign with your delegate key. To get your delegate key, use the sqlite3 command line tool to open the local database: `sqlite3  ~/.rein/local.db`
+and run the query `select name, dkey from identity;` and run `.q` to quit.</p>
+
+<textarea rows="25" cols="128" readonly>{% for u in unique %}{{u['original']}}
+
+{% endfor %}
+</textarea>
+</p>
+{% else %}
+
+<p>You have not been selected as mediator for any jobs.</p>
+
+{% endif %}
+
+
+
+    </div>
+</div>
+</div>
+{% endblock %}

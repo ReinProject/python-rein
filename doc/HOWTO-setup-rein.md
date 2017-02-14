@@ -31,9 +31,10 @@ The first step in using Rein to earn Bitcoin is to install the python-rein softw
 
 ###Clone the repo    
 
-Let's clone `python-rein` now into your home folder with this command:
+Let's clone `python-rein` now into your home folder and select v0.2.4-alpha with these commands:
 
     $ git clone https://github.com/ReinProject/python-rein.git ~/python-rein
+    $ git checkout v0.2.4-alpha
 
 You should now have a copy of the `python-rein` repository in ~/python-rein
 
@@ -45,7 +46,7 @@ Before installing, change to the `python-rein` directory:
 
 We can now install it with this command:
 
-    $ sudo pip install --editable .
+    $ sudo python setup.py install
 
 With rein installed, we can easily check if it is setup correctly by running it.
 

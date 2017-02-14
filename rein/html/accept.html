@@ -36,7 +36,7 @@
 {% endif %}
 </p>
 
-<form class="form-horizontal" role="form" method="POST" onsubmit="return confirm('This will be sync\'d immediately to available servers. Please confirm.');" action="{{ url_for('job_accept') }}">
+<form class="form-horizontal" role="form" method="POST" onsubmit="return confirm('Payment to worker will be broadcast immediately to the Bitcoin network. Please confirm.');" action="{{ url_for('job_accept') }}">
     {{ form.csrf_token }}
 
 <table class="table">
@@ -58,17 +58,7 @@
 </tbody>
 </table>
 
-    <div class="form-group">
-        <label class="col-sm-3 control-label">{{ form.signed_primary_payment.label }}</label>
-        <div class="col-sm-7">{{ form.signed_primary_payment(rows=6, cols=80, class="form-control", data_toggle="tooltip", title="Use the primary redeem script and sign a payment including the full amount to the worker's address.") }}</div>
-        {{ render_error(form.signed_primary_payment) }}
-    </div>
-    <div class="form-group">
-        <label class="col-sm-3 control-label">{{ form.signed_mediator_payment.label }}</label>
-        <div class="col-sm-7">{{ form.signed_mediator_payment(rows=6, cols=60, class="form-control", title="Use the mediator redeem script and sign a payment including the full amount sending to the mediator's address.") }}</div>
-        {{ render_error(form.signed_mediator_payment) }}
-    </div>
-    
+Click accept to release the funds from the escrow addresses for this job.<br /><br />
 <input type="submit" value="Accept!">
 </form>
 {% endif %}
