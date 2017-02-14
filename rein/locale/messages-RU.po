@@ -1,0 +1,245 @@
+# Rein Decentralized Freelance Market.
+# Copyright (C) 2017
+# This file is distributed under the same license as the python-rein package.
+# David Sterry <davids@exchb.com>, 2017.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: 0.2\n"
+"POT-Creation-Date: 2016-12-21 11:00+PST\n"
+"PO-Revision-Date: 2016-12-21 11:00+PST\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: RUSSIAN <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: rein/cli.py:52
+msgid ""
+"\n"
+"    Rein это децентрализованный рынок профессиональных услуг и Python-rein это клиент\n"
+"который предоставляет интерфейс пользователя. Используйте эту программу из вашего локального браузера \n"
+"или коммандной строки что бы создать аккаунт, опубликовать работу, сделать ставку и т.д.\n"
+"\n"
+"\b\n"
+"    Быстрый старт:\n"
+"        $ rein start     - создать идентификатор, запустить Web UI\n"
+"        $ rein buy       - запросить микрохостинг\n"
+"        $ rein sync      - синхронизировать идентификатор с серверами микрохостинга\n"
+"        $ rein status    - узнать статус пользоваля, сбросить рабочие документы\n"
+"\n"
+"\b\n"
+"    Исполнители\n"
+"        $ rein bid       - показать проекты и сделать ставку\n"
+"        $ rein deliver   - окончить работу предоставив результат\n"
+"\n"
+"\b\n"
+"    Споры\n"
+"        $ rein workerdispute    - оспорить рабочие файлы работника\n"
+"        $ rein creatordispute   - оспорить рабочие файлы работодателя\n"
+"        $ rein resolve          - публичное решение медиатора\n"
+"\n"
+"    Для подробной информации и инструкции установки посетите ресурс: http://reinproject.org\n"
+"    "
+msgstr ""
+
+#: rein/cli.py:85
+msgid ""
+"\n"
+"    Установите или импортируйте идентификатор.\n"
+"\n"
+"    Вы выберете имя для вашего аккаунта, включая публичную контактную информацию, \n"
+"    и Bitcoin адрес/приватный ключ, которые программа будет использовать для подписи документов\n"
+"    от вашего имени. Зарегистрированный документ будет создан и вы должны будете подписать это\n"
+"    вашим приватным Bitcoin ключем.\n"
+
+"    "
+msgstr ""
+
+#: rein/cli.py:98
+msgid ""
+"1 - Создать новый аккаунт\n"
+"2 - Импортировать бэкап\n"
+msgstr ""
+
+#: rein/lib/forms.py:51
+msgid "Сделать ставку"
+msgstr ""
+
+#: rein/lib/forms.py:52
+msgid "Выбрать проект для ставки"
+msgstr ""
+
+#: rein/lib/forms.py:55
+msgid "Выбрать ставку"
+msgstr ""
+
+#: rein/lib/forms.py:63
+msgid "Выбрать работу"
+msgstr ""
+
+#: rein/lib/forms.py:59
+msgid "Выбрать работу ассоциированную с результатом"
+msgstr ""
+
+#: rein/lib/forms.py:47
+msgid "Выбрать медиатора"
+msgstr ""
+
+#: rein/lib/forms.py:33
+msgid "Выбрать Bitcoin адрес"
+msgstr ""
+
+#: rein/lib/forms.py:34
+msgid "Выбрать приватный ключ Bitcoin"
+msgstr ""
+
+#: rein/lib/forms.py:58 rein/lib/forms.py:68
+msgid "Результат"
+msgstr ""
+
+#: rein/lib/forms.py:44 rein/lib/forms.py:50
+msgid "Описание"
+msgstr ""
+
+#: rein/lib/forms.py:62
+msgid "Оспорить деталь"
+msgstr ""
+
+#: rein/lib/forms.py:74
+msgid "Споры"
+msgstr ""
+
+#: rein/cli.py:97
+msgid ""
+"Вы хотите имортировать бэкап или создать новый аккаунт?\n"
+"\n"
+msgstr ""
+
+#: rein/lib/forms.py:31
+msgid "Email / Bitmessage"
+msgstr ""
+
+#: rein/lib/io.py:16
+msgid "Ошибка подключения к серверу."
+msgstr ""
+
+#: rein/lib/forms.py:46
+msgid "Истекает (дней)"
+msgstr ""
+
+#: rein/lib/market.py:54
+msgid "Файл содержит подписанный документ"
+msgstr ""
+
+#: rein/lib/order.py:18
+msgid ""
+"Средства для каждой работы в реин хранятся в двух мультиподписанных адресах. Один адрес\n"
+"для личного платежа который будет отправлен работнику по окончании проекта. \n"
+"Второй для медиатора, на случай разрешения спора при необходимости. Второй адрес должен быть пополнен опираясь на процент\n"
+"указанный медиатором и быть в дополнении к личному платежу. \n"
+"Список ниже показывает доступных медиаторов и комиссии, которые они требуют. \n"
+"Вы должны учитывать комиссию так же, как и любую другую репутационную информацию, которую вы можете найти,\n"
+"когда выбираете медиатора. Ваш выбор может повлиять на количество и качество ставок."
+msgstr ""
+
+#: rein/lib/forms.py:22
+msgid "Неправильный адрес"
+msgstr ""
+
+#: rein/lib/forms.py:27
+msgid "Неправильная подпись"
+msgstr ""
+
+#: rein/lib/forms.py:43
+msgid "Имя работы"
+msgstr ""
+
+#: rein/lib/forms.py:32
+msgid "Адрес Bitcoin"
+msgstr ""
+
+#: rein/lib/forms.py:36
+msgid "Комиссия медиатора"
+msgstr ""
+
+#: rein/lib/forms.py:30
+msgid "Имя / Держатель"
+msgstr ""
+
+#: rein/lib/validate.py:168
+msgid "Ничего не найдено"
+msgstr ""
+
+#: rein/lib/forms.py:18
+msgid "Не правильный приватный ключ."
+msgstr ""
+
+#: rein/lib/toolbox.py:9
+msgid "Пожалуйста введите "
+msgstr ""
+
+#: rein/lib/forms.py:35
+msgid "Зарегистрировать как медиатор?"
+msgstr ""
+
+#: rein/lib/forms.py:73
+msgid "Решение"
+msgstr ""
+
+#: rein/lib/forms.py:40
+msgid "Подписанное зачисление"
+msgstr ""
+
+#: rein/lib/forms.py:67 rein/lib/forms.py:72
+msgid "Подписанный платеж медиатора"
+msgstr ""
+
+#: rein/lib/forms.py:66 rein/lib/forms.py:71
+msgid "Подписанный частный платеж"
+msgstr ""
+
+#: rein/lib/forms.py:45
+msgid "Тэги"
+msgstr ""
+
+#: rein/lib/validate.py:14
+msgid "Верификация блока раз..."
+msgstr ""
+
+#: rein/cli.py:98
+msgid "Добро пожаловать в Rein."
+msgstr ""
+
+#: rein/lib/order.py:31
+msgid "ставка принята"
+msgstr ""
+
+#: rein/lib/order.py:67
+msgid "окончено, спор окончен"
+msgstr ""
+
+#: rein/lib/order.py:61
+msgid "окончено, работа принята"
+msgstr ""
+
+#: rein/lib/order.py:43
+msgid "результаты отправлены"
+msgstr ""
+
+#: rein/lib/order.py:49
+msgid "оспорено работодателем"
+msgstr ""
+
+#: rein/lib/order.py:55
+msgid "оспорено исполнителем"
+msgstr ""
+
+#: rein/lib/order.py:37
+msgid "выбран исполнитель"
+msgstr ""
+
+#: rein/lib/order.py:17
+msgid "опубликовано"
+msgstr ""

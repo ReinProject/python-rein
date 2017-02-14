@@ -1,0 +1,296 @@
+# Rein Decentralized Freelance Market.
+# Copyright (C) 2017
+# This file is distributed under the same license as the python-rein package.
+# David Sterry <davids@exchb.com>, 2017.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: 0.2\n"
+"POT-Creation-Date: 2016-12-21 11:00+PST\n"
+"PO-Revision-Date: 2016-12-21 11:00+PST\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: rein/cli.py:52
+msgid ""
+"\n"
+"    Rein is a decentralized professional services market and Python-rein is a client\n"
+"that provides a user interface. Use this program from your local browser or command \n"
+"line to create an account, post a job, bid, etc.\n"
+"\n"
+"\b\n"
+"    Quick start:\n"
+"        $ rein start     - create an identity, run the Web UI\n"
+"        $ rein buy       - request microhosting\n"
+"        $ rein sync      - push your identity to microhosting servers\n"
+"        $ rein status    - get user status, or dump of job's documents\n"
+"\n"
+"\b\n"
+"    Workers\n"
+"        $ rein bid       - view and bid on jobs\n"
+"        $ rein deliver   - complete job by providing deliverables\n"
+"\n"
+"\b\n"
+"    Disputes\n"
+"        $ rein workerdispute    - worker files dispute\n"
+"        $ rein creatordispute   - job creator files dispute\n"
+"        $ rein resolve          - mediator posts decision\n"
+"\n"
+"    For more info and the setup guide visit: http://reinproject.org\n"
+"    "
+msgstr ""
+"\n"
+"    Rein es un mercado profesional, descentralizado, de servicios y Python-rein es el cliente\n"
+"que provee la interfaz de usuario. Usa este programa desde tu navegador o línea de comandos \n"
+"para crear una cuenta, publicar un trabajo, ofertarse para un trabajo, etc.\n"
+"\n"
+"\b\n"
+"    Iniciándose:\n"
+"        $ rein start     - crea una identidad, ejecuta la interfaz de usuario web\n"
+"        $ rein buy       - pide microhosting\n"
+"        $ rein sync      - sincroniza tu identidad con los servidores\n"
+"        $ rein status    - comprobar estado de identidad, transacción, etc\n"
+"\n"
+"\b\n"
+"    Trabajadores\n"
+"        $ rein bid       - mirar y ofertarse para un trabajo\n"
+"        $ rein deliver   - completar trabajo suministrando entregas\n"
+"\n"
+"\b\n"
+"    Disputas\n"
+"        $ rein workerdispute    - mediante este comando el trabajador puede comenzar un conflicto,\n" 
+"								   debe especificar la razón de la misma, i.e. el epmpleador no \n"
+"								   fue razonable, etc, enlazar pruebas \n"
+"        $ rein creatordispute   - mediante este comando el empleador puede comenzar un conflicto, \n"
+"								   debe especificar la razón de la misma, i.e. el trabajador no realizó \n"
+"								   la entrega o hizo un mal trabajo, etc\n"
+"        $ rein resolve          - este comando es el usado por el mediador para revisar la información \n"
+"								   dada por el empleador y el trabajador con el fin de decidir cómo \n"
+" 								   resolver el conflicto.\n"
+"\n"
+"    Para más información y guía de configuración visitar: http://reinproject.org\n"
+"    "
+
+#: rein/cli.py:85
+msgid ""
+"\n"
+"    Setup or import an identity.\n"
+"\n"
+"    You will choose a name or handle for your account, include public contact information, \n"
+"    and a delegate Bitcoin address/private key that the program will use to sign documents\n"
+"    on your behalf. An enrollment document will be created and you will need to sign it\n"
+"    with your master Bitcoin private key.\n"
+"    "
+msgstr ""
+"\n"
+"    Configurar o importar una identidad.\n"
+"\n"
+"    Escoger un nombre de usuario para la cuenta, incluyendo información pública de contacto, \n"
+"    y una dirección/llave privada delegada de Bitcoinand que el programa utilizará para firmar documentos\n"
+"    a tu favor. Se creará un documento llamado matrícula el cual deberás firmar con \n"
+"    la llave privada de la dirección Bitcoin principal .\n"
+"    "
+
+#: rein/cli.py:98
+msgid ""
+"1 - Create new account\n"
+"2 - Import backup\n"
+msgstr ""
+"1 - Crear nueva cuenta\n"
+"2 - Restaurar respaldo\n"
+
+#: rein/lib/forms.py:51
+msgid "Bid amount"
+msgstr "Ofrecer cantidad"
+
+#: rein/lib/forms.py:52
+msgid "Choose Job to bid on"
+msgstr "Escoger trabajo para ofrecerse"
+
+#: rein/lib/forms.py:55
+msgid "Choose bid"
+msgstr "Escoger oferta"
+
+#: rein/lib/forms.py:63
+msgid "Choose job"
+msgstr "Escoger trabajo"
+
+#: rein/lib/forms.py:59
+msgid "Choose job associated with deliverables"
+msgstr "Escoger trabajo asociado a entregas"
+
+#: rein/lib/forms.py:47
+msgid "Choose mediator"
+msgstr "Escoger mediador"
+
+#: rein/lib/forms.py:33
+msgid "Delegate Bitcoin address"
+msgstr "Dirección Bitcoin delegada"
+
+#: rein/lib/forms.py:34
+msgid "Delegate Bitcoin private Key"
+msgstr "Llave privada de dirección delegada"
+
+#: rein/lib/forms.py:58 rein/lib/forms.py:68
+msgid "Deliverables"
+msgstr "Entregas"
+
+#: rein/lib/forms.py:44 rein/lib/forms.py:50
+msgid "Description"
+msgstr "Descripción"
+
+#: rein/lib/forms.py:62
+msgid "Dispute detail"
+msgstr "Detalles de conflicto"
+
+#: rein/lib/forms.py:74
+msgid "Disputes"
+msgstr "Conflictos"
+
+#: rein/cli.py:97
+msgid ""
+"Do you want to import a backup or create a new account?\n"
+"\n"
+msgstr ""
+"Deseas restaurar copia de respaldo o crear una nueva cuenta?\n"
+"\n"
+
+#: rein/lib/forms.py:31
+msgid "Email / Bitmessage"
+msgstr "Email"
+
+#: rein/lib/io.py:16
+msgid "Error connecting to server."
+msgstr "Error conectándose al servidor"
+
+#: rein/lib/forms.py:46
+msgid "Expiration (days)"
+msgstr "Expira (días)"
+
+#: rein/lib/market.py:54
+msgid "File containing signed document"
+msgstr "Archivo que contiene documento firmado"
+
+#: rein/lib/order.py:18
+msgid ""
+"Funds for each job in Rein are stored in two multisig addresses. One address\n"
+"is for the primary payment that will go to the worker on completion. The\n"
+"second address pays the mediator to be available to resolve a dispute\n"
+"if necessary. The second address should be funded according to the percentage\n"
+"specified by the mediator and is in addition to the primary payment. The\n"
+"listing below shows available mediators and the fee they charge. You should\n"
+"consider the fee as well as any reputational data you are able to find when\n"
+"choosing a mediator. Your choice may affect the number and quality of bids"
+msgstr ""
+"Los fondos para cada trabajo en Rein se almacenan en dos direcciones multi-firma. \n"
+"En la primera se transfieren los pagos al trabajador, tras terminar el trabajo,\n"
+"en la segunda dirección, los pagos al mediador que resolverá los conflictos.\n"
+"A la segunda dirección se le transferirá un monto de acuerdo a los honorarios establecidos\n"
+"por el mediador, en adición a los fondos transferidos a la primera dirección. La lista mostrada\n"
+"debajo muestra los mediadores disponibles y sus respectivos honorarios. Debes considerar\n"
+"dichos honorarios así como los datos disponibles de reputación al buscar un mediador.\n"
+"La elección de un mediador podría influir en el número y calidad de las ofertas."
+
+#: rein/lib/forms.py:22
+msgid "Invalid address"
+msgstr "Dirección no válida"
+
+#: rein/lib/forms.py:27
+msgid "Invalid signature"
+msgstr "Firma no válida"
+
+#: rein/lib/forms.py:43
+msgid "Job name"
+msgstr "Nombre del trabajo"
+
+#: rein/lib/forms.py:32
+msgid "Master Bitcoin address"
+msgstr "Dirección Bitcoin principal"
+
+#: rein/lib/forms.py:36
+msgid "Mediator Fee"
+msgstr "Honorarios del mediador"
+
+#: rein/lib/forms.py:30
+msgid "Name / Handle"
+msgstr "Nombre"
+
+#: rein/lib/validate.py:168
+msgid "None found"
+msgstr "No se encontró"
+
+#: rein/lib/forms.py:18
+msgid "Not a valid private key."
+msgstr "Llave privada no válida"
+
+#: rein/lib/toolbox.py:9
+msgid "Please enter "
+msgstr "Por favor entre"
+
+#: rein/lib/forms.py:35
+msgid "Register as a mediator?"
+msgstr "Registrarse como mediador?"
+
+#: rein/lib/forms.py:73
+msgid "Resolution"
+msgstr "Decisión del mediador"
+
+#: rein/lib/forms.py:40
+msgid "Signed enrollment"
+msgstr "Matrícula firmada"
+
+#: rein/lib/forms.py:67 rein/lib/forms.py:72
+msgid "Signed mediator payment"
+msgstr "Pago de mediador firmado"
+
+#: rein/lib/forms.py:66 rein/lib/forms.py:71
+msgid "Signed primary payment"
+msgstr "Pago principal firmado"
+
+#: rein/lib/forms.py:45
+msgid "Tags"
+msgstr "Etiquetas"
+
+#: rein/lib/validate.py:14
+msgid "Verifying block times..."
+msgstr "Verificando block ..."
+
+#: rein/cli.py:98
+msgid "Welcome to Rein."
+msgstr "Bienvenido a Rein"
+
+#: rein/lib/order.py:31
+msgid "bid submitted"
+msgstr "oferta enviada"
+
+#: rein/lib/order.py:67
+msgid "complete, dispute resolved"
+msgstr "completo, conflicto resuelto"
+
+#: rein/lib/order.py:61
+msgid "complete, work accepted"
+msgstr "completo, trabajo aceptado"
+
+#: rein/lib/order.py:43
+msgid "deliverables submitted"
+msgstr "entregas enviadas"
+
+#: rein/lib/order.py:49
+msgid "disputed by job creator"
+msgstr "dispudato por el creador del trabajo"
+
+#: rein/lib/order.py:55
+msgid "disputed by worker"
+msgstr "dispudato por el trabajador"
+
+#: rein/lib/order.py:37
+msgid "job awarded"
+msgstr "trabajo otorgado"
+
+#: rein/lib/order.py:17
+msgid "posted"
+msgstr "publicado"
