@@ -52,6 +52,7 @@ import bitcoin
 from bitcoin.wallet import P2PKHBitcoinAddress
 from bitcoin.core import x
 if (rein.testnet): bitcoin.SelectParams('testnet')
+init_localization()
 
 
 @click.group()
@@ -107,7 +108,8 @@ def setup(multi):
         click.echo("\n" + hilight(_("Welcome to Rein."), True, True) + "\n\n" +
                    _("Do you want to import a backup or create a new account?\n\n") +
                    _("1 - Create new account\n2 - Import backup\n"))
-        choice = click.prompt(hilight("Choice", True, True), type=int, default=1)
+        choice = click.prompt(highlight("Choice", True, True), type=int, default=1)
+
         if choice == 1:
             create_account(rein)
             log.info('account created')

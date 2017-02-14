@@ -82,6 +82,8 @@ Like with the primary payment, a user is prompted for a signed mediator payment 
 
 ## Developer Notes
 
+We have [a quick Vagrant-based setup](https://github.com/ReinProject/devsetup) that gives you a virtual machine with the python-rein client, Causway server and its Bitcoin Core (testnet) node all configured to work together. Testing usually involves creating users and walking through jobs so a virtual machine that has all components going, even allowing payments to be sent is very helpful.
+
 To generate or update pot files for translation, run the following from the root of the repo:
 
     xgettext.pl rein/cli.py rein/lib/*.py

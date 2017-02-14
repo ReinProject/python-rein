@@ -70,9 +70,9 @@ choosing a mediator. Your choice may affect the number and quality of bids"""),
                     'pre': ['resolve'],
                     'next': ['complete'],
                     'endpoint': '/acceptresolution',
-                    'past_tense': 'complete, resolution accepted'
+                    'past_tense': _('complete, resolution accepted'),
                         }
-}
+        }
 
 class Order(Base):
     __tablename__ = 'order'
