@@ -32,11 +32,7 @@ class User(Base):
         self.dxprv = user_data['dxprv']
         self.enrolled = False
         self.testnet = user_data['testnet']
-
-        if user_data['will_mediate'] == u'1':
-            self.will_mediate = True
-        else:
-            self.will_mediate = False
+        self.will_mediate = user_data['will_mediate']
 
         if self.will_mediate:
             self.mediator_fee = float(user_data['mediator_fee'])

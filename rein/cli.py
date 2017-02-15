@@ -1428,7 +1428,7 @@ def start(multi, identity, setup):
                         'dkey': dkey,
                         'dxprv': dxprv,
                         'will_mediate': will_mediate,
-                        'mediator_fee': request.form['mediatorFee'],
+                        'mediator_fee': request.form['mediatorFee'].replace('%',''),
                         'msin': msin,
                         'testnet': rein.testnet}
             new_identity = User(user_data)
