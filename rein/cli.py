@@ -105,7 +105,7 @@ def setup(multi):
         rein.set_multiuser()
     log.info('entering setup')
     if multi or rein.has_no_account():
-        click.echo("\n" + hilight(_("Welcome to Rein."), True, True) + "\n\n" +
+        click.echo("\n" + highlight(_("Welcome to Rein."), True, True) + "\n\n" +
                    _("Do you want to import a backup or create a new account?\n\n") +
                    _("1 - Create new account\n2 - Import backup\n"))
         choice = click.prompt(highlight("Choice", True, True), type=int, default=1)
