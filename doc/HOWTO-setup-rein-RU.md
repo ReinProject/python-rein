@@ -1,3 +1,5 @@
+Note: This is for version v0.2.4-alpha, currently only the english version is available for v0.3.0-beta.
+
 #Как установить Rein и начать зарабатывать Bitcoin
 
 ##Вступление
