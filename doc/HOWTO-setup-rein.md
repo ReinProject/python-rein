@@ -2,9 +2,9 @@
 
 ##Introduction
 
-Rein is a new decentralized labor market that provides a safe and easy way to earn Bitcoin and to obtain services from professionals globally. It simplifies the process of entering into a digitally-signed contract and behaving honestly to get what they want. Currently, as Rein is still in alpha, the process requires use of a command line client. However, the software is easy to install with commands that make sense once you've seen them in action.
+Rein is a new decentralized labor market that provides a safe and easy way to earn Bitcoin and to obtain services from professionals globally. It simplifies the process of entering into a digitally-signed contract and behaving honestly to get what you want whether that's work or money. Currently, as Rein is in beta and the process requires use of a command line client. However, the software is easy to install and we appreciate your feedback to help make it easier.
 
-In this tutorial, we will show you how to use Rein to earn Bitcoin or get work done online. We will also show you how to generate a couple of standalone Bitcoin keys that will form the basis of your user account in Rein.
+In this tutorial, we will show you how to install the software, setup your account, and get connected.
 
 ## Time to complete
 
@@ -106,6 +106,6 @@ To check the status of your account and any transactions you are involved in, ru
 
 To bid on any available jobs visit: http://localhost:5001/bid
 
-To post a job visit: http://localhost;5001/post
+To post a job visit: http://localhost:5001/post
 
 If you have any questions, corrections, or recommendations please post an issue here or submit a pull request.
