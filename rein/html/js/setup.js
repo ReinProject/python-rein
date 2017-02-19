@@ -67,7 +67,7 @@ function confirmMnemonic() {
     }
     for (var i = 0; i < conditions.length; i++) {
         if (conditions[i] == false) {
-            errors = "Some of the words you entered are incorrect. Try again.\n";
+            errors = "Some of the words you entered are incorrect. Please try again or restart the setup.";
             document.getElementById('errors').innerText = errors;
             return
         }
