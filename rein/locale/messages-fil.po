@@ -1,0 +1,290 @@
+# Rein Decentralized Freelance Market.
+# Copyright (C) 2017
+# This file is distributed under the same license as the python-rein package.
+# David Sterry <davids@exchb.com>, 2017.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: 0.2\n"
+"POT-Creation-Date: 2016-12-21 11:00+PST\n"
+"PO-Revision-Date: 2016-12-21 11:00+PST\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: FILIPINO <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: rein/cli.py:52
+msgid ""
+"\n"
+"    Rein is a decentralized professional services market and Python-rein is a client\n"
+"that provides a user interface. Use this program from your local browser or command \n"
+"line to create an account, post a job, bid, etc.\n"
+"\n"
+"\b\n"
+"    Quick start:\n"
+"        $ rein start     - create an identity, run the Web UI\n"
+"        $ rein buy       - request microhosting\n"
+"        $ rein sync      - push your identity to microhosting servers\n"
+"        $ rein status    - get user status, or dump of job's documents\n"
+"\n"
+"\b\n"
+"    Workers\n"
+"        $ rein bid       - view and bid on jobs\n"
+"        $ rein deliver   - complete job by providing deliverables\n"
+"\n"
+"\b\n"
+"    Disputes\n"
+"        $ rein workerdispute    - worker files dispute\n"
+"        $ rein creatordispute   - job creator files dispute\n"
+"        $ rein resolve          - mediator posts decision\n"
+"\n"
+"    For more info and the setup guide visit: http://reinproject.org\n"
+"    "
+msgstr ""
+"\n"
+"    Ang Rein ay isang desentrilisadong merkado ng serbisyo ng mga propesyonal at anv Python-rein ay isang client\n"
+"na nagbibigay ng user interface. Gamitin ang program na ito sa iyong local browser o sa command \n"
+"linya para sa account , mag post ng trabaho, bid, at iba pa.\n"
+"\n"
+"\b\n"
+"    Mabilis na panimula:\n"
+"        $ rein start     - gumawa ng kilanlan, patakbuhin ang Web UI\n"
+"        $ rein buy       - humiling ng microhosting\n"
+"        $ rein sync      - ilagay ay iyong pagkilablan sa microhosting servers\n"
+"        $ rein status    - kunin ang status ng user o ibasura ang dokumento ng trabaho\n"
+"\n"
+"\b\n"
+"    Mga trabahador\n"
+"        $ rein bid       - tingnan at mag bid sa mga trabaho\n"
+"        $ rein deliver   - kompletuhin ang trabaho sa pamamagitan ng deliverables \n"
+"\n"
+"\b\n"
+"    Disputes\n"
+"        $ rein workerdispute    - mga dispute files ng mga trabahador \n"
+"        $ rein creatordispute   - mga dispute files ng mga tagagawa ng trabaho\n"
+"        $ rein resolve          - paglathala ng desisyon ng mediator\n"
+"\n"
+"    Para sa iba pang impormasyon bumisita sa: http://reinproject.org\n"
+"    "
+
+#: rein/cli.py:85
+msgid ""
+"\n"
+"    Setup or import an identity.\n"
+"\n"
+"    You will choose a name or handle for your account, include public contact information, \n"
+"    and a delegate Bitcoin address/private key that the program will use to sign documents\n"
+"    on your behalf. An enrollment document will be created and you will need to sign it\n"
+"    with your master Bitcoin private key.\n"
+"    "
+msgstr ""
+"\n"
+"    Setup o i-angkat ang pagkakilanlan.\n"
+"\n"
+"    Pipili ka ng pangalan o hawakan ang iyong account, kasama ang mga impormasyon ng pampublikong contacts , \n"
+"    at mga delegadong Bitcoin address/private key na program na gagamitin sa pag sign ng documents\n"
+"    sa ngalan mo. Ang mga dokumento ng mga enrollment ay magagaqa at kailangan mo itong isign it\n"
+"    kasama ang iyong Master Bitcoin key.\n"
+"    "
+
+#: rein/cli.py:98
+msgid ""
+"1 - Create new account\n"
+"2 - Import backup\n"
+msgstr ""
+"1 - Gumawa ng bagong account\n"
+"2 - Iimport ang backup\n"
+
+#: rein/lib/forms.py:51
+msgid "Bid amount"
+msgstr "Halaga ng tawaran"
+
+#: rein/lib/forms.py:52
+msgid "Choose Job to bid on"
+msgstr "Pumili ng trabaho kung saan mag tatawaran"
+
+#: rein/lib/forms.py:55
+msgid "Choose bid"
+msgstr "Pumili ng tatawaran"
+
+#: rein/lib/forms.py:63
+msgid "Choose job"
+msgstr "Pumili ng trabaho"
+
+#: rein/lib/forms.py:59
+msgid "Choose job associated with deliverables"
+msgstr "Pumili ng trabaho kaugnay sa paghatid"
+
+#: rein/lib/forms.py:47
+msgid "Choose mediator"
+msgstr "Mamili ng mediator"
+
+#: rein/lib/forms.py:33
+msgid "Delegate Bitcoin address"
+msgstr "Delegado ng Bitcoin address"
+
+#: rein/lib/forms.py:34
+msgid "Delegate Bitcoin private Key"
+msgstr "Delegado ng Bitcoin private Key"
+
+#: rein/lib/forms.py:58 rein/lib/forms.py:68
+msgid "Deliverables"
+msgstr "Paghahatid"
+
+#: rein/lib/forms.py:44 rein/lib/forms.py:50
+msgid "Description"
+msgstr "Paglalarawan"
+
+#: rein/lib/forms.py:62
+msgid "Dispute detail"
+msgstr "Detalye sa pagmamatwiranan "
+
+#: rein/lib/forms.py:74
+msgid "Disputes"
+msgstr "Pagmamatwiranan"
+
+#: rein/cli.py:97
+msgid ""
+"Do you want to import a backup or create a new account?\n"
+"\n"
+msgstr ""
+"Gusto mong iimport ang backup o gumawa na bagong account?\n"
+"\n"
+
+#: rein/lib/forms.py:31
+msgid "Email / Bitmessage"
+msgstr "Email / Bitmessage"
+
+#: rein/lib/io.py:16
+msgid "Error connecting to server."
+msgstr "May mali sa pagkonekta sa server."
+
+#: rein/lib/forms.py:46
+msgid "Expiration (days)"
+msgstr "Paglipas (araw)"
+
+#: rein/lib/market.py:54
+msgid "File containing signed document"
+msgstr "File ng dokumento na may perma"
+
+#: rein/lib/order.py:18
+msgid ""
+"Funds for each job in Rein are stored in two multisig addresses. One address\n"
+"is for the primary payment that will go to the worker on completion. The\n"
+"second address pays the mediator to be available to resolve a dispute\n"
+"if necessary. The second address should be funded according to the percentage\n"
+"specified by the mediator and is in addition to the primary payment. The\n"
+"listing below shows available mediators and the fee they charge. You should\n"
+"consider the fee as well as any reputational data you are able to find when\n"
+"choosing a mediator. Your choice may affect the number and quality of bids"
+msgstr ""
+"Ang pondo sa bawat trabaho sa Rein ay itatago sa dalawanv multisig addresses. Ang isang address\n"
+"ay para sa pangunahing bayad na mapupunta sa trabahador kapag natapos ito. Ang\n"
+"pangalawang address ay pambayad sa mediator na puwedeng ma resolba sa pangangatwiran.\n"
+"kung kinakailangan. Anv pangalawang ay dapat pondihan ayon sa porsyento\n"
+"na ibinigay o gusto ng mediator at idagdag sa pangunahing bayad. Ang\n"
+"nakalista sa baba ay mga bakanteng mediators at ang kanilang bayad na sisingilin. Dapat mong\n"
+"ikonsidera ang fee pati ng ang kaniyang reputational data na mahahanap mo sa\n"
+"pagpili ng mediator. Ang iyong nais ay makaka-epekto sa bilang at kalidad ng pakikipatawaran."
+
+#: rein/lib/forms.py:22
+msgid "Invalid address"
+msgstr ""
+
+#: rein/lib/forms.py:27
+msgid "Invalid signature"
+msgstr "Mali ang address"
+
+#: rein/lib/forms.py:43
+msgid "Job name"
+msgstr "Pangalan ng trabaho"
+
+#: rein/lib/forms.py:32
+msgid "Master Bitcoin address"
+msgstr "Master Bitcoin address"
+
+#: rein/lib/forms.py:36
+msgid "Mediator Fee"
+msgstr "Singil ng Mediator"
+
+#: rein/lib/forms.py:30
+msgid "Name / Handle"
+msgstr "Pangalan / Tagahawak"
+
+#: rein/lib/validate.py:168
+msgid "None found"
+msgstr "Hindi makita"
+
+#: rein/lib/forms.py:18
+msgid "Not a valid private key."
+msgstr "Hindi tama ang private key."
+
+#: rein/lib/toolbox.py:9
+msgid "Please enter "
+msgstr "Pakiusap i-enter "
+
+#: rein/lib/forms.py:35
+msgid "Register as a mediator?"
+msgstr "Magrehistro bilang mediator?"
+
+#: rein/lib/forms.py:73
+msgid "Resolution"
+msgstr "Resolusyon"
+
+#: rein/lib/forms.py:40
+msgid "Signed enrollment"
+msgstr "Permado ng pagpapalista"
+
+#: rein/lib/forms.py:67 rein/lib/forms.py:72
+msgid "Signed mediator payment"
+msgstr "Permado ng bayad sa mediator "
+
+#: rein/lib/forms.py:66 rein/lib/forms.py:71
+msgid "Signed primary payment"
+msgstr "Permado na paunang bayad"
+
+#: rein/lib/forms.py:45
+msgid "Tags"
+msgstr "Mga tag"
+
+#: rein/lib/validate.py:14
+msgid "Verifying block times..."
+msgstr "Pag beripiko ng oras ng  block..."
+
+#: rein/cli.py:98
+msgid "Welcome to Rein."
+msgstr "Maligayang Pagdating sa Rein."
+
+#: rein/lib/order.py:31
+msgid "bid submitted"
+msgstr "Na sumite na ang tawad"
+
+#: rein/lib/order.py:67
+msgid "complete, dispute resolved"
+msgstr "Tapos na, na resolba na ang pangagatwiran"
+
+#: rein/lib/order.py:61
+msgid "complete, work accepted"
+msgstr "Tapos na, ang trabaho ay tinanggap"
+
+#: rein/lib/order.py:43
+msgid "deliverables submitted"
+msgstr "na sumite na ang hatid"
+
+#: rein/lib/order.py:49
+msgid "disputed by job creator"
+msgstr "pangagatwiran ng tagagawa ng trabaho"
+
+#: rein/lib/order.py:55
+msgid "disputed by worker"
+msgstr "pangagatwiran ng trabahador"
+
+#: rein/lib/order.py:37
+msgid "job awarded"
+msgstr "ang tabaho ay naibigay na"
+
+#: rein/lib/order.py:17
+msgid "posted"
+msgstr "ipaskil"

@@ -53,7 +53,7 @@ def sign_and_store_document(rein, doc_type, document, signature_address=None, si
         click.echo("\n%s\n" % document)
         done = False
         while not done:
-            filename = click.prompt("File containing signed document", type=str, default=doc_type + '.sig.txt')
+            filename = click.prompt(_("File containing signed document"), type=str, default=doc_type + '.sig.txt')
             if os.path.isfile(filename):
                 done = True
         f = open(filename, 'r')

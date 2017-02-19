@@ -1,76 +1,78 @@
 from sqlalchemy import Column, Integer, String, Boolean, and_
 from sqlalchemy.ext.declarative import declarative_base
+from localization import init_localization
 try:
     from document import Document
 except:
     pass
 
 Base = declarative_base()
+init_localization()
 
 STATE = {
         'job_posting': {
                     'pre': [],
                     'next': ['bid'],
                     'endpoint': '/post',
-                    'past_tense': 'posted',
-                    'description':  "Funds for each job in Rein are stored in two multisig addresses. One address\n" \
-                                    "is for the primary payment that will go to the worker on completion. The\n" \
-                                    "second address pays the mediator to be available to resolve a dispute\n" \
-                                    "if necessary. The second address should be funded according to the percentage\n" \
-                                    "specified by the mediator and is in addition to the primary payment. The\n" \
-                                    "listing below shows available mediators and the fee they charge. You should\n" \
-                                    "consider the fee as well as any reputational data you are able to find when\n" \
-                                    "choosing a mediator. Your choice may affect the number and quality of bids\n"
+                    'past_tense': _('posted'),
+                    'description': _("""Funds for each job in Rein are stored in two multisig addresses. One address
+is for the primary payment that will go to the worker on completion. The
+second address pays the mediator to be available to resolve a dispute
+if necessary. The second address should be funded according to the percentage
+specified by the mediator and is in addition to the primary payment. The
+listing below shows available mediators and the fee they charge. You should
+consider the fee as well as any reputational data you are able to find when
+choosing a mediator. Your choice may affect the number and quality of bids"""),
                         },
         'bid':          {
                     'pre': ['job_posting'],
                     'next': ['offer'],
                     'endpoint': None,
-                    'past_tense': 'bid submitted'
+                    'past_tense': _('bid submitted'),
                         },
         'offer':        {
                     'pre': ['bid'],
                     'next': ['delivery', 'creatordispute', 'workerdispute'],
                     'endpoint': '/offer',
-                    'past_tense': 'job awarded',
+                    'past_tense': _('job awarded'),
                         },
         'delivery':     {
                     'pre': ['offer'],
                     'next': ['accept', 'creatordispute', 'workerdispute'],
                     'endpoint': '/deliver',
-                    'past_tense':  'deliverables submitted'
+                    'past_tense': _('deliverables submitted'),
                         },
         'creatordispute': {
                     'pre': ['offer', 'delivery'],
                     'next': ['resolve', 'workerdispute'],
                     'endpoint': '/dispute',
-                    'past_tense':'disputed by job creator'
+                    'past_tense': _('disputed by job creator'),
                         },
         'workerdispute': {
                     'pre': ['offer', 'delivery', 'accept'],
                     'next': ['resolve', 'creatordispute'],
                     'endpoint': '/dispute',
-                    'past_tense': 'disputed by worker'
+                    'past_tense': _('disputed by worker'),
                         },
         'accept':       {
                     'pre': ['delivery'],
                     'next': ['workerdispute', 'complete'],
                     'endpoint': '/accept',
-                    'past_tense': 'complete, work accepted',
+                    'past_tense': _('complete, work accepted'),
                         },
         'resolve':   {
                     'pre': ['creatordispute', 'workerdispute'],
                     'next': ['acceptresolution'],
                     'endpoint': '/resolve',
-                    'past_tense': 'dispute resolved'
+                    'past_tense': _('complete, dispute resolved'),
                         },
         'acceptresolution': {
                     'pre': ['resolve'],
                     'next': ['complete'],
                     'endpoint': '/acceptresolution',
-                    'past_tense': 'complete, resolution accepted'
+                    'past_tense': _('complete, resolution accepted'),
                         }
-}
+        }
 
 class Order(Base):
     __tablename__ = 'order'

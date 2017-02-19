@@ -13,7 +13,7 @@ def safe_get(log, url):
     try:
         answer = requests.get(url=url, proxies=rein.proxies)
     except requests.ConnectionError:
-        click.echo('Error connecting to server.')
+        click.echo(_('Error connecting to server.'))
         log.error('server connect error ' + url)
         return None
 

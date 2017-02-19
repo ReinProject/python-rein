@@ -1,0 +1,293 @@
+# Rein Patstāvīgo darbu tirgus.
+# Copyright (C) 2017
+# Šis fails ir izplatīts zem tās pašas licenses kā python-rein paka.
+# David Sterry <davids@exchb.com>, 2017.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: 0.2\n"
+"POT-Creation-Date: 2016-12-21 11:00+PST\n"
+"PO-Revision-Date: 2017-02-16 19:43+0100\n"
+"Last-Translator: Kaspars Lapiņš <neeo33@inbox.lv>\n"
+"Language-Team: Latviešu <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: lv\n"
+"X-Generator: Poedit 1.8.11\n"
+
+#: rein/cli.py:52
+msgid ""
+"\n"
+"    Rein is a decentralized professional services market and Python-rein is a client\n"
+"that provides a user interface. Use this program from your local browser or command \n"
+"line to create an account, post a job, bid, etc.\n"
+"\n"
+"\b\n"
+"    Quick start:\n"
+"        $ rein start     - create an identity, run the Web UI\n"
+"        $ rein buy       - request microhosting\n"
+"        $ rein sync      - push your identity to microhosting servers\n"
+"        $ rein status    - get user status, or dump of job's documents\n"
+"\n"
+"\b\n"
+"    Workers\n"
+"        $ rein bid       - view and bid on jobs\n"
+"        $ rein deliver   - complete job by providing deliverables\n"
+"\n"
+"\b\n"
+"    Disputes\n"
+"        $ rein workerdispute    - worker files dispute\n"
+"        $ rein creatordispute   - job creator files dispute\n"
+"        $ rein resolve          - mediator posts decision\n"
+"\n"
+"    For more info and the setup guide visit: http://reinproject.org\n"
+"    "
+msgstr ""
+"\n"
+"    Rein ir centralizēts pakalpojumu tirgus un Python-rein ir klients\n"
+"kas nodrošina lietotāja interfeisu. Izmanto šo programmu no jūsu patstāvīgās "
+"pārlukprogrammas \n"
+"vieta kur reģistrēties, pievono darbu, liec likmes, u.c.\n"
+"\n"
+"\b\n"
+"    Ātrā palaišana:\n"
+"        $ rein start     - izveidot identitāti, palaist tīklu UI\n"
+"        $ rein buy       - pieprasīt microhostingu\n"
+"        $ rein sync      - ielikt savu identitāti microhosting serveros\n"
+"        $ rein status    - dabūt lietotāja statusus, vai kaudzi ar darba "
+"doukumentiem\n"
+"\n"
+"\b\n"
+"    Darbinieki\n"
+"        $ rein bid       - apskatīt un ievietot darbus\n"
+"        $ rein deliver   - pabeigt darbu nodrošinot nodevas\n"
+"\n"
+"\b\n"
+"    Strīdi\n"
+"        $ rein workerdispute    - darbinieku failu apstrīde\n"
+"        $ rein creatordispute   - darba devēju failu apstrīde\n"
+"        $ rein resolve          - starpnieks pasludina lēmumu\n"
+"\n"
+"    Vairāk info šeit: http://reinproject.org\n"
+"    "
+
+#: rein/cli.py:85
+msgid ""
+"\n"
+"    Setup or import an identity.\n"
+"\n"
+"    You will choose a name or handle for your account, include public contact information, \n"
+"    and a delegate Bitcoin address/private key that the program will use to sign documents\n"
+"    on your behalf. An enrollment document will be created and you will need to sign it\n"
+"    with your master Bitcoin private key.\n"
+"    "
+msgstr ""
+"\n"
+"    izveidot vai ievietot identitāti.\n"
+"\n"
+"    Jūs izvēlēsieties savu vārdu priekš jūsu profila, ievietojot publisku "
+"kontaktinformāciju, \n"
+"    ievietojot Bitcoin adresi/privāto atslēgu ko programma izmantos "
+"parakstot dokumentus\n"
+"    jūsu vārdā. Uzņemšanas dokuments tiks izveidots un jums tas būs "
+"jāparaksta\n"
+"    ar jūsu Bitcoin private key/privāto atslēgu.\n"
+"    "
+
+#: rein/cli.py:98
+msgid ""
+"1 - Create new account\n"
+"2 - Import backup\n"
+msgstr ""
+"1 - Izveidot profilu\n"
+"2 - atgūt dublētos datus\n"
+
+#: rein/lib/forms.py:51
+msgid "Bid amount"
+msgstr "Pieteikties"
+
+#: rein/lib/forms.py:52 rein/lib/forms.py:63
+msgid "Choose Job to bid on"
+msgstr "Izvēlēties darbu"
+
+#: rein/lib/forms.py:55
+msgid "Choose bid"
+msgstr "Izvēlēties pieteikumu"
+
+#: rein/lib/forms.py:59
+msgid "Choose job associated with deliverables"
+msgstr "Izvēlēties darbu ar nodevām"
+
+#: rein/lib/forms.py:47
+msgid "Choose mediator"
+msgstr "Izvēlēties starpnieku"
+
+#: rein/lib/forms.py:33
+msgid "Delegate Bitcoin address"
+msgstr "Pārskatīt BITCOIN adresi"
+
+#: rein/lib/forms.py:34
+msgid "Delegate Bitcoin private Key"
+msgstr "Pārskatīt Bitcoin Private Key/atslēgu"
+
+#: rein/lib/forms.py:58 rein/lib/forms.py:68
+msgid "Deliverables"
+msgstr "Nodevas"
+
+#: rein/lib/forms.py:44 rein/lib/forms.py:50
+msgid "Description"
+msgstr "Apraksts"
+
+#: rein/lib/forms.py:62
+msgid "Dispute detail"
+msgstr "apstrīdēt detaļas"
+
+#: rein/lib/forms.py:74
+msgid "Disputes"
+msgstr "Strīdi"
+
+#: rein/cli.py:97
+msgid ""
+"Do you want to import a backup or create a new account?\n"
+"\n"
+msgstr ""
+"Vai vēlaties atgūt dublētos datus vai izveidot jaunu profilu?\n"
+"\n"
+
+#: rein/lib/forms.py:31
+msgid "Email / Bitmessage"
+msgstr "E-pasts / Bitvēstule"
+
+#: rein/lib/io.py:16
+msgid "Error connecting to server."
+msgstr "Kļuda piekļūšanai serverim."
+
+#: rein/lib/forms.py:46
+msgid "Expiration (days)"
+msgstr "Atlikušās dienas"
+
+#: rein/lib/market.py:54
+msgid "File containing signed document"
+msgstr "Failā ietilpst parakstīts dokuments"
+
+#: rein/lib/order.py:18
+msgid ""
+"Funds for each job in Rein are stored in two multisig addresses. One address\n"
+"is for the primary payment that will go to the worker on completion. The\n"
+"second address pays the mediator to be available to resolve a dispute\n"
+"if necessary. The second address should be funded according to the percentage\n"
+"specified by the mediator and is in addition to the primary payment. The\n"
+"listing below shows available mediators and the fee they charge. You should\n"
+"consider the fee as well as any reputational data you are able to find when\n"
+"choosing a mediator. Your choice may affect the number and quality of bids"
+msgstr ""
+"Uzkrājumi darbā Rein ir saglabāti divās adresēs. Viena adrese\n"
+"ir priekš primārās samaksas darbiniekam par pabeigtu darbu.\n"
+"Otrā adrese ir priekš starpnieka, lai varētu atrisināt strīdus\n"
+"ja vajadzīgs. Otrā adrese tiks uzkrāta ņemot vērā attiecīgos procentus\n"
+",to noteiks starpnieks arī ņemot vērā primāro samaksu. The\n"
+"Saraksts lejā norāda brīvos starpniekus un to procentus ko viņi pieprasa. "
+"Jums vajadzētu\n"
+"apsvērt samaksu starpniekam kā reputācijas datu kad\n"
+"izvēlēsieties starpnieku. Jūsu izvēle nosaka skaitu un kvalitāti pieteikumiem"
+
+#: rein/lib/forms.py:22
+msgid "Invalid address"
+msgstr "Nederīga adrese"
+
+#: rein/lib/forms.py:27
+msgid "Invalid signature"
+msgstr "Nederīgs paraksts"
+
+#: rein/lib/forms.py:43
+msgid "Job name"
+msgstr "Darba nosaukums"
+
+#: rein/lib/forms.py:32
+msgid "Master Bitcoin address"
+msgstr "Bitcoin adrese"
+
+#: rein/lib/forms.py:36
+msgid "Mediator Fee"
+msgstr "Starnieka samaksa"
+
+#: rein/lib/forms.py:30
+msgid "Name / Handle"
+msgstr "Vārds"
+
+#: rein/lib/validate.py:168
+msgid "None found"
+msgstr "Netika atrasts"
+
+#: rein/lib/forms.py:18
+msgid "Not a valid private key."
+msgstr "nederīga privātā atslēga."
+
+#: rein/lib/toolbox.py:9
+msgid "Please enter "
+msgstr "Lūdzu ievadiet "
+
+#: rein/lib/forms.py:35
+msgid "Register as a mediator?"
+msgstr "Reģistrēties kā starpniekam?"
+
+#: rein/lib/forms.py:73
+msgid "Resolution"
+msgstr "Rezolūcija"
+
+#: rein/lib/forms.py:40
+msgid "Signed enrollment"
+msgstr "Parakstīta uzņemšana"
+
+#: rein/lib/forms.py:67 rein/lib/forms.py:72
+msgid "Signed mediator payment"
+msgstr "Parakstīta starpnieka samaksa"
+
+#: rein/lib/forms.py:66 rein/lib/forms.py:71
+msgid "Signed primary payment"
+msgstr "Parakstīta primārā samaksa"
+
+#: rein/lib/forms.py:45
+msgid "Tags"
+msgstr "Etiķetes"
+
+#: rein/lib/validate.py:14
+msgid "Verifying block times..."
+msgstr "Pārbauda bloku laiku..."
+
+#: rein/cli.py:98
+msgid "Welcome to Rein."
+msgstr "Sveicināti Rein."
+
+#: rein/lib/order.py:31
+msgid "bid submitted"
+msgstr "pieteikums apstiprināts"
+
+#: rein/lib/order.py:67
+msgid "complete, dispute resolved"
+msgstr "Pabeigts, strīds atrisināts"
+
+#: rein/lib/order.py:61
+msgid "complete, work accepted"
+msgstr "Pabeigts, darbs apstiprināts"
+
+#: rein/lib/order.py:43
+msgid "deliverables submitted"
+msgstr "nodevas pieņemtas"
+
+#: rein/lib/order.py:49
+msgid "disputed by job creator"
+msgstr "apstrīdēts no darba devēja"
+
+#: rein/lib/order.py:55
+msgid "disputed by worker"
+msgstr "apstrīdēts no darbinieka"
+
+#: rein/lib/order.py:37
+msgid "job awarded"
+msgstr "Darbs piešķirts"
+
+#: rein/lib/order.py:17
+msgid "posted"
+msgstr "Publicēts"

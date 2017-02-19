@@ -1,0 +1,289 @@
+# Rein Decentralized Freelance Market.
+# Copyright (C) 2016
+# This file is distributed under the same license as the python-rein package.
+# David Stery <davids@exchb.com>, 2016.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: 0.2\n"
+"POT-Creation-Date: 2016-12-21 11:00+PST\n"
+"PO-Revision-Date: 2017-02-16 20:14+0100\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Language: hi_IN\n"
+"X-Generator: Poedit 1.8.11\n"
+
+#: rein/cli.py:52
+msgid ""
+"\n"
+"    Rein is a decentralized professional services market and Python-rein is a client\n"
+"that provides a user interface. Use this program from your local browser or command \n"
+"line to create an account, post a job, bid, etc.\n"
+"\n"
+"\b\n"
+"    Quick start:\n"
+"        $ rein start     - create an identity, run the Web UI\n"
+"        $ rein buy       - request microhosting\n"
+"        $ rein sync      - push your identity to microhosting servers\n"
+"        $ rein status    - get user status, or dump of job's documents\n"
+"\n"
+"\b\n"
+"    Workers\n"
+"        $ rein bid       - view and bid on jobs\n"
+"        $ rein deliver   - complete job by providing deliverables\n"
+"\n"
+"\b\n"
+"    Disputes\n"
+"        $ rein workerdispute    - worker files dispute\n"
+"        $ rein creatordispute   - job creator files dispute\n"
+"        $ rein resolve          - mediator posts decision\n"
+"\n"
+"    For more info and the setup guide visit: http://reinproject.org\n"
+"    "
+msgstr ""
+"\n"
+"    रेन एक विकेन्द्रीकृत पेशेवर सेवाओं का त्रय-विक्रय-स्थान है और Python-rein एक असामी है\n"
+"जो एक उपयोगकर्ता अंतरापृष्ठ प्रदान करता है। अपने स्थानीय विचरक या आदेशसे इस क्रमादेश का उपयोग करना\n"
+"एक खाता बनाने के लिए, कार्य का विज्ञापन, बोली, आदि भेजने के लिए यह पंक्ति है\n"
+"\b\n"
+"    त्वरित प्रारंभ:\n"
+"        $ रेन की शुरूवात     - एक पहचान बनाने, चलाने के लिए वेब यूआई\n"
+"        $ रेन की खरीद      - सूक्ष्महोस्टिंग का अनुरोध करे\n"
+"        $ रेन का संकालन      - सूक्ष्महोस्टिंग के सर्वर तक अपनी पहचान पहुंचाहिए\n"
+"        $ रेन की स्थिति    - उपयोगकर्ता की स्थिति, या नौकरी के दस्तावेजों का ढेर जमा करे\n"
+"\n"
+"\b\n"
+"    श्रमिक\n"
+"        $ रेन बोली       - देखे और कार्यों पर बोली लगाए\n"
+"        $ रेन पहुंचाना     - प्रदेय का उपलब्ध करके पूरा काम ख़तम करना\n"
+"\n"
+"\b\n"
+"    मतभेद\n"
+"        $ रेन श्रमिकों का मतभेद    - कार्यकर्ता फ़ाइलों विवाद\n"
+"        $ रेन निर्माताओं का विवाद   - नौकरी के निर्माता मतभेद का दावा करता है\n"
+"        $ रेन का संकल्प           - मध्यस्थ निर्णय को घोषित करता है\n"
+"\n"
+"    अधिक जानकारी और स्थापित करने की सूचना के लिए: http://reinproject.org\n"
+"    "
+
+#: rein/cli.py:85
+msgid ""
+"\n"
+"    Setup or import an identity.\n"
+"\n"
+"    You will choose a name or handle for your account, include public contact information, \n"
+"    and a delegate Bitcoin address/private key that the program will use to sign documents\n"
+"    on your behalf. An enrollment document will be created and you will need to sign it\n"
+"    with your master Bitcoin private key.\n"
+"    "
+msgstr ""
+"\n"
+"    पहचान को स्थापित या आयत करें.\n"
+"\n"
+"    आपको अपने खाते के लिए एक नाम या उपाधि का चयन करना होगा, जिसमे आप सार्वजनिक संपर्क जानकारी शामिल करेंगे, \n"
+"    और एक प्रतिनिधि बिटकॉइन की पता/गुप्त चाबी है जसिका उपयोग वो प्रोग्राम दस्तावेजों पर हस्ताक्षर करने के लिए करेगा\n"
+"    आपकी जगह पर। एक नामांकन दस्तावेज बनाया जाएगा और आपको इसपर हस्ताक्षर करने की आवश्यकता होगी\n"
+"    अपने विशेषज्ञ बिटकॉइन के गुप्त चाबी के साथ.\n"
+"    "
+
+#: rein/cli.py:98
+msgid ""
+"1 - Create new account\n"
+"2 - Import backup\n"
+msgstr ""
+"१ - एक नया खता बनाए\n"
+"२ - बवैकअप का आयत करें\n"
+
+#: rein/lib/forms.py:51
+msgid "Bid amount"
+msgstr " नीलामी राशि"
+
+#: rein/lib/forms.py:52
+msgid "Choose Job to bid on"
+msgstr "बोली के लिए कार्य का चयन करें"
+
+#: rein/lib/forms.py:55
+msgid "Choose bid"
+msgstr "बोली चुनें"
+
+#: rein/lib/forms.py:63
+msgid "Choose job"
+msgstr "कार्य का चयन"
+
+#: rein/lib/forms.py:59
+msgid "Choose job associated with deliverables"
+msgstr "प्रदेय के साथ जुड़े कार्य का चयन"
+
+#: rein/lib/forms.py:47
+msgid "Choose mediator"
+msgstr "मध्यस्थ चुनें "
+
+#: rein/lib/forms.py:33
+msgid "Delegate Bitcoin address"
+msgstr "बिटकॉइन के पता की नियुक्ति"
+
+#: rein/lib/forms.py:34
+msgid "Delegate Bitcoin private Key"
+msgstr "प्बिटकॉइन गुप्त चाबी की नियुक्ति"
+
+#: rein/lib/forms.py:58 rein/lib/forms.py:68
+msgid "Deliverables"
+msgstr "प्रदेय "
+
+#: rein/lib/forms.py:44 rein/lib/forms.py:50
+msgid "Description"
+msgstr "विवरण"
+
+#: rein/lib/forms.py:62
+msgid "Dispute detail"
+msgstr "मतभेद की जानकारी"
+
+#: rein/lib/forms.py:74
+msgid "Disputes"
+msgstr "मतभेद"
+
+#: rein/cli.py:97
+msgid ""
+"Do you want to import a backup or create a new account?\n"
+"\n"
+msgstr ""
+"क्या आप एक बैकअप का आयात या एक नया खाता बनाना चाहते हैं?\n"
+"\n"
+
+#: rein/lib/forms.py:31
+msgid "Email / Bitmessage"
+msgstr "ईमेल/बिटकॉइन का सन्देश (Bitmessage)"
+
+#: rein/lib/io.py:16
+msgid "Error connecting to server."
+msgstr "सर्वर से संपर्क बनाने में त्रुटि।"
+
+#: rein/lib/forms.py:46
+msgid "Expiration (days)"
+msgstr "समय सीमा समाप्त (दिन)"
+
+#: rein/lib/market.py:54
+msgid "File containing signed document"
+msgstr "फ़ाइल ज्सिमे हस्ताक्षर किए दस्तावेज़ युक्त है"
+
+#: rein/lib/order.py:18
+msgid ""
+"Funds for each job in Rein are stored in two multisig addresses. One address\n"
+"is for the primary payment that will go to the worker on completion. The\n"
+"second address pays the mediator to be available to resolve a dispute\n"
+"if necessary. The second address should be funded according to the percentage\n"
+"specified by the mediator and is in addition to the primary payment. The\n"
+"listing below shows available mediators and the fee they charge. You should\n"
+"consider the fee as well as any reputational data you are able to find when\n"
+"choosing a mediator. Your choice may affect the number and quality of bids"
+msgstr ""
+"\"Rein में किए गए प्रत्येक कार्य के लिए जमा की गई रकम दो एकाधिकहस्ताक्षर के पता में जमा हो जाती है। एक की पता\n"
+"\"\"में प्राथमिक भुगतान है जो कि पूरा होने पर काम करनेवाले को मिलेगा।\n"
+"\"दूसरी पता मध्यस्थ का भुगतान करती है ताकि वो मतभेद हल करने के लिए उपलब्ध हो सके\n"
+"अगर आवश्यक है। दूसरी पता प्रतिशत के अनुसार रकम जमा किया जाना चाहिए\n"
+"मध्यस्थ द्वारा निर्दिष्ट और इसके साथ में प्राथमिक भुगतान करने के लिए है।\n"
+"निचे दी गयी सूची उपलब्ध मध्यस्थों और उनके शुल्क की जानकारी देता है। आपको\n"
+"एक मध्यस्थ चुनें। आपकी पसंद आपके अंकों और बोलियों की गुणवत्ता को प्रभावित कर सकता है"
+
+#: rein/lib/forms.py:22
+msgid "Invalid address"
+msgstr "अवैध पता"
+
+#: rein/lib/forms.py:27
+msgid "Invalid signature"
+msgstr "अवैध हस्ताक्षर"
+
+#: rein/lib/forms.py:43
+msgid "Job name"
+msgstr "कार्य का नाम"
+
+#: rein/lib/forms.py:32
+msgid "Master Bitcoin address"
+msgstr "विशेषज्ञ बिटकॉइन का पता"
+
+#: rein/lib/forms.py:36
+msgid "Mediator Fee"
+msgstr "मध्यस्थ का शुल्क"
+
+#: rein/lib/forms.py:30
+msgid "Name / Handle"
+msgstr "नाम / उपाधि (Handle)"
+
+#: rein/lib/validate.py:168
+msgid "None found"
+msgstr "कोई जानकारी नहीं मिला"
+
+#: rein/lib/forms.py:18
+msgid "Not a valid private key."
+msgstr "एक अमान्य गुप्त चाबी।"
+
+#: rein/lib/toolbox.py:9
+msgid "Please enter "
+msgstr "कृपया दर्ज करें "
+
+#: rein/lib/forms.py:35
+msgid "Register as a mediator?"
+msgstr "एक मध्यस्थ के रूप में दर्ज करें?"
+
+#: rein/lib/forms.py:73
+msgid "Resolution"
+msgstr "संकल्प"
+
+#: rein/lib/forms.py:40
+msgid "Signed enrollment"
+msgstr "हस्ताक्षर किए गए नामांकन"
+
+#: rein/lib/forms.py:67 rein/lib/forms.py:72
+msgid "Signed mediator payment"
+msgstr "हस्ताक्षर किए गए मध्यस्थ भुगतान"
+
+#: rein/lib/forms.py:66 rein/lib/forms.py:71
+msgid "Signed primary payment"
+msgstr "हस्ताक्षर किए गए प्राथमिक भुगतान"
+
+#: rein/lib/forms.py:45
+msgid "Tags"
+msgstr "टैग्स "
+
+#: rein/lib/validate.py:14
+msgid "Verifying block times..."
+msgstr "ब्लॉक समय का सत्यापन ..."
+
+#: rein/cli.py:98
+msgid "Welcome to Rein."
+msgstr "रेन में आपका स्वागत है|"
+
+#: rein/lib/order.py:31
+msgid "bid submitted"
+msgstr "बोली प्रस्तुत की गई है "
+
+#: rein/lib/order.py:67
+msgid "complete, dispute resolved"
+msgstr "पूरा करना, मतभेद सुलझाया"
+
+#: rein/lib/order.py:61
+msgid "complete, work accepted"
+msgstr "पूरा करना, काम स्वीकार कर लिया"
+
+#: rein/lib/order.py:43
+msgid "deliverables submitted"
+msgstr "प्रदेय प्रस्तुत की गई है"
+
+#: rein/lib/order.py:49
+msgid "disputed by job creator"
+msgstr "काम निर्माता द्वारा मतभेद"
+
+#: rein/lib/order.py:55
+msgid "disputed by worker"
+msgstr "काम करनेवालों द्वारा मतभेद"
+
+#: rein/lib/order.py:37
+msgid "job awarded"
+msgstr "काम को सौंपा गया है"
+
+#: rein/lib/order.py:17
+msgid "posted"
+msgstr "को दर्ज करना "
