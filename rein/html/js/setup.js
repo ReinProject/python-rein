@@ -59,15 +59,15 @@ function renderConfirmationPage() {
 function confirmMnemonic() {
     // TODO - Add a retry counter
     mnemonic = sessionStorage.mnemonic.split(' ');
-    wordsToCheck = sessionStorage.wordsToCheck;
+    wordsToCheck = sessionStorage.wordsToCheck.split(',');
     conditions = [];
-    for (var i = 0, len = wordsToCheck; i < len; i++) {
+    for (var i = 0; i < wordsToCheck.length; i++) {
         wordNo = wordsToCheck[i];
         conditions[i] = document.getElementById('word' + wordNo).value == mnemonic[wordNo - 1];
     }
     for (var i = 0; i < conditions.length; i++) {
         if (conditions[i] == false) {
-            errors = "Some of the words you entered are incorrect. Try again.\n";
+            errors = "Some of the words you entered are incorrect. Please try again or restart the setup.";
             document.getElementById('errors').innerText = errors;
             return
         }
@@ -79,7 +79,7 @@ function submitData() {
     urlEncodedDataPairs = ['name=' + sessionStorage.name, 'contact=' + sessionStorage.contact, 
                            'mediate=' + sessionStorage.mediate, 'mediatorFee=' + sessionStorage.mediatorFee, 
                            'mnemonic=' + sessionStorage.mnemonic];
-    urlEncodedData = urlEncodedDataPairs.join('&').replace(/%20/g, '+');
+    urlEncodedData = urlEncodedDataPairs.join('&').replace(/\+/, '%2B');
     var xhttp = new XMLHttpRequest();
     xhttp.open('POST', '/register-user', true);
     xhttp.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
