@@ -2,39 +2,37 @@
 
 ##Introduction
 
-Rein is a new decentralized labor market that provides a safe and easy way to earn Bitcoin and to obtain services from professionals globally. It simplifies the process of entering into a digitally-signed contract and behaving honestly to get what they want. Currently, as Rein is still in alpha, the process requires use of a command line client. However, the software is easy to install with commands that make sense once you've seen them in action.
+Rein is a new decentralized labor market that provides a safe and easy way to earn Bitcoin and to obtain services from professionals globally. It simplifies the process of entering into a digitally-signed contract and behaving honestly to get what you want whether that's work or money. Currently, as Rein is in beta and the process requires use of a command line client. However, the software is easy to install and we appreciate your feedback to help make it easier.
 
-In this tutorial, we will show you how to use Rein to earn Bitcoin or get work done online. We will also show you how to generate a couple of standalone Bitcoin keys that will form the basis of your user account in Rein.
+In this tutorial, we will show you how to install the software, setup your account, and get connected.
 
 ## Time to complete
 
-10-20 minutes
+3-5 minutes
 
 ##Prerequisites
-
 
 Before following this tutorial, you'll need a few things.
 
 You should have Python 2.7 with pip installed on your computer and be reasonably certain that the computer is free of malware.
 
-You should also have Bitcoin Core (or similar) installed. It's not required that it be sync'd to the blockchain for this HOWTO. We'll be using it to generate addresses but to be able to detect payments and spend your earnings, you will want to sync it up later.
+You should have a flash drive or two and a piece of paper. These will be used to save copies of the seed, a list of words that can be used to recover your
+identity should your computer be compromised or your data lost.
 
-You should have a way to boot into a GNU+Linux Live CD environment. Perhaps by using unetbootin and the latest Ubuntu ISO with a thumb drive.
+Once you have all of the prerequisites out of the way, let's move on to installing the python-rein client.
 
-You should have a few flash drives onto which you will backup a Bitcoin wallet.
+##Step 1 -- Install python-rein
 
-Once you have all of the prerequisites out of the way, let's move on to installing the python-rein client and helper apps.
+The first step in using Rein is to install python-rein on your computer.
 
-##Step 1 -- Install python-rein and helper apps
+###Download the software    
 
-The first step in using Rein to earn Bitcoin is to install the python-rein software on your computer. Currently, the best way to install python-rein is to clone it from the Github repository. In the future, it will likely be available through your package manager.
+Let's download `python-rein` now from one of these links:
 
-###Clone the repo    
+    [Download (reinproject.org)](https://reinproject.org/bin/latest)
+    [Download (github)](https://github.com/ReinProject/python-rein/archive/v0.3.0-beta.zip)
 
-Let's clone `python-rein` now into your home folder and select v0.2.4-alpha with these commands:
-
-    $ git clone https://github.com/ReinProject/python-rein.git ~/python-rein
-    $ git checkout v0.2.4-alpha
+Unzip this into folder python-rein.
 
 You should now have a copy of the `python-rein` repository in ~/python-rein
 
@@ -58,110 +56,31 @@ You can use --help with any of the commands to get more information; for example
 
     $ rein setup --help
 
-###Download the helper apps
+##Step 2 -- Create Your Account
 
-To help you make digital signatures the bitcoin-signature-tool and a modified version of Coinbin have been built for Rein.
-
-    $ cd 
-    $ mkdir Rein && cd Rein
-    $ git clone https://github.com/ReinProject/bitcoin-signature-tool.git
-    $ git clone https://github.com/ReinProject/coinbin.git
-
-You should now have the bitcoin-signature-tool and Coinbin for Rein to help make signatures with Bitcoin ECDSA private keys.
-
-Note: If you are already familiar with Bitcoin addresses, signatures and wallets, you can skip to Step 3 to setup your Rein identity.
-
-##Step 2 -- Prepare a Bitcoin Wallet
-
-Rein provides the ability to have as many identities as you would like, though for anything where trust and reputation are important, you will probably want to transact through your main identity. These identities are defined by a Bitcoin ECDSA keypair (i.e. an address) which we call the identity's master address. 
-
-In this setup, we'll show you how to use **Bitcoin Core (or similar)** to generate Bitcoin addresses and save their private keys for convenient use later.
-
-###Create an encrypted Bitcoin Wallet
-
-Bitcoin Core (or similar) provides a very simple way to create Bitcoin addresses. When the program `bitcoin-qt` is opened for the first time, it generates a wallet automatically. This wallet can then be encrypted to protect against theft and copies of the wallet can be backed up to removable media.
-
-Before we obtain any addresses, let's encrypt the wallet.
-
-<img src="http://reinproject.org/img/encrypt.png">
-
-Enter a strong password of at least 10 characters. It is **very important** that you have this password when you need access in the future so put it in your password manager, write it down, and/or memorize it. If you lose the password or the wallet file, you will lose access to any Rein identities and Bitcoin funds for which it holds the keys.
-
-###Backup the Wallet
-
-Make a few backup copies of the wallet to removable media such as flash drives, memory cards, or optical media. Ideally you will store these in a safe or safe deposit box.
-
-<img src="http://reinproject.org/img/backup.png">
-
-##Step 3 -- Create Your User Account
-
-Let's create your Rein user account, also known in the software as an identity.
+Let's create your Rein user account.
 
     $ rein start
     
-You should see a web form to fill out. Note that all of the information in your setup except the private keys will become public and will be available to all users once pushed to a server.
-
-###Obtain address from Bitcoin-Qt
-
-Let's obtain the Master Bitcoin address from Bitcoin-Qt. Here you will go to File -> Receiving Addresses... and click new until there are a couple of addresses showing. Copy the first address and paste it here.
-
-Next, we'll get a different address from Bitcoin-Qt and copy and paste it in for the Delegate Bitcoin address.
-
-<img src="http://reinproject.org/img/rein-web-enroll.png">
-
-###Get a private key from Bitcoin-Qt
-
-We will need the private keys for the two above addresses. We'll start by getting the private key from Bitcoin-Qt for the Delegate address.
-
-Open the Debug Window to the Console tab.
-
-<img src="http://reinproject.org/img/debug.png">
-
-There you will type the following command:
-
-    dumpprivkey <your address>
-
-<img src="http://reinproject.org/img/dumpprivkey1.png">
-
-After a second or two, this will print out the private key.
-
-<img src="http://reinproject.org/img/dumpprivkey2.png">
-
-Copy this key to the Delegate Bitcoin private key field.
+You should see a web form to fill out. Note that all of the information displayed during setup will become public and is available to all users once pushed to a server. Private keys are kept locally and are never shared or sent to servers.
 
 Choose whether you want to be a mediator or not and set your fee. For example, if you put 3% here, you would earn 0.003 BTC for mediating a 0.1 BTC transaction, whether you need to resolve a dispute or not. Click next.
 
-###Sign the enrollment
+Now you are presented with an ordered list of words that define your identity, called a mnemonic seed. Write these down and put a copy of the words, possibly encryted, onto a thumb drive or two. 
 
-Based on the information you entered, a document called an enrollment will be made. To finish creating your user account, we'll sign this text using the Bitcoin Signature Tool.
+It is NOT advisable to save these words to your computer. If you think of these as cold storage for your identity, Rein generates a hot wallet for day-to-day use that is saved to your computer.
 
-Open your browser and open the file at ~/Rein/bitcoin-signature-tool/index.html. Click over to the Sign tab and repeat the above procedure to get the private key for your Master Bitcoin address.
+The next screen will require that you type certain words from the seed in to confirm that you have written them down. Click next.
 
-<img src="http://reinproject.org/img/master-signing.png">
+##Step 3 -- Enable Tor (optional)
 
-The private key will go in the Private Key box shaded in red.
-
-Open enrollment.txt with your favorite plain-text editor, cut the content and paste it into the Message box shaded in yellow.
-
-Click "Sign Message" to generate the signature. A block of text that includes the message and signature will be generated in the green area. Click it to highlight it and copy that text.
-
-Paste this text into your editor and save the file.
-
-Once this is done, you will complete the account setup by pressing enter back in the terminal window where `rein setup` is running.
-
-Python-rein will check the signature in the text file you just created and if it is valid, will save the entire signed document to its local database. 
-
-We are now ready for the next step, which is to register with some Rein servers.
-
-##Step 4 -- Enable Tor (optional)
-
-Privacy is an important feature that Rein aims to provide to its users. For users of the [Tor Browser Bundle](https://www.torproject.org), a single command can be run to enable all traffic to be routed through Tor.
+Privacy is an important feature that Rein aims to provide to its users. For users of the [Tor Browser Bundle](https://www.torproject.org), a single command can be run to enable all traffic to be routed through Tor. It's a good idea to do this before connecting to any servers.
 
     rein tor true
 
-##Step 5 -- Register and Upload Enrollment
+##Step 4 -- Register and Upload Enrollment
 
-Rein uses microhosting servers to share data between its users. Let's connect python-rein to two such servers, that are being operated as a community service by ReinProject.org.
+Rein uses microhosting servers to share data between its users. Let's connect python-rein to two such servers that are being operated as a community service by our project.
 
     $ rein request rein1-sfo.reinproject.org:2016
     
@@ -171,20 +90,22 @@ You should now have a message saying you have 1 bucket at the above server. Repe
 
 Again, a message should confirm that you have 1 bucket at the above server.
 
-### Upload your Enrollment
+If you wish to donate to help pay for these servers, you can get a donation address with the `rein buy` command.
 
-Next, we'll sync your local Rein database which contains only a single document, with the servers we `request`-ed in the previous section.
+### Upload your account info 
+
+Next, we'll sync your local Rein database which contains only a single document, with the servers we requested in the previous section.
 
     $ rein sync
 
 This command checks each registered server for the documents we have created locally and uploads any that are incorrect or do not yet exist. In this case, two servers would be checked and neither would have our document, so two uploads would occur.
 
-You are now ready to start earning bitcoin through Rein.
+You are now ready to start using Rein.
 
-To check the status of your account and any transactions you may be involved in, run `rein status`.
+To check the status of your account and any transactions you are involved in, run `rein start` and visit http://localhost:5001.
 
-If you are a mediator who must resolve a dispute, you will see a transaction listed in the output. Workers and job creators would also be advised to message you via the information in the Contact section of your enrollment.
+To bid on any available jobs visit: http://localhost:5001/bid
 
-For further reference, much of the above process is shown in the video [Rein - Getting started: Install and Setup - part 2/4 ](https://www.youtube.com/watch?v=PaF5URG2dLc)
+To post a job visit: http://localhost:5001/post
 
 If you have any questions, corrections, or recommendations please post an issue here or submit a pull request.
