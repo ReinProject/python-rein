@@ -10,7 +10,6 @@ def init_localization():
   loc = locale.getdefaultlocale()[0]
   file_name = "messages-%s.mo" % loc.split('_')[0]
   file_path = os.path.join(os.path.dirname(os.path.abspath(rein.locale.__file__)), file_name)
-  print(file_path)
 
   try:
     logging.debug("Opening message file %s for locale %s", file_name, loc[0])
