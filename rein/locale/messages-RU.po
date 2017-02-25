@@ -1,0 +1,290 @@
+# Rein Decentralized Freelance Market.
+# Copyright (C) 2017
+# This file is distributed under the same license as the python-rein package.
+# David Sterry <davids@exchb.com>, 2017.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: 0.2\n"
+"POT-Creation-Date: 2016-12-21 11:00+PST\n"
+"PO-Revision-Date: 2017-02-16 19:44+0100\n"
+"Language-Team: RUSSIAN <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Last-Translator: \n"
+"Language: ru\n"
+"X-Generator: Poedit 1.8.11\n"
+
+#: rein/cli.py:52
+msgid ""
+"\n"
+"    Rein is a decentralized professional services market and Python-rein is a client\n"
+"that provides a user interface. Use this program from your local browser or command \n"
+"line to create an account, post a job, bid, etc.\n"
+"\n"
+"\b\n"
+"    Quick start:\n"
+"        $ rein start     - create an identity, run the Web UI\n"
+"        $ rein buy       - request microhosting\n"
+"        $ rein sync      - push your identity to microhosting servers\n"
+"        $ rein status    - get user status, or dump of job's documents\n"
+"\n"
+"\b\n"
+"    Workers\n"
+"        $ rein bid       - view and bid on jobs\n"
+"        $ rein deliver   - complete job by providing deliverables\n"
+"\n"
+"\b\n"
+"    Disputes\n"
+"        $ rein workerdispute    - worker files dispute\n"
+"        $ rein creatordispute   - job creator files dispute\n"
+"        $ rein resolve          - mediator posts decision\n"
+"\n"
+"    For more info and the setup guide visit: http://reinproject.org\n"
+"    "
+msgstr ""
+"\n"
+"    Rein это децентрализованный рынок профессиональных услуг и Python-rein это клиент\n"
+"который предоставляет интерфейс пользователя. Используйте эту программу из вашего локального браузера \n"
+"или коммандной строки что бы создать аккаунт, опубликовать работу, сделать ставку и т.д.\n"
+"\n"
+"\b\n"
+"    Быстрый старт:\n"
+"        $ rein start     - создать идентификатор, запустить Web UI\n"
+"        $ rein buy       - запросить микрохостинг\n"
+"        $ rein sync      - синхронизировать идентификатор с серверами микрохостинга\n"
+"        $ rein status    - узнать статус пользоваля, сбросить рабочие документы\n"
+"\n"
+"\b\n"
+"    Исполнители\n"
+"        $ rein bid       - показать проекты и сделать ставку\n"
+"        $ rein deliver   - окончить работу предоставив результат\n"
+"\n"
+"\b\n"
+"    Споры\n"
+"        $ rein workerdispute    - оспорить рабочие файлы работника\n"
+"        $ rein creatordispute   - оспорить рабочие файлы работодателя\n"
+"        $ rein resolve          - публичное решение медиатора\n"
+"\n"
+"    Для подробной информации и инструкции установки посетите ресурс: http://reinproject.org\n"
+"    "
+
+#: rein/cli.py:85
+msgid ""
+"\n"
+"    Setup or import an identity.\n"
+"\n"
+"    You will choose a name or handle for your account, include public contact information, \n"
+"    and a delegate Bitcoin address/private key that the program will use to sign documents\n"
+"    on your behalf. An enrollment document will be created and you will need to sign it\n"
+"    with your master Bitcoin private key.\n"
+"    "
+msgstr ""
+"\n"
+"    Установите или импортируйте идентификатор.\n"
+"\n"
+"    Вы выберете имя для вашего аккаунта, включая публичную контактную информацию, \n"
+"    и Bitcoin адрес/приватный ключ, которые программа будет использовать для подписи документов\n"
+"    от вашего имени. Зарегистрированный документ будет создан и вы должны будете подписать это\n"
+"    вашим приватным Bitcoin ключем.\n"
+"    "
+
+#: rein/cli.py:98
+msgid ""
+"1 - Create new account\n"
+"2 - Import backup\n"
+msgstr ""
+"1 - Создать новый аккаунт\n"
+"2 - Импортировать бэкап\n"
+
+#: rein/lib/forms.py:51
+msgid "Bid amount"
+msgstr "Сделать ставку"
+
+#: rein/lib/forms.py:52
+msgid "Choose Job to bid on"
+msgstr "Выбрать проект для ставки"
+
+#: rein/lib/forms.py:55
+msgid "Choose bid"
+msgstr "Выбрать ставку"
+
+#: rein/lib/forms.py:63
+msgid "Choose job"
+msgstr "Выбрать работу"
+
+#: rein/lib/forms.py:59
+msgid "Choose job associated with deliverables"
+msgstr "Выбрать работу ассоциированную с результатом"
+
+#: rein/lib/forms.py:47
+msgid "Choose mediator"
+msgstr "Выбрать медиатора"
+
+#: rein/lib/forms.py:33
+msgid "Delegate Bitcoin address"
+msgstr "Выбрать Bitcoin адрес"
+
+#: rein/lib/forms.py:34
+msgid "Delegate Bitcoin private Key"
+msgstr "Выбрать приватный ключ Bitcoin"
+
+#: rein/lib/forms.py:58 rein/lib/forms.py:68
+msgid "Deliverables"
+msgstr "Результат"
+
+#: rein/lib/forms.py:44 rein/lib/forms.py:50
+msgid "Description"
+msgstr "Описание"
+
+#: rein/lib/forms.py:62
+msgid "Dispute detail"
+msgstr "Оспорить деталь"
+
+#: rein/lib/forms.py:74
+msgid "Disputes"
+msgstr "Споры"
+
+#: rein/cli.py:97
+msgid ""
+"Do you want to import a backup or create a new account?\n"
+"\n"
+msgstr ""
+"Вы хотите имортировать бэкап или создать новый аккаунт?\n"
+"\n"
+
+#: rein/lib/forms.py:31
+msgid "Email / Bitmessage"
+msgstr "Email / Bitmessage"
+
+#: rein/lib/io.py:16
+msgid "Error connecting to server."
+msgstr "Ошибка подключения к серверу."
+
+#: rein/lib/forms.py:46
+msgid "Expiration (days)"
+msgstr "Истекает (дней)"
+
+#: rein/lib/market.py:54
+msgid "File containing signed document"
+msgstr "Файл содержит подписанный документ"
+
+#: rein/lib/order.py:18
+msgid ""
+"Funds for each job in Rein are stored in two multisig addresses. One address\n"
+"is for the primary payment that will go to the worker on completion. The\n"
+"second address pays the mediator to be available to resolve a dispute\n"
+"if necessary. The second address should be funded according to the percentage\n"
+"specified by the mediator and is in addition to the primary payment. The\n"
+"listing below shows available mediators and the fee they charge. You should\n"
+"consider the fee as well as any reputational data you are able to find when\n"
+"choosing a mediator. Your choice may affect the number and quality of bids"
+msgstr ""
+"Средства для каждой работы в реин хранятся в двух мультиподписанных адресах. Один адрес\n"
+"для личного платежа который будет отправлен работнику по окончании проекта. \n"
+"Второй для медиатора, на случай разрешения спора при необходимости. Второй адрес должен быть пополнен опираясь на процент\n"
+"указанный медиатором и быть в дополнении к личному платежу. \n"
+"Список ниже показывает доступных медиаторов и комиссии, которые они требуют. \n"
+"Вы должны учитывать комиссию так же, как и любую другую репутационную информацию, которую вы можете найти,\n"
+"когда выбираете медиатора. Ваш выбор может повлиять на количество и качество ставок."
+
+#: rein/lib/forms.py:22
+msgid "Invalid address"
+msgstr "Неправильный адрес"
+
+#: rein/lib/forms.py:27
+msgid "Invalid signature"
+msgstr "Неправильная подпись"
+
+#: rein/lib/forms.py:43
+msgid "Job name"
+msgstr "Имя работы"
+
+#: rein/lib/forms.py:32
+msgid "Master Bitcoin address"
+msgstr "Адрес Bitcoin"
+
+#: rein/lib/forms.py:36
+msgid "Mediator Fee"
+msgstr "Комиссия медиатора"
+
+#: rein/lib/forms.py:30
+msgid "Name / Handle"
+msgstr "Имя / Держатель"
+
+#: rein/lib/validate.py:168
+msgid "None found"
+msgstr "Ничего не найдено"
+
+#: rein/lib/forms.py:18
+msgid "Not a valid private key."
+msgstr "Не правильный приватный ключ."
+
+#: rein/lib/toolbox.py:9
+msgid "Please enter "
+msgstr "Пожалуйста введите "
+
+#: rein/lib/forms.py:35
+msgid "Register as a mediator?"
+msgstr "Зарегистрировать как медиатор?"
+
+#: rein/lib/forms.py:73
+msgid "Resolution"
+msgstr "Решение"
+
+#: rein/lib/forms.py:40
+msgid "Signed enrollment"
+msgstr "Подписанное зачисление"
+
+#: rein/lib/forms.py:67 rein/lib/forms.py:72
+msgid "Signed mediator payment"
+msgstr "Подписанный платеж медиатора"
+
+#: rein/lib/forms.py:66 rein/lib/forms.py:71
+msgid "Signed primary payment"
+msgstr "Подписанный частный платеж"
+
+#: rein/lib/forms.py:45
+msgid "Tags"
+msgstr "Тэги"
+
+#: rein/lib/validate.py:14
+msgid "Verifying block times..."
+msgstr "Верификация блока раз..."
+
+#: rein/cli.py:98
+msgid "Welcome to Rein."
+msgstr "Добро пожаловать в Rein."
+
+#: rein/lib/order.py:31
+msgid "bid submitted"
+msgstr "ставка принята"
+
+#: rein/lib/order.py:67
+msgid "complete, dispute resolved"
+msgstr "окончено, спор окончен"
+
+#: rein/lib/order.py:61
+msgid "complete, work accepted"
+msgstr "окончено, работа принята"
+
+#: rein/lib/order.py:43
+msgid "deliverables submitted"
+msgstr "результаты отправлены"
+
+#: rein/lib/order.py:49
+msgid "disputed by job creator"
+msgstr "оспорено работодателем"
+
+#: rein/lib/order.py:55
+msgid "disputed by worker"
+msgstr "оспорено исполнителем"
+
+#: rein/lib/order.py:37
+msgid "job awarded"
+msgstr "выбран исполнитель"
+
+#: rein/lib/order.py:17
+msgid "posted"
+msgstr "опубликовано"

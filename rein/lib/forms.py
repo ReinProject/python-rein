@@ -16,16 +16,16 @@ from .validate import validate_enrollment
 
 def validate_privkey(form, field):
     if not privkey_to_address(field.data):
-        raise ValidationError("Not a valid private key.")
+        raise ValidationError(_("Not a valid private key."))
 
 def validate_address(form, field):
     if not check_bitcoin_address(field.data):
-        raise ValidationError("Invalid address")
+        raise ValidationError(_("Invalid address"))
 
 def validate_en(form, field):
     message = field.data.replace("\r\n","\n")
     if not validate_enrollment(message):
-        raise ValidationError("Invalid signature")
+        raise ValidationError(_("Invalid signature"))
 
 def validate_mediator_fee(form, field):
     try:
@@ -38,55 +38,55 @@ def avoid_self_rating(form, field):
         raise ValidationError('You may not rate yourself!')
 
 class SetupForm(Form):
-    name = TextField('Name / Handle', validators = [Required()])
-    contact = TextField('Email / Bitmessage', validators = [Required()])
-    maddr = TextField('Master Bitcoin address', validators = [Required(), validate_address])
-    daddr = TextField('Delegate Bitcoin address', validators = [Required(), validate_address])
-    dkey = PasswordField('Delegate Bitcoin private Key', validators = [Required(), validate_privkey])
-    will_mediate = RadioField('Register as a mediator?', choices = [('1','Yes'), ('0', 'No')])
-    mediator_fee = TextField('Mediator Fee', validators = [validate_mediator_fee])  # TODO make required only if Yes above
+    name = TextField(_('Name / Handle'), validators = [Required()])
+    contact = TextField(_('Email / Bitmessage'), validators = [Required()])
+    maddr = TextField(_('Master Bitcoin address'), validators = [Required(), validate_address])
+    daddr = TextField(_('Delegate Bitcoin address'), validators = [Required(), validate_address])
+    dkey = PasswordField(_('Delegate Bitcoin private Key'), validators = [Required(), validate_privkey])
+    will_mediate = RadioField(_('Register as a mediator?'), choices = [('1','Yes'), ('0', 'No')])
+    mediator_fee = TextField(_('Mediator Fee'), validators = [validate_mediator_fee])  # TODO make required only if Yes above
 
 class SignForm(Form):
     identity_id = HiddenInput("identity_id")
-    signed = TextAreaField('Signed enrollment', validators = [Required(), validate_en])
+    signed = TextAreaField(_('Signed enrollment'), validators = [Required(), validate_en])
 
 class JobPostForm(Form):
-    job_name = TextField('Job name', validators = [Required()])
-    description = TextAreaField('Description', validators = [Required()])
-    tags = TextField('Tags', validators = [Required()])
-    expire_days = TextField('Expiration (days)', validators = [Required()])
-    mediator_maddr = RadioField('Choose mediator')
+    job_name = TextField(_('Job name'), validators = [Required()])
+    description = TextAreaField(_('Description'), validators = [Required()])
+    tags = TextField(_('Tags'), validators = [Required()])
+    expire_days = TextField(_('Expiration (days)'), validators = [Required()])
+    mediator_maddr = RadioField(_('Choose mediator'))
 
 class BidForm(Form):
-    description = TextAreaField('Description', validators = [Required()])
-    bid_amount = TextAreaField('Bid amount', validators = [Required()])
-    job_id = RadioField('Choose Job to bid on')
+    description = TextAreaField(_('Description'), validators = [Required()])
+    bid_amount = TextAreaField(_('Bid amount'), validators = [Required()])
+    job_id = RadioField(_('Choose Job to bid on'))
 
 class JobOfferForm(Form):
-    bid_id = RadioField('Choose bid')
+    bid_id = RadioField(_('Choose bid'))
 
 class DeliverForm(Form):
-    deliverable = TextAreaField('Deliverables', validators = [Required()])
-    job_id = RadioField('Choose job associated with deliverables')
+    deliverable = TextAreaField(_('Deliverables'), validators = [Required()])
+    job_id = RadioField(_('Choose job associated with deliverables'))
 
 class DisputeForm(Form):
-    dispute_detail = TextAreaField('Dispute detail', validators = [Required()])
-    order_id = RadioField('Choose job')
+    dispute_detail = TextAreaField(_('Dispute detail'), validators = [Required()])
+    order_id = RadioField(_('Choose job'))
 
 class AcceptForm(Form):
-    deliverable_id = RadioField('Deliverables')
+    deliverable_id = RadioField(_('Deliverables'))
 
 class ResolveForm(Form):
-    resolution = TextAreaField('Resolution', validators = [Required()])
-    client_payment_amount = TextField('Client payment amount in BTC (remainder sent to worker)', validators = [Required()])
-    dispute_id = RadioField('Disputes')
+    resolution = TextAreaField(_('Resolution'), validators = [Required()])
+    client_payment_amount = TextField(_('Client payment amount in BTC (remainder sent to worker)'), validators = [Required()])
+    dispute_id = RadioField(_('Disputes'))
 
 class AcceptResolutionForm(Form):
-    resolution_id = RadioField('Resolution')
+    resolution_id = RadioField(_('Resolution'))
 
 class RatingForm(Form):
-    job_id = TextField('Job id', validators = [Required()], default='')
-    user_id = TextField('User SIN', validators = [Required(), avoid_self_rating], default='')
-    rated_by_id = TextField('Rated by SIN', validators = [Required()], default='')
-    rating = TextField('Rating', validators=[Required()], default=0, widget=HiddenInput())
-    comments = TextAreaField('Comments', validators = [], default='')
+    job_id = TextField(_('Job ID'), validators = [Required()], default='')
+    user_id = TextField(_('User SIN'), validators = [Required(), avoid_self_rating], default='')
+    rated_by_id = TextField(_('Rated by SIN'), validators = [Required()], default='')
+    rating = TextField(_('Rating'), validators=[Required()], default=0, widget=HiddenInput())
+    comments = TextAreaField(_('Comments'), validators = [], default='')

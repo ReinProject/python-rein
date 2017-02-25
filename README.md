@@ -80,27 +80,40 @@ For the mediator payment, a mandatory multisig address is created. To spend the 
 
 Like with the primary payment, a user is prompted for a signed mediator payment if they are a job creator accepting a delivery or they are the mediator resolving a dispute.
 
-## Development and Testing
+## Developer Notes
 
 We have [a quick Vagrant-based setup](https://github.com/ReinProject/devsetup) that gives you a virtual machine with the python-rein client, Causway server and its Bitcoin Core (testnet) node all configured to work together. Testing usually involves creating users and walking through jobs so a virtual machine that has all components going, even allowing payments to be sent is very helpful.
 
-Tests are run using nose:
+To generate or update pot files for translation, run the following from the root of the repo:
 
-    $ nosetests
-    ..
-    ----------------------------------------------------------------------
-    Ran 2 tests in 0.837s
+    xgettext.pl rein/cli.py rein/lib/*.py
 
-    OK
+## Testing
 
-And unittest2:
+We have [a quick Vagrant-based setup](https://github.com/ReinProject/devsetup) that gives you a virtual machine with the python-rein client, Causway server and its Bitcoin Core (testnet) node all configured to work together. Testing usually involves creating users and walking through jobs so a virtual machine that has all components going, even allowing payments to be sent is very helpful.
+
+Tests are run using nose, with the make file specifying two different test commands:
 
     $ make test
-    python -m unittest2 rein/lib/*.py
-    ....
+    nosetests -v --ignore-files="test_cli.py"
+    ..
     ----------------------------------------------------------------------
-    Ran 4 tests in 0.001s
-    
+    Ran 5 tests in 0.344
+
     OK
 
+and
+
+    $ make test_all
+    nosetests -v
+    ..
+    ----------------------------------------------------------------------
+    Ran 7 tests in 2.393s
+
+    OK
+
+By default, the more limited "test" command should be used when a dedicated test-environment, such as the Vagrant set-up mentioned above, is not available. It currently runs all tests except the tests specified in "tests/test_cli.py".
+
 Tox fails right now but does run flake so will be helpful for cleanup.
+
+Be aware that new unit tests should be added to a file within the tests directory. Both the file name and the test method names should follow the naming convention "test_*".
