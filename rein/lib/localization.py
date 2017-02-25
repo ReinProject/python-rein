@@ -8,9 +8,8 @@ def init_localization():
   '''prepare l10n'''
   # Extract system locale identifier
   loc = locale.getdefaultlocale()[0]
-  file_name = "messages-%s.mo" % loc.split('_')[0]
+  file_name = "messages-%s.mo" % loc.split('_')[0].upper()
   file_path = os.path.join(os.path.dirname(os.path.abspath(rein.locale.__file__)), file_name)
-  print(file_path)
 
   try:
     logging.debug("Opening message file %s for locale %s", file_name, loc[0])
@@ -24,3 +23,4 @@ def init_localization():
 
 if __name__ == '__main__':
   init_localization()
+  

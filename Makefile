@@ -3,5 +3,7 @@ clean:
 	rm -f enrollment.txt.sig
 
 test:
-	python -m unittest2 rein/lib/script.py
-	python -m unittest2 rein/lib/bitcoinaddress.py
+	nosetests -v --ignore-files="test_cli.py"
+	
+test_all:
+	nosetests -v
