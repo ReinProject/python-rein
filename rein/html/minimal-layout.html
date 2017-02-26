@@ -18,6 +18,7 @@
 				<script src="http://getbootstrap.com/docs-assets/js/html5shiv.js"></script>
 				<script src="http://getbootstrap.com/docs-assets/js/respond.min.js"></script>
 		<![endif]-->
+        <script src="/js/qrcode.min.js"></script>
 	</head>
 <body>
 <!--Start Header-->
@@ -72,12 +73,14 @@
 		<div id="content" class="col-xs-12 col-sm-12">
 			<div id="about">
 				<div class="about-inner">
-					<h4 class="page-header">Decentralized Freelance Market</h4>
-					<p>ReinProject</p>
-					<p>Homepage - <a href="http://reinproject.org" target="_blank">http://reinproject.org</a></p>
-					<p>Email - <a href="mailto:davids@exchb.com">davids@exchb.com</a></p>
-					<p>Twitter - <a href="http://twitter.com/reinproject" target="_blank">http://twitter.com/reinproject</a></p>
-					<p>Donate for DevOOPs UI - BTC 123Ci1ZFK5V7gyLsyVU36yPNWSB5TDqKn3</p>
+					<h4>ReinProject</h4>
+                    <p>Need help? Have a suggestion? Join us on IRC Chat: #Rein on freenode<br />
+                    <a href="https://github.com/ReinProject/python-rein/issues/new">Report an issue</a><br />
+                    Website - <a href="https://reinproject.org" target="_blank">https://reinproject.org</a><br />
+					Twitter - <a href="https://twitter.com/reinproject" target="_blank">https://twitter.com/reinproject</a><br />
+                    Donate to Rein development - BTC <a href="https://blockexplorer.com/address/1ReincqnUHz5tTbQCvXWYExjxcU5NpGAq">1ReincqnUHz5tTbQCvXWYExjxcU5NpGAq</a><br />
+                    <div id="donate"></div><br />
+                    Donate for DevOOPs UI - BTC 123Ci1ZFK5V7gyLsyVU36yPNWSB5TDqKn3</p>
 				</div>
 			</div>
             <div>
@@ -90,6 +93,17 @@
 <!--End Container-->
 <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
 <!--<script src="http://code.jquery.com/jquery.js"></script>-->
+<script type="text/javascript">
+    new QRCode(document.getElementById("donate"),
+                {
+                  text: "bitcoin:1ReincqnUHz5tTbQCvXWYExjxcU5NpGAq",
+                  width: 148,
+                  height: 148,
+                  colorDark : "#000000",
+                  colorLight : "#ffffff",
+                  correctLevel : QRCode.CorrectLevel.H
+                  });
+</script>
 <script src="/plugins/jquery/jquery.min.js"></script>
 <script src="/plugins/jquery-ui/jquery-ui.min.js"></script>
 <!-- Include all compiled plugins (below), or include individual files as needed -->
