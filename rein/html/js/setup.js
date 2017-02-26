@@ -30,15 +30,16 @@ function storeUserData() {
     }
     // Display errors if any.
     if (errors != '') {
-        document.getElementById("errors").innerText = errors;
+        document.getElementById("ajax-errors").innerText = errors;
         return false;
     } else {
+        document.getElementById("ajax-errors").innerText = '';
         return true;
     }
 }
 
 function renderConfirmationPage() {
-    document.getElementById('ajax-header').innerText = "Confirm the mnemonic phrase";
+    document.getElementById('ajax-header').innerText = "Confirm backup seed";
     document.getElementById('ajax-description').innerText = '';
     var wordsToCheck = [1, 2, 3, 10, 11, 12];
     sessionStorage.wordsToCheck = wordsToCheck;
@@ -67,11 +68,12 @@ function confirmMnemonic() {
     }
     for (var i = 0; i < conditions.length; i++) {
         if (conditions[i] == false) {
-            errors = "Some of the words you entered are incorrect. Please try again or restart the setup.";
-            document.getElementById('errors').innerText = errors;
+            errors = "Some of the words are incorrect. Please try again or restart setup.";
+            document.getElementById('ajax-errors').innerText = errors;
             return
         }
     }
+    document.getElementById('ajax-errors').innerText = 'Checking...';
     submitData();
 }
 // -------------------------
@@ -105,12 +107,12 @@ function getMnemonic() {
 	    var response = JSON.parse(this.responseText);
 	    var mnemonic = response.mnemonic;
 	    if (mnemonic) {
-		document.getElementById('ajax-header').innerText = "Generating access keys"
-		document.getElementById('ajax-description').innerHTML = "<span style='font-size: 12pt'>Attention! Write down these 12 words. They are the key to recovering your Rein account and wallet.</span><br>"
+		document.getElementById('ajax-header').innerText = "Generating mnemonic seed"
+		document.getElementById('ajax-description').innerHTML = "<span style='font-size: 12pt'>Attention! Write down and save the following 12 words offline. They are <b>essential</b> to recovering this Rein account and wallet.</span><br>"
 		document.getElementById('ajax-elements').innerHTML = "<br><p style='font-size: 13pt'>" + mnemonic + "</p>";
 		document.getElementById('ajax-button').removeAttribute('class')
 		document.getElementById('ajax-button').setAttribute('class', 'col-sm-6')
-		document.getElementById('ajax-button').innerHTML = "<br><button onclick='renderConfirmationPage()'>Next</button>"
+		document.getElementById('ajax-button').innerHTML = "<br><button onclick='renderConfirmationPage()'>I've written then down. Continue...</button>"
 		sessionStorage.mnemonic = mnemonic;
 	    } else {
 		alert('Error generating mnemonic')
