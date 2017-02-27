@@ -2236,9 +2236,12 @@ def start(multi, identity, setup):
             time_left = str(days) + 'd ' + str(hours) + 'h'
 
             if state in ['job_posting', 'bid'] and key not in [j['Job creator public key'], j['Mediator public key']]:
-                row = '<a href="http://localhost:'+str(port)+'/job/{}">{}</a></td><td>{}</td><td>{}</td><td><span title="{}">{}</span>'
+                creator_msin = generate_sin(j['Job creator master address'])
+                row = '<a href="http://localhost:'+str(port)+'/job/{}">{}</a></td><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td><span title="{}">{}</span>'
                 job_ids.append((j['Job ID'], row.format(j['Job ID'],
                                                         j['Job name'],
+                                                        j['Job creator'],
+                                                        get_averave_user_rating_display(log, url, user, rein, creator_msin),
                                                         j['Description'],
                                                         time_left,
                                                         j['Mediator public key'],
