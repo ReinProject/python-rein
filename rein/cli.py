@@ -28,7 +28,7 @@ from .lib.io import safe_get
 from .lib.script import build_2_of_3, build_mandatory_multisig, check_redeem_scripts
 from .lib.localization import init_localization
 from .lib.transaction import partial_spend_p2sh, spend_p2sh, spend_p2sh_mediator, partial_spend_p2sh_mediator, partial_spend_p2sh_mediator_2
-from .lib.rating import add_rating, get_user_jobs, get_average_user_ratings
+from .lib.rating import add_rating, get_user_jobs, get_average_user_rating, get_averave_user_rating_display
 
 # Import config
 import rein.lib.config as config
@@ -1550,8 +1550,9 @@ def start(multi, identity, setup):
         mediator_maddrs = []
         for m in mediators:
             if m.dpubkey != key:
-                mediator_maddrs.append((m.maddr, '{}</td><td>{}%</td><td><a href="mailto:{}" target="_blank">{}</a></td><td>{}'.\
+                mediator_maddrs.append((m.maddr, '{}</td><td>{}</td><td>{}%</td><td><a href="mailto:{}" target="_blank">{}</a></td><td>{}'.\
                         format(m.username,
+                               get_averave_user_rating_display(log, url, user, rein, m.msin),
                                m.mediator_fee,
                                m.contact,
                                m.contact,
