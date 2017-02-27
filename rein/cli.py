@@ -1057,15 +1057,7 @@ def sync_core(log, user, key, urls):
         answer = safe_get(log, sel_url.format(user.maddr, nonce[url]))
         log.info('nonce cleared for %s' % (url))
 
-    sel_url = "{0}query?owner={1}&query={2}&testnet={3}"
-    ratings = safe_get(log, sel_url.format(url, user.maddr, 'ratings', rein.testnet))
-    if ratings and ratings['result'] != 'error':
-        rein.session.query(Document).filter(Document.doc_type == 'rating').delete()
-        for rating in ratings['ratings']:
-            d = Document(rein, 'rating', rating['value'], sig_verified=True, testnet=rein.testnet)
-            rein.session.add(d)
-            rein.session.commit()
-
+    rein.session.commit()
     click.echo('%s docs checked on %s servers, %s uploads done.' % (len(documents), len(urls), str(succeeded)))
 
 @cli.command()
