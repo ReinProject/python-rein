@@ -1,3 +1,5 @@
+from flask import flash
+
 from .market import assemble_document, sign_and_store_document
 from .document import Document
 from .io import safe_get
@@ -100,7 +102,7 @@ def add_rating(rein, user, testnet, rating, user_msin, job_id, rated_by_msin, co
     store = True
     document = None
     if update_rating:
-    	document = sign_and_store_document(rein, 'rating', document_text, user.daddr, user.dkey, store, update_rating.doc_hash)
+    	flash(u"Ratings cannot currently be updated.")
 
     else:
     	document = sign_and_store_document(rein, 'rating', document_text, user.daddr, user.dkey, store)
