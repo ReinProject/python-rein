@@ -23,12 +23,12 @@ from .lib.ui import *
 from .lib.validate import filter_and_parse_valid_sigs, parse_document, choose_best_block, filter_out_expired, remote_query
 from .lib.bitcoinecdsa import sign, pubkey
 from .lib.market import * 
-from .lib.util import unique
+from .lib.util import unique, get_user_name
 from .lib.io import safe_get
 from .lib.script import build_2_of_3, build_mandatory_multisig, check_redeem_scripts
 from .lib.localization import init_localization
 from .lib.transaction import partial_spend_p2sh, spend_p2sh, spend_p2sh_mediator, partial_spend_p2sh_mediator, partial_spend_p2sh_mediator_2
-from .lib.rating import add_rating, get_user_jobs, get_average_user_rating, get_averave_user_rating_display
+from .lib.rating import add_rating, get_user_jobs, get_average_user_rating, get_averave_user_rating_display, get_all_user_ratings
 
 # Import config
 import rein.lib.config as config
@@ -1526,6 +1526,11 @@ def start(multi, identity, setup):
         else:
             user_jobs = get_user_jobs(rein)
             return render_template("rate.html", form=form, user_sin=user.msin, user=user, user_jobs=user_jobs)
+
+    @app.route('/ratings/<msin>', methods=['GET'])
+    def view_ratings(msin):
+        ratings = get_all_user_ratings(log, url, user, rein, msin)
+        return render_template("ratings.html", user=user, user_rated=get_user_name(log, url, user, rein, msin), msin=msin, ratings=ratings)
 
     @app.route("/post", methods=['POST', 'GET'])
     def job_post():
