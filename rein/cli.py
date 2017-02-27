@@ -998,10 +998,8 @@ def sync_core(log, user, key, urls):
                 if len(placements) == 0:
                     upload.append([doc, url])
                 else:
-                    # Also upload all ratings created locally to allow for rating updates
-                    is_own_rating = doc.doc_type == 'rating' and doc.source_url == 'local'
                     for plc in placements:
-                        if Placement.get_remote_document_hash(rein, plc) != doc.doc_hash or is_own_rating:
+                        if Placement.get_remote_document_hash(rein, plc) != doc.doc_hash:
                             upload.append([doc, url])
     
     failed = []
