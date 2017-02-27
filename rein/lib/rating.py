@@ -47,7 +47,7 @@ def get_user_jobs(rein, return_dict=False):
     for o in orders:
         setattr(o,'state',STATE[o.get_state(rein, Document)]['past_tense'])
         # Enable rating only for jobs that are completed
-        relevant_states = ['complete, work accepted', 'dispute resolved'] # For testing 'job awarded'
+        relevant_states = ['complete, work accepted', 'dispute resolved', 'job awarded'] # For testing 'job awarded'
         if o.state in relevant_states:
             relevant_orders.append(o)
 
