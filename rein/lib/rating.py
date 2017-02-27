@@ -3,6 +3,7 @@ from flask import flash
 from .market import assemble_document, sign_and_store_document
 from .document import Document
 from .io import safe_get
+from .util import document_to_dict
 from .order import Order, STATE
 from .document import Document
 from .bitcoinaddress import generate_sin
@@ -46,7 +47,7 @@ def get_user_jobs(rein, return_dict=False):
     for o in orders:
         setattr(o,'state',STATE[o.get_state(rein, Document)]['past_tense'])
         # Enable rating only for jobs that are completed
-        relevant_states = ['complete, work accepted', 'dispute resolved'] # For testing 'job awarded'
+        relevant_states = ['complete, work accepted', 'dispute resolved', 'job awarded'] # For testing 'job awarded'
         if o.state in relevant_states:
             relevant_orders.append(o)
 
@@ -76,7 +77,7 @@ def get_user_jobs(rein, return_dict=False):
 def rating_identifier(fields):
 	"""Generates a string that would be found in the contents of an existing rating document"""
 	identifier = ''
-	relevant_fields = ['User id', 'Job id', 'Rater id']
+	relevant_fields = ['User msin', 'Job id', 'Rater msin']
 	for field in fields:
 		if field['label'] in relevant_fields:
 			identifier += field['label'] + ": " + field['value'] + "\n"
@@ -108,3 +109,33 @@ def add_rating(rein, user, testnet, rating, user_msin, job_id, rated_by_msin, co
     	document = sign_and_store_document(rein, 'rating', document_text, user.daddr, user.dkey, store)
     
     return (document and store)
+
+def get_average_user_ratings(log, url, user, rein, msin):
+    """Gets the average rating a user (identified by his msin) has received
+    along with the number of ratings he has received"""
+
+    sel_url = "{0}query?owner={1}&delegate={2}&query=get_user_ratings&testnet={3}&msin={4}"
+    data = safe_get(log, sel_url.format(url, user.maddr, user.daddr, rein.testnet, msin))
+    data = data['get_user_ratings']
+
+    # If there was a server-side error, return None
+    if 'error' in data:
+        return None
+
+    # Create a list of all the ratings the user has received
+    rating_values = []
+    for rating_data in data:
+        rating = document_to_dict(rating_data['value'])
+        try:
+            rating_value = int(rating['Rating'])
+            rating_values.append(rating_value)
+
+        except:
+            pass
+
+    # Return None if the user has not been rated
+    if len(rating_values) == 0:
+        return None
+
+    average_rating = float(sum(rating_values)) / float(len(rating_values))
+    return (average_rating, len(rating_values))

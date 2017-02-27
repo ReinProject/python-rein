@@ -5,6 +5,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from .validate import filter_valid_sigs, parse_document
 from .order import Order
 from .io import safe_get
+from .util import document_to_dict
 
 Base = declarative_base()
 
@@ -125,16 +126,4 @@ class Document(Base):
         return hashlib.sha256(text).hexdigest()
 
     def to_dict(self):
-        content = self.contents
-        doc = {}
-        # Grab part of the document containing information
-        content = content.split('\n-----BEGIN SIGNATURE-----')[0]
-        # Remove heading
-        content = content.split('\n')[2:]
-        for line in content:
-            key_value = line.split(': ')
-            key = key_value[0]
-            value = key_value[1]
-            doc[key] = value
-
-        return doc
+        return document_to_dict(self.contents)
