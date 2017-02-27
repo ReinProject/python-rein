@@ -1655,6 +1655,7 @@ def start(multi, identity, setup):
         # build tuple list to populate form.bids
         bid_choices = []
         for b in bids:
+            worker_msin = generate_sin(b['Worker master address'])
             doc_hash = Document.calc_hash(b['original'])
             d = Document.find(rein, doc_hash, 'remote')
             if not d:
@@ -1664,10 +1665,16 @@ def start(multi, identity, setup):
                 id = d.id
             else:
                 id = d[0].id
-            bid_choices.append((str(id), '{}</td><td>{}</td><td>{}</td><td>{}'.format(job_link(b),
-                                                                                           b['Worker'],
-                                                                                           b['Description'],
-                                                                                           b['Bid amount (BTC)'])))
+            bid_choices.append((
+                str(id), 
+                '{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}'.format(
+                    job_link(b),
+                    b['Worker'],
+                    get_averave_user_rating_display(log, url, user, rein, worker_msin),
+                    b['Description'],
+                    b['Bid amount (BTC)']
+                )
+                ))
 
         form.bid_id.choices = bid_choices
 
