@@ -179,7 +179,7 @@ def post(multi, identity, defaults, dry_run):
                    "consider the fee as well as any reputational data you are able to find when\n"
                    "choosing a mediator. Your choice may affect the number and quality of bids\n"
                    "you receive.\n")
-        mediator = mediator_prompt(rein, eligible_mediators)
+        mediator = mediator_prompt(log, url, user, rein, eligible_mediators)
     if not mediator:
         return
     click.echo("Chosen mediator: " + str(mediator['User']))
@@ -280,7 +280,7 @@ def bid(multi, identity, defaults, dry_run):
     if 'Job ID' in form.keys():
         job = select_by_form(jobs, 'Job ID', form)
     else:
-        job = job_prompt(rein, jobs)
+        job = job_prompt(log, url, user, rein, jobs)
     if not job:
         return
 
@@ -363,7 +363,7 @@ def offer(multi, identity, defaults, dry_run):
     if 'Worker public key' in form.keys():
         bid = select_by_form([bid], 'Worker public key', form)
     else:
-        bid = bid_prompt(rein, bids)
+        bid = bid_prompt(log, url, user, rein, bids)
     if not bid:
         return
 
