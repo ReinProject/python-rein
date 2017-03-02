@@ -10,7 +10,7 @@ from .user import User, Base
 from .util import unique
 from .document import Document
 from .bitcoinaddress import generate_sin
-from .rating import get_averave_user_rating_display
+from .rating import get_average_user_rating_display
 import rein.lib.crypto.bip32 as bip32
 
 
@@ -291,7 +291,7 @@ def mediator_prompt(log, url, user, rein, eligible_mediators):
         click.echo('{} - {} - {} - Fee: {} - Public key: {}'.format(
             str(i), 
             m['User'],
-            get_averave_user_rating_display(log, url, user, rein, m['Secure Identity Number'], True),
+            get_average_user_rating_display(log, url, user, rein, m['Secure Identity Number'], True),
             m['Mediator fee'], 
             m['Mediator public key']
             )
@@ -324,7 +324,7 @@ def bid_prompt(log, url, user, rein, bids):
             str(i), 
             b['Job name'], 
             b["Worker"],
-            get_averave_user_rating_display(log, url, user, rein, worker_msin, True),
+            get_average_user_rating_display(log, url, user, rein, worker_msin, True),
             shorten(b['Description']), 
             b['Bid amount (BTC)']
             )
@@ -363,7 +363,7 @@ def job_prompt(log, url, user, rein, jobs):
         click.echo('{} - {} - {} - {} - {}'.format(
             str(i), 
             j["Job creator"], 
-            get_averave_user_rating_display(log, url, user, rein, creator_msin, True),
+            get_average_user_rating_display(log, url, user, rein, creator_msin, True),
             j['Job name'], 
             shorten(j['Description'])
             )
