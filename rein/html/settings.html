@@ -1,0 +1,62 @@
+{% extends "layout.html" %}
+{% from "_form_helpers.html" import render_error %}
+{% block body %}
+
+<br>
+<div class="well">
+    <h1>Settings</h1>
+    <p>This page gives you the opportunity to customize the application to your liking.</p>
+
+    <h3>Hidden content</h3>
+    <p>This section lets you view, and, if you so desire, re-enable hidden content.</p>
+
+    <h4>Jobs</h4>
+    <table class="table m-table table-bordered table-hover table-heading">
+        <thead>
+            <th>Unhidebutton</th>
+            <th>Job id</th>
+        </thead>
+        <tbody>
+        {% for hidden_job in hidden_jobs %}
+            <tr>
+                <td>Unhidebutton</td>
+                <td>{{ hidden_job }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    <h4>Bids</h4>
+    <table class="table m-table table-bordered table-hover table-heading">
+        <thead>
+            <th>Unhidebutton</th>
+            <th>Bid document hash</th>
+        </thead>
+        <tbody>
+        {% for hidden_bid in hidden_bids %}
+            <tr>
+                <td>Unhidebutton</td>
+                <td>{{ hidden_bid }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    <h4>Mediators</h4>
+    <table class="table m-table table-bordered table-hover table-heading">
+        <thead>
+            <th>Unhidebutton</th>
+            <th>Mediator msin</th>
+        </thead>
+        <tbody>
+        {% for hidden_mediator in hidden_mediators %}
+            <tr>
+                <td>Unhidebutton</td>
+                <td>{{ hidden_mediator }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}

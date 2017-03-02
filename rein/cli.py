@@ -1548,6 +1548,15 @@ def start(multi, identity, setup):
         except:
             return False
 
+    @app.route('/settings', methods=['GET'])
+    def settings():
+        """Allows for local customization of the web app."""
+
+        hidden_jobs = HiddenContent.get_hidden_ids(rein, 'job')
+        hidden_bids = HiddenContent.get_hidden_ids(rein, 'bid')
+        hidden_mediators = HiddenContent.get_hidden_ids(rein, 'mediator')
+        return render_template('settings.html', user=user, hidden_jobs=hidden_jobs, hidden_bids=hidden_bids, hidden_mediators=hidden_mediators)
+
     @app.route("/post", methods=['POST', 'GET'])
     def job_post():
         form = JobPostForm(request.form)
