@@ -44,6 +44,7 @@ from .lib.document import Document
 from .lib.placement import Placement
 from .lib.order import Order, STATE
 from .lib.mediator import Mediator
+from .lib.hidden_content import HiddenContent
 
 rein = config.Config()
 init_localization()
@@ -1539,6 +1540,10 @@ def start(multi, identity, setup):
         try:
             content_identifier = request.json['contentIdentifier']
             content_type = request.json['contentType']
+            new_hidden_content = HiddenContent(content_type, content_identifier)
+            rein.session.add(new_hidden_content)
+            rein.session.commit()
+            return True
 
         except:
             return False
@@ -1564,8 +1569,13 @@ def start(multi, identity, setup):
 
         mediators = Mediator.get(None, rein.testnet)
         mediator_maddrs = []
+        hidden_mediator_msins = HiddenContent.get_hidden_ids(rein, 'mediator')
         for m in mediators:
             if m.dpubkey != key:
+                # Exclude hidden mediators
+                if m.msin in hidden_mediator_msins:
+                    continue
+
                 mediator_maddrs.append((m.maddr, '{}</td><td>{}</td><td>{}%</td><td><a href="mailto:{}" target="_blank">{}</a></td><td>{}</td><td>{}'.\
                         format(m.username,
                                get_averave_user_rating_display(log, url, user, rein, m.msin),
@@ -1671,9 +1681,14 @@ def start(multi, identity, setup):
         # check of bid exists and if not store it
         # build tuple list to populate form.bids
         bid_choices = []
+        hidden_bid_hashes = HiddenContent.get_hidden_ids(rein, 'bid')
         for b in bids:
             worker_msin = generate_sin(b['Worker master address'])
             doc_hash = Document.calc_hash(b['original'])
+            # Exclude ignored bids
+            if doc_hash in hidden_bid_hashes:
+                continue
+
             d = Document.find(rein, doc_hash, 'remote')
             if not d:
                 d = Document(rein, 'bid', b['original'], source_url='remote', testnet=rein.testnet)
@@ -2247,6 +2262,7 @@ def start(multi, identity, setup):
         unique_jobs = unique(live_jobs, 'Job ID')
 
         job_ids = []
+        hidden_job_ids = HiddenContent.get_hidden_ids(rein, 'job')
         for j in unique_jobs:
             order = Order.get_by_job_id(rein, j['Job ID'])
             if not order:
@@ -2261,6 +2277,10 @@ def start(multi, identity, setup):
             time_left = str(days) + 'd ' + str(hours) + 'h'
 
             if state in ['job_posting', 'bid'] and key not in [j['Job creator public key'], j['Mediator public key']]:
+                # Exclude hidden jobs
+                if j['Job ID'] in hidden_job_ids:
+                    continue
+
                 creator_msin = generate_sin(j['Job creator master address'])
                 row = '<a href="http://localhost:'+str(port)+'/job/{}">{}</a></td><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td><span title="{}">{}</span></td><td>{}'
                 job_ids.append((j['Job ID'], row.format(j['Job ID'],
@@ -2445,16 +2465,20 @@ def start(multi, identity, setup):
         documents = Document.get_user_documents(rein)
         Order.update_orders(rein, Document)
         orders = Order.get_user_orders(rein, Document)
+        hidden_order_ids = HiddenContent.get_hidden_ids(rein, 'job')
         for o in orders:
             setattr(o,'state',STATE[o.get_state(rein, Document)]['past_tense'])
             o.hide_button = hide_button('job', o.job_id)
-            
+
+        # Exclude hidden jobs
+        relevant_orders = [o for o in orders if o.job_id not in hidden_order_ids]
+
         return render_template('index.html',
                         user=user,
                         key=key,
                         urls=urls,
                         documents=documents,
-                        orders=orders)
+                        orders=relevant_orders)
 
     webbrowser.open('http://'+host+':' + str(port))
     print("testnet = "+str(rein.testnet))
