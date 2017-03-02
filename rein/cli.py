@@ -23,7 +23,7 @@ from .lib.ui import *
 from .lib.validate import filter_and_parse_valid_sigs, parse_document, choose_best_block, filter_out_expired, remote_query
 from .lib.bitcoinecdsa import sign, pubkey
 from .lib.market import * 
-from .lib.util import unique, get_user_name
+from .lib.util import unique, get_user_name, hide_button
 from .lib.io import safe_get
 from .lib.script import build_2_of_3, build_mandatory_multisig, check_redeem_scripts
 from .lib.localization import init_localization
@@ -1555,13 +1555,14 @@ def start(multi, identity, setup):
         mediator_maddrs = []
         for m in mediators:
             if m.dpubkey != key:
-                mediator_maddrs.append((m.maddr, '{}</td><td>{}</td><td>{}%</td><td><a href="mailto:{}" target="_blank">{}</a></td><td>{}'.\
+                mediator_maddrs.append((m.maddr, '{}</td><td>{}</td><td>{}%</td><td><a href="mailto:{}" target="_blank">{}</a></td><td>{}</td><td>{}'.\
                         format(m.username,
                                get_averave_user_rating_display(log, url, user, rein, m.msin),
                                m.mediator_fee,
                                m.contact,
                                m.contact,
-                               m.dpubkey)))
+                               m.dpubkey,
+                               hide_button('mediator', m.msin))))
 
         form.mediator_maddr.choices = mediator_maddrs
 
@@ -1672,12 +1673,13 @@ def start(multi, identity, setup):
                 id = d[0].id
             bid_choices.append((
                 str(id), 
-                '{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}'.format(
+                '{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}'.format(
                     job_link(b),
                     b['Worker'],
                     get_averave_user_rating_display(log, url, user, rein, worker_msin),
                     b['Description'],
-                    b['Bid amount (BTC)']
+                    b['Bid amount (BTC)'],
+                    hide_button('bid', doc_hash)
                 )
                 ))
 
@@ -2249,7 +2251,7 @@ def start(multi, identity, setup):
 
             if state in ['job_posting', 'bid'] and key not in [j['Job creator public key'], j['Mediator public key']]:
                 creator_msin = generate_sin(j['Job creator master address'])
-                row = '<a href="http://localhost:'+str(port)+'/job/{}">{}</a></td><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td><span title="{}">{}</span>'
+                row = '<a href="http://localhost:'+str(port)+'/job/{}">{}</a></td><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td><span title="{}">{}</span></td><td>{}'
                 job_ids.append((j['Job ID'], row.format(j['Job ID'],
                                                         j['Job name'],
                                                         j['Job creator'],
@@ -2257,7 +2259,8 @@ def start(multi, identity, setup):
                                                         j['Description'],
                                                         time_left,
                                                         j['Mediator public key'],
-                                                        j['Mediator'])))
+                                                        j['Mediator'],
+                                                        hide_button('job', j['Job ID']))))
 
         no_choices = len(job_ids) == 0
 
@@ -2433,6 +2436,8 @@ def start(multi, identity, setup):
         orders = Order.get_user_orders(rein, Document)
         for o in orders:
             setattr(o,'state',STATE[o.get_state(rein, Document)]['past_tense'])
+            o.hide_button = hide_button('job', o.job_id)
+            
         return render_template('index.html',
                         user=user,
                         key=key,

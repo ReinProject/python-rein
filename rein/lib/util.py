@@ -49,3 +49,10 @@ def unique(the_array, key=None):
             if element not in unique:
                 unique.append(element)
     return unique
+
+def hide_button(content_type, content_identifier):
+    """Generates a button to hide list content.
+    Type can be 'job', 'bid' or 'mediator' with content_identifier being
+    that item's unique id (job id, bid doc hash, or msin)."""
+
+    return '<button type="button" onclick="alert(\'hidden {}\')">Hide {}</button>'.format(content_identifier, content_type)
