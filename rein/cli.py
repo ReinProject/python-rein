@@ -28,7 +28,7 @@ from .lib.io import safe_get
 from .lib.script import build_2_of_3, build_mandatory_multisig, check_redeem_scripts
 from .lib.localization import init_localization
 from .lib.transaction import partial_spend_p2sh, spend_p2sh, spend_p2sh_mediator, partial_spend_p2sh_mediator, partial_spend_p2sh_mediator_2
-from .lib.rating import add_rating, get_user_jobs, get_average_user_rating, get_averave_user_rating_display, get_all_user_ratings
+from .lib.rating import add_rating, get_user_jobs, get_average_user_rating, get_average_user_rating_display, get_all_user_ratings
 
 # Import config
 import rein.lib.config as config
@@ -1557,7 +1557,7 @@ def start(multi, identity, setup):
             if m.dpubkey != key:
                 mediator_maddrs.append((m.maddr, '{}</td><td>{}</td><td>{}%</td><td><a href="mailto:{}" target="_blank">{}</a></td><td>{}'.\
                         format(m.username,
-                               get_averave_user_rating_display(log, url, user, rein, m.msin),
+                               get_average_user_rating_display(log, url, user, rein, m.msin),
                                m.mediator_fee,
                                m.contact,
                                m.contact,
@@ -1675,7 +1675,7 @@ def start(multi, identity, setup):
                 '{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}'.format(
                     job_link(b),
                     b['Worker'],
-                    get_averave_user_rating_display(log, url, user, rein, worker_msin),
+                    get_average_user_rating_display(log, url, user, rein, worker_msin),
                     b['Description'],
                     b['Bid amount (BTC)']
                 )
@@ -2253,7 +2253,7 @@ def start(multi, identity, setup):
                 job_ids.append((j['Job ID'], row.format(j['Job ID'],
                                                         j['Job name'],
                                                         j['Job creator'],
-                                                        get_averave_user_rating_display(log, url, user, rein, creator_msin),
+                                                        get_average_user_rating_display(log, url, user, rein, creator_msin),
                                                         j['Description'],
                                                         time_left,
                                                         j['Mediator public key'],

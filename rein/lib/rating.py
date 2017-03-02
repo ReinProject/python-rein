@@ -140,7 +140,7 @@ def get_average_user_rating(log, url, user, rein, msin):
     average_rating = float(sum(rating_values)) / float(len(rating_values))
     return (average_rating, len(rating_values))
 
-def get_averave_user_rating_display(log, url, user, rein, msin, cli=False):
+def get_average_user_rating_display(log, url, user, rein, msin, cli=False):
     """Returns a user's average rating in html format (as a link to the user's ratings page)."""
 
     rating = get_average_user_rating(log, url, user, rein, msin)
@@ -172,7 +172,7 @@ def get_all_user_ratings(log, url, user, rein, msin):
                 'rating_value': '{} <i class="fa fa-star-o"></i>'.format(float(rating['Rating'])),
                 'comments': rating['Comments'],
                 'rated_by_name': get_user_name(log, url, user, rein, rating['Rater msin']),
-                'rated_by_rating': get_averave_user_rating_display(log, url, user, rein, rating['Rater msin'])
+                'rated_by_rating': get_average_user_rating_display(log, url, user, rein, rating['Rater msin'])
             }
         )
 
