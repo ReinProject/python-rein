@@ -1532,6 +1532,17 @@ def start(multi, identity, setup):
         ratings = get_all_user_ratings(log, url, user, rein, msin)
         return render_template("ratings.html", user=user, user_rated=get_user_name(log, url, user, rein, msin), msin=msin, ratings=ratings)
 
+    @app.route('/hide', methods=['POST'])
+    def hide():
+        """Saves hidden content, by type and identifier, into the database to stay hidden."""
+
+        try:
+            content_identifier = request.json['contentIdentifier']
+            content_type = request.json['contentType']
+
+        except:
+            return False
+
     @app.route("/post", methods=['POST', 'GET'])
     def job_post():
         form = JobPostForm(request.form)

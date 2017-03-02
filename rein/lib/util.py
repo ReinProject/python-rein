@@ -1,3 +1,5 @@
+import random
+
 def document_to_dict(content):
     """Turns a document's contents into a dict"""
 
@@ -55,4 +57,5 @@ def hide_button(content_type, content_identifier):
     Type can be 'job', 'bid' or 'mediator' with content_identifier being
     that item's unique id (job id, bid doc hash, or msin)."""
 
-    return '<button type="button" onclick="alert(\'hidden {}\')">Hide {}</button>'.format(content_identifier, content_type)
+    button_id = random.getrandbits(32)
+    return '<button type="button" onclick="hide(\'{}\', \'{}\', \'{}\')" id="{}">Hide {}</button>'.format(content_type, content_identifier, button_id, button_id, content_type)
