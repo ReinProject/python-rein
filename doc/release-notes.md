@@ -1,6 +1,8 @@
-Python-rein version v0.3.0-beta is now available from:
+This is a working version of release notes which will become final once the next major or minor version is tagged.
 
-  <https://reinproject.org/bin/python-rein-v0.3.0-beta/>
+Python-rein version v0.3.1-beta is now available from:
+
+  <https://reinproject.org/bin/python-rein-v0.3.1-beta/>
 
 This is a new major version release, including a new
 identity management scheme, ratings, and payment
@@ -15,7 +17,7 @@ To receive security and update notifications, please follow:
   <https://twitter.com/ReinProject>
 
 
-v0.3.0-beta Change log
+v0.3.1-beta Change log
 ======================
 
 Detailed release notes follow. This overview includes changes that affect
@@ -25,17 +27,20 @@ git merge commit are mentioned.
 
 
 ### Key Management and Payments
-- #91 `bcee278` Integration of bip32/39 and transaction sign&send (piratelinux) (ads2alpha)
+- #101 `e7278a3` Fix mnemonic bypass method (weex)
 
 ### Reputation
-- #97 `533bf6f` SIN generation and ratings (FreakJoe)
+- #107 ` ` Ratings summary and display (FreakJoe)
+
+### Localization
+- #102 `9ddfe31` Localization and restructured tests (FreakJoe)
 
 ### UX
-- #94 `d10098c` Fixes and polish for 0.3 release (weex)
-- #98 `24afc3b` Final v0.3 fixes and polish / Mediation jobs page for mediators (weex)
+- #103 `8f1d964` Update about and setup text (weex)
+- #100 `19120e2` Fix mediator options not being stored in db (weex)
 
 ### Miscellaneous
-- #95 `13894fb` `make config settings much easier to define and access (weex)
+- #105 ` ` disabled rating mutability, fixed CLI setup issue (FreakJoe)
 
 
 Credits
@@ -43,7 +48,5 @@ Credits
 
 Thanks to everyone who directly contributed to this release:
 
-- ads2alpha
 - David Sterry
 - FreakJoe
-- piratelinux
