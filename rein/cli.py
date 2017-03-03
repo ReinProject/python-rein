@@ -23,7 +23,7 @@ from .lib.ui import *
 from .lib.validate import filter_and_parse_valid_sigs, parse_document, choose_best_block, filter_out_expired, remote_query
 from .lib.bitcoinecdsa import sign, pubkey
 from .lib.market import * 
-from .lib.util import unique, get_user_name, hide_button
+from .lib.util import unique, get_user_name, document_to_dict
 from .lib.io import safe_get
 from .lib.script import build_2_of_3, build_mandatory_multisig, check_redeem_scripts
 from .lib.localization import init_localization
@@ -1555,13 +1555,36 @@ def start(multi, identity, setup):
         except:
             return 'false'
 
+    @app.route('/unhide', methods=['POST'])
+    def unhide():
+        """Re-enables hidden content by removing it from the database"""
+
+        try:
+            content_identifier = request.json['contentIdentifier']
+            content_type = request.json['contentType']
+            rein.session.query(HiddenContent).filter(HiddenContent.content_identifier == content_identifier).filter(HiddenContent.content_type == content_type).delete()
+            rein.session.commit()
+            return 'true'
+
+        except:
+            return 'false'
+
     @app.route('/settings', methods=['GET'])
     def settings():
         """Allows for local customization of the web app."""
 
         hidden_jobs = HiddenContent.get_hidden_content(rein, 'job')
+        for hidden_job in hidden_jobs:
+            hidden_job['unhide_button'] = HiddenContent.unhide_button('job', hidden_job['content_identifier'])
+
         hidden_bids = HiddenContent.get_hidden_content(rein, 'bid')
+        for hidden_bid in hidden_bids:
+            hidden_bid['unhide_button'] = HiddenContent.unhide_button('bid', hidden_bid['content_identifier'])
+
         hidden_mediators = HiddenContent.get_hidden_content(rein, 'mediator')
+        for hidden_mediator in hidden_mediators:
+            hidden_mediator['unhide_button'] = HiddenContent.unhide_button('mediator', hidden_mediator['content_identifier'])
+
         return render_template('settings.html', user=user, hidden_jobs=hidden_jobs, hidden_bids=hidden_bids, hidden_mediators=hidden_mediators)
 
     @app.route("/post", methods=['POST', 'GET'])
@@ -1599,7 +1622,7 @@ def start(multi, identity, setup):
                                m.contact,
                                m.contact,
                                m.dpubkey,
-                               hide_button('mediator', m.msin, '{}'.format(m.username)))))
+                               HiddenContent.hide_button('mediator', m.msin, '{}'.format(m.username)))))
 
         form.mediator_maddr.choices = mediator_maddrs
 
@@ -1721,7 +1744,7 @@ def start(multi, identity, setup):
                     get_averave_user_rating_display(log, url, user, rein, worker_msin),
                     b['Description'],
                     b['Bid amount (BTC)'],
-                    hide_button('bid', doc_hash, '{}BTC bid on {} by {}'.format(b['Bid amount (BTC)'], job_link(b), b['Worker']))
+                    HiddenContent.hide_button('bid', doc_hash, '{}BTC bid on {} by {}'.format(b['Bid amount (BTC)'], job_link(b), b['Worker']))
                 )
                 ))
 
@@ -2307,7 +2330,7 @@ def start(multi, identity, setup):
                                                         time_left,
                                                         j['Mediator public key'],
                                                         j['Mediator'],
-                                                        hide_button('job', j['Job ID'], j['Job name']))))
+                                                        HiddenContent.hide_button('job', j['Job ID'], j['Job name']))))
 
         no_choices = len(job_ids) == 0
 
@@ -2484,7 +2507,8 @@ def start(multi, identity, setup):
         hidden_order_ids = HiddenContent.get_hidden_content(rein, 'job')
         for o in orders:
             setattr(o,'state',STATE[o.get_state(rein, Document)]['past_tense'])
-            o.hide_button = hide_button('job', o.job_id, 'ADD DESCRIPTION')
+            job_name = document_to_dict(o.get_documents(rein, Document, 'job_posting')[0].contents)['Job name']
+            o.hide_button = HiddenContent.hide_button('job', o.job_id, job_name)
 
         # Exclude hidden jobs
         relevant_orders = [o for o in orders if o.job_id not in [hidden_order_id['content_identifier'] for hidden_order_id in hidden_order_ids]]

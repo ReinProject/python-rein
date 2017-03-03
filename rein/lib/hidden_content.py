@@ -1,3 +1,5 @@
+import random
+
 from sqlalchemy import Column, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
 
@@ -30,3 +32,23 @@ class HiddenContent(Base):
             hidden_content.append({'content_identifier': content.content_identifier, 'content_description': content.content_description})
 
         return hidden_content
+
+    @staticmethod
+    def hide_button(content_type, content_identifier, content_description=''):
+        """Generates a button to hide list content.
+        Type can be 'job', 'bid' or 'mediator' with content_identifier being
+        that item's unique id (job id, bid doc hash, or msin)."""
+
+        button_id = random.getrandbits(32)
+        # Sanitize input
+        content_description = content_description.replace('"', '&quot;').replace("'", "&quot;")
+        return '<button type="button" onclick="hide(\'{}\', \'{}\', \'{}\', \'{}\')" id="{}">Hide {}</button>'.format(content_type, content_identifier, content_description, button_id, button_id, content_type)
+
+    @staticmethod
+    def unhide_button(content_type, content_identifier):
+        """Generates a button to hide list content.
+        Type can be 'job', 'bid' or 'mediator' with content_identifier being
+        that item's unique id (job id, bid doc hash, or msin)."""
+
+        button_id = random.getrandbits(32)
+        return '<button type="button" onclick="unhide(\'{}\', \'{}\', \'{}\')" id="{}">Unhide {}</button>'.format(content_type, content_identifier, button_id, button_id, content_type)
