@@ -52,10 +52,10 @@ def unique(the_array, key=None):
                 unique.append(element)
     return unique
 
-def hide_button(content_type, content_identifier):
+def hide_button(content_type, content_identifier, content_description=''):
     """Generates a button to hide list content.
     Type can be 'job', 'bid' or 'mediator' with content_identifier being
     that item's unique id (job id, bid doc hash, or msin)."""
 
     button_id = random.getrandbits(32)
-    return '<button type="button" onclick="hide(\'{}\', \'{}\', \'{}\')" id="{}">Hide {}</button>'.format(content_type, content_identifier, button_id, button_id, content_type)
+    return '<button type="button" onclick="hide(\'{}\', \'{}\', \'{}\', \'{}\')" id="{}">Hide {}</button>'.format(content_type, content_identifier, content_description, button_id, button_id, content_type)

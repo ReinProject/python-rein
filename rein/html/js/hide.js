@@ -1,4 +1,4 @@
-function hide(contentType, contentIdentifier, buttonId) {
+function hide(contentType, contentIdentifier, contentDescription, buttonId) {
     // Hide the row containing the data that's supposed to be hidden
     $('#' + buttonId).closest('tr').hide()
     // Save hiding preferences to local database
@@ -8,7 +8,8 @@ function hide(contentType, contentIdentifier, buttonId) {
         contentType: "application/json",
         data: JSON.stringify({
             'contentType': contentType,
-            'contentIdentifier': contentIdentifier
+            'contentIdentifier': contentIdentifier,
+            'contentDescription': contentDescription
         })
     })
 }

@@ -15,12 +15,14 @@
         <thead>
             <th>Unhidebutton</th>
             <th>Job id</th>
+            <th>Description</th>
         </thead>
         <tbody>
         {% for hidden_job in hidden_jobs %}
             <tr>
-                <td>Unhidebutton</td>
-                <td>{{ hidden_job }}</td>
+                <td class="col-md-2">Unhidebutton</td>
+                <td>{{ hidden_job.content_identifier }}</td>
+                <td class="col-md-6">{{ hidden_job.content_description}}</td>
             </tr>
         {% endfor %}
         </tbody>
@@ -31,12 +33,14 @@
         <thead>
             <th>Unhidebutton</th>
             <th>Bid document hash</th>
+            <th>Description</th>
         </thead>
         <tbody>
         {% for hidden_bid in hidden_bids %}
             <tr>
-                <td>Unhidebutton</td>
-                <td>{{ hidden_bid }}</td>
+                <td class="col-md-2">Unhidebutton</td>
+                <td>{{ hidden_bid.content_identifier }}</td>
+                <td class="col-md-6">{{ hidden_bid.content_description}}</td>
             </tr>
         {% endfor %}
         </tbody>
@@ -47,12 +51,14 @@
         <thead>
             <th>Unhidebutton</th>
             <th>Mediator msin</th>
+            <th>Description</th>
         </thead>
         <tbody>
         {% for hidden_mediator in hidden_mediators %}
             <tr>
-                <td>Unhidebutton</td>
-                <td>{{ hidden_mediator }}</td>
+                <td class="col-md-2">Unhidebutton</td>
+                <td>{{ hidden_mediator.content_identifier }}</td>
+                <td class="col-md-6">{{ hidden_mediator.content_description}}</td>
             </tr>
         {% endfor %}
         </tbody>

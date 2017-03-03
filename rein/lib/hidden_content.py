@@ -11,20 +11,22 @@ class HiddenContent(Base):
     id = Column(Integer, primary_key=True)
     content_type = Column(String(32))
     content_identifier = Column(String(128))
+    content_description = Column(String)
 
-    def __init__(self, content_type, content_identifier):
+    def __init__(self, content_type, content_identifier, content_description=''):
         """Sets the content that is supposed to be hidden."""
 
         self.content_type = content_type
         self.content_identifier = content_identifier
+        self.content_description = content_description
 
     @staticmethod
-    def get_hidden_ids(rein, content_type):
+    def get_hidden_content(rein, content_type):
         """Gets all content identifiers of content type that are hidden."""
 
-        hidden_content = rein.session.query(HiddenContent).filter(HiddenContent.content_type == content_type).all()
-        hidden_ids = []
-        for content in hidden_content:
-            hidden_ids.append(content.content_identifier)
+        hidden_content_db = rein.session.query(HiddenContent).filter(HiddenContent.content_type == content_type).all()
+        hidden_content = []
+        for content in hidden_content_db:
+            hidden_content.append({'content_identifier': content.content_identifier, 'content_description': content.content_description})
 
-        return hidden_ids
+        return hidden_content

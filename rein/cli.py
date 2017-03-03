@@ -1537,24 +1537,31 @@ def start(multi, identity, setup):
     def hide():
         """Saves hidden content, by type and identifier, into the database to stay hidden."""
 
+        content_description = ''
+        try:
+            content_description = request.json['contentDescription']
+
+        except:
+            pass
+
         try:
             content_identifier = request.json['contentIdentifier']
             content_type = request.json['contentType']
-            new_hidden_content = HiddenContent(content_type, content_identifier)
+            new_hidden_content = HiddenContent(content_type, content_identifier, content_description)
             rein.session.add(new_hidden_content)
             rein.session.commit()
-            return True
+            return 'true'
 
         except:
-            return False
+            return 'false'
 
     @app.route('/settings', methods=['GET'])
     def settings():
         """Allows for local customization of the web app."""
 
-        hidden_jobs = HiddenContent.get_hidden_ids(rein, 'job')
-        hidden_bids = HiddenContent.get_hidden_ids(rein, 'bid')
-        hidden_mediators = HiddenContent.get_hidden_ids(rein, 'mediator')
+        hidden_jobs = HiddenContent.get_hidden_content(rein, 'job')
+        hidden_bids = HiddenContent.get_hidden_content(rein, 'bid')
+        hidden_mediators = HiddenContent.get_hidden_content(rein, 'mediator')
         return render_template('settings.html', user=user, hidden_jobs=hidden_jobs, hidden_bids=hidden_bids, hidden_mediators=hidden_mediators)
 
     @app.route("/post", methods=['POST', 'GET'])
@@ -1578,11 +1585,11 @@ def start(multi, identity, setup):
 
         mediators = Mediator.get(None, rein.testnet)
         mediator_maddrs = []
-        hidden_mediator_msins = HiddenContent.get_hidden_ids(rein, 'mediator')
+        hidden_mediator_content = HiddenContent.get_hidden_content(rein, 'mediator')
         for m in mediators:
             if m.dpubkey != key:
                 # Exclude hidden mediators
-                if m.msin in hidden_mediator_msins:
+                if m.msin in [hidden_mediator['content_identifier'] for hidden_mediator in hidden_mediator_content]:
                     continue
 
                 mediator_maddrs.append((m.maddr, '{}</td><td>{}</td><td>{}%</td><td><a href="mailto:{}" target="_blank">{}</a></td><td>{}</td><td>{}'.\
@@ -1592,7 +1599,7 @@ def start(multi, identity, setup):
                                m.contact,
                                m.contact,
                                m.dpubkey,
-                               hide_button('mediator', m.msin))))
+                               hide_button('mediator', m.msin, '{}'.format(m.username)))))
 
         form.mediator_maddr.choices = mediator_maddrs
 
@@ -1690,12 +1697,12 @@ def start(multi, identity, setup):
         # check of bid exists and if not store it
         # build tuple list to populate form.bids
         bid_choices = []
-        hidden_bid_hashes = HiddenContent.get_hidden_ids(rein, 'bid')
+        hidden_bids = HiddenContent.get_hidden_content(rein, 'bid')
         for b in bids:
             worker_msin = generate_sin(b['Worker master address'])
             doc_hash = Document.calc_hash(b['original'])
             # Exclude ignored bids
-            if doc_hash in hidden_bid_hashes:
+            if doc_hash in [hidden_bid['content_identifier'] for hidden_bid in hidden_bids]:
                 continue
 
             d = Document.find(rein, doc_hash, 'remote')
@@ -1714,7 +1721,7 @@ def start(multi, identity, setup):
                     get_averave_user_rating_display(log, url, user, rein, worker_msin),
                     b['Description'],
                     b['Bid amount (BTC)'],
-                    hide_button('bid', doc_hash)
+                    hide_button('bid', doc_hash, '{}BTC bid on {} by {}'.format(b['Bid amount (BTC)'], job_link(b), b['Worker']))
                 )
                 ))
 
@@ -2271,7 +2278,7 @@ def start(multi, identity, setup):
         unique_jobs = unique(live_jobs, 'Job ID')
 
         job_ids = []
-        hidden_job_ids = HiddenContent.get_hidden_ids(rein, 'job')
+        hidden_jobs = HiddenContent.get_hidden_content(rein, 'job')
         for j in unique_jobs:
             order = Order.get_by_job_id(rein, j['Job ID'])
             if not order:
@@ -2287,7 +2294,7 @@ def start(multi, identity, setup):
 
             if state in ['job_posting', 'bid'] and key not in [j['Job creator public key'], j['Mediator public key']]:
                 # Exclude hidden jobs
-                if j['Job ID'] in hidden_job_ids:
+                if j['Job ID'] in [hidden_job['content_identifier'] for hidden_job in hidden_jobs]:
                     continue
 
                 creator_msin = generate_sin(j['Job creator master address'])
@@ -2300,7 +2307,7 @@ def start(multi, identity, setup):
                                                         time_left,
                                                         j['Mediator public key'],
                                                         j['Mediator'],
-                                                        hide_button('job', j['Job ID']))))
+                                                        hide_button('job', j['Job ID'], j['Job name']))))
 
         no_choices = len(job_ids) == 0
 
@@ -2474,13 +2481,13 @@ def start(multi, identity, setup):
         documents = Document.get_user_documents(rein)
         Order.update_orders(rein, Document)
         orders = Order.get_user_orders(rein, Document)
-        hidden_order_ids = HiddenContent.get_hidden_ids(rein, 'job')
+        hidden_order_ids = HiddenContent.get_hidden_content(rein, 'job')
         for o in orders:
             setattr(o,'state',STATE[o.get_state(rein, Document)]['past_tense'])
-            o.hide_button = hide_button('job', o.job_id)
+            o.hide_button = hide_button('job', o.job_id, 'ADD DESCRIPTION')
 
         # Exclude hidden jobs
-        relevant_orders = [o for o in orders if o.job_id not in hidden_order_ids]
+        relevant_orders = [o for o in orders if o.job_id not in [hidden_order_id['content_identifier'] for hidden_order_id in hidden_order_ids]]
 
         return render_template('index.html',
                         user=user,
