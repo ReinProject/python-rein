@@ -28,7 +28,7 @@ from .lib.io import safe_get
 from .lib.script import build_2_of_3, build_mandatory_multisig, check_redeem_scripts
 from .lib.localization import init_localization
 from .lib.transaction import partial_spend_p2sh, spend_p2sh, spend_p2sh_mediator, partial_spend_p2sh_mediator, partial_spend_p2sh_mediator_2
-from .lib.rating import add_rating, get_user_jobs
+from .lib.rating import add_rating, get_user_jobs, get_average_user_ratings
 
 # Import config
 import rein.lib.config as config
@@ -998,10 +998,8 @@ def sync_core(log, user, key, urls):
                 if len(placements) == 0:
                     upload.append([doc, url])
                 else:
-                    # Also upload all ratings created locally to allow for rating updates
-                    is_own_rating = doc.doc_type == 'rating' and doc.source_url == 'local'
                     for plc in placements:
-                        if Placement.get_remote_document_hash(rein, plc) != doc.doc_hash or is_own_rating:
+                        if Placement.get_remote_document_hash(rein, plc) != doc.doc_hash:
                             upload.append([doc, url])
     
     failed = []
@@ -1059,15 +1057,7 @@ def sync_core(log, user, key, urls):
         answer = safe_get(log, sel_url.format(user.maddr, nonce[url]))
         log.info('nonce cleared for %s' % (url))
 
-    sel_url = "{0}query?owner={1}&query={2}&testnet={3}"
-    ratings = safe_get(log, sel_url.format(url, user.maddr, 'ratings', rein.testnet))
-    if ratings and ratings['result'] != 'error':
-        rein.session.query(Document).filter(Document.doc_type == 'rating').delete()
-        for rating in ratings['ratings']:
-            d = Document(rein, 'rating', rating['value'], sig_verified=True, testnet=rein.testnet)
-            rein.session.add(d)
-            rein.session.commit()
-
+    rein.session.commit()
     click.echo('%s docs checked on %s servers, %s uploads done.' % (len(documents), len(urls), str(succeeded)))
 
 @cli.command()

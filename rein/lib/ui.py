@@ -9,6 +9,7 @@ from .validate import validate_enrollment
 from .user import User, Base
 from .util import unique
 from .document import Document
+from .bitcoinaddress import generate_sin
 import rein.lib.crypto.bip32 as bip32
 
 
@@ -115,6 +116,7 @@ def create_account(rein):
         daddr = bip32.get_delegate_address(key)
         dkey = bip32.get_delegate_private_key(key)
         dxprv = bip32.get_delegate_extended_key(key)
+        msin = generate_sin(maddr)
     else:
         click.echo(highlight('\nTo sign up for Rein you have to put down the mnemonic. Aborting.', False, True))
         quit()
@@ -136,6 +138,7 @@ def create_account(rein):
                  'dxprv': dxprv,
                  'will_mediate': will_mediate,
                  'mediator_fee': mediator_fee,
+                 'msin': msin,
                  'testnet': rein.testnet}
     new_identity = User(user_data)
     rein.session.add(new_identity)
