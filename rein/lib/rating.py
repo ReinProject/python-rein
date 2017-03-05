@@ -3,7 +3,7 @@ from flask import flash
 from .market import assemble_document, sign_and_store_document
 from .document import Document
 from .io import safe_get
-from .util import document_to_dict
+from .util import document_to_dict, get_user_name
 from .order import Order, STATE
 from .document import Document
 from .bitcoinaddress import generate_sin
@@ -110,7 +110,8 @@ def add_rating(rein, user, testnet, rating, user_msin, job_id, rated_by_msin, co
     
     return (document and store)
 
-def get_average_user_ratings(log, url, user, rein, msin):
+
+def get_average_user_rating(log, url, user, rein, msin):
     """Gets the average rating a user (identified by his msin) has received
     along with the number of ratings he has received"""
 
@@ -139,3 +140,41 @@ def get_average_user_ratings(log, url, user, rein, msin):
 
     average_rating = float(sum(rating_values)) / float(len(rating_values))
     return (average_rating, len(rating_values))
+
+def get_average_user_rating_display(log, url, user, rein, msin, cli=False):
+    """Returns a user's average rating in html format (as a link to the user's ratings page)."""
+
+    rating = get_average_user_rating(log, url, user, rein, msin)
+    if not rating:
+        return 'Not yet rated'
+
+    if not cli:
+        return '<a href="/ratings/{}">{} <i class="fa fa-star-o"></i> ({})</a>'.format(msin, rating[0], rating[1])
+
+    return '{} Stars ({})'.format(rating[0], rating[1]) 
+
+def get_all_user_ratings(log, url, user, rein, msin):
+    """Returns a list of a user's ratings."""
+
+    sel_url = "{0}query?owner={1}&delegate={2}&query=get_user_ratings&testnet={3}&msin={4}"
+    data = safe_get(log, sel_url.format(url, user.maddr, user.daddr, rein.testnet, msin))
+    data = data['get_user_ratings']
+
+    # If there was a server-side error, return None
+    if 'error' in data:
+        return []
+
+    # Create a list of all the ratings the user has received
+    ratings = []
+    for rating_data in data:
+        rating = document_to_dict(rating_data['value'])
+        ratings.append(
+            {
+                'rating_value': '{} <i class="fa fa-star-o"></i>'.format(float(rating['Rating'])),
+                'comments': rating['Comments'],
+                'rated_by_name': get_user_name(log, url, user, rein, rating['Rater msin']),
+                'rated_by_rating': get_average_user_rating_display(log, url, user, rein, rating['Rater msin'])
+            }
+        )
+
+    return ratings

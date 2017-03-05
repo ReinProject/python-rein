@@ -1,0 +1,28 @@
+{% extends "layout.html" %}
+{% from "_form_helpers.html" import render_error %}
+{% block body %}
+
+<br>
+<div class="well">
+    This page displays ratings received by <b>{{ user_rated }}</b> (msin: {{ msin }}).
+    <p>
+        <table class="table m-table table-bordered table-hover table-heading">
+            <thead>
+                <th>Rating</th>
+                <th>Comments</th>
+                <th>Rated by</th>
+            </thead>
+            <tbody>
+                {% for rating in ratings %}
+                <tr>
+                    <td>{{ rating.rating_value|safe }}</td>
+                    <td>{{ rating.comments }}</td>
+                    <td>{{ rating.rated_by_name }} - {{ rating.rated_by_rating|safe }}</a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </p>
+</div>
+
+{% endblock %}

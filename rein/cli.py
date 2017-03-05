@@ -23,12 +23,12 @@ from .lib.ui import *
 from .lib.validate import filter_and_parse_valid_sigs, parse_document, choose_best_block, filter_out_expired, remote_query
 from .lib.bitcoinecdsa import sign, pubkey
 from .lib.market import * 
-from .lib.util import unique
+from .lib.util import unique, get_user_name
 from .lib.io import safe_get
 from .lib.script import build_2_of_3, build_mandatory_multisig, check_redeem_scripts
 from .lib.localization import init_localization
 from .lib.transaction import partial_spend_p2sh, spend_p2sh, spend_p2sh_mediator, partial_spend_p2sh_mediator, partial_spend_p2sh_mediator_2
-from .lib.rating import add_rating, get_user_jobs, get_average_user_ratings
+from .lib.rating import add_rating, get_user_jobs, get_average_user_rating, get_average_user_rating_display, get_all_user_ratings
 
 # Import config
 import rein.lib.config as config
@@ -179,7 +179,7 @@ def post(multi, identity, defaults, dry_run):
                    "consider the fee as well as any reputational data you are able to find when\n"
                    "choosing a mediator. Your choice may affect the number and quality of bids\n"
                    "you receive.\n")
-        mediator = mediator_prompt(rein, eligible_mediators)
+        mediator = mediator_prompt(log, url, user, rein, eligible_mediators)
     if not mediator:
         return
     click.echo("Chosen mediator: " + str(mediator['User']))
@@ -280,7 +280,7 @@ def bid(multi, identity, defaults, dry_run):
     if 'Job ID' in form.keys():
         job = select_by_form(jobs, 'Job ID', form)
     else:
-        job = job_prompt(rein, jobs)
+        job = job_prompt(log, url, user, rein, jobs)
     if not job:
         return
 
@@ -363,7 +363,7 @@ def offer(multi, identity, defaults, dry_run):
     if 'Worker public key' in form.keys():
         bid = select_by_form([bid], 'Worker public key', form)
     else:
-        bid = bid_prompt(rein, bids)
+        bid = bid_prompt(log, url, user, rein, bids)
     if not bid:
         return
 
@@ -1527,6 +1527,11 @@ def start(multi, identity, setup):
             user_jobs = get_user_jobs(rein)
             return render_template("rate.html", form=form, user_sin=user.msin, user=user, user_jobs=user_jobs)
 
+    @app.route('/ratings/<msin>', methods=['GET'])
+    def view_ratings(msin):
+        ratings = get_all_user_ratings(log, url, user, rein, msin)
+        return render_template("ratings.html", user=user, user_rated=get_user_name(log, url, user, rein, msin), msin=msin, ratings=ratings)
+
     @app.route("/post", methods=['POST', 'GET'])
     def job_post():
         form = JobPostForm(request.form)
@@ -1550,8 +1555,9 @@ def start(multi, identity, setup):
         mediator_maddrs = []
         for m in mediators:
             if m.dpubkey != key:
-                mediator_maddrs.append((m.maddr, '{}</td><td>{}%</td><td><a href="mailto:{}" target="_blank">{}</a></td><td>{}'.\
+                mediator_maddrs.append((m.maddr, '{}</td><td>{}</td><td>{}%</td><td><a href="mailto:{}" target="_blank">{}</a></td><td>{}'.\
                         format(m.username,
+                               get_average_user_rating_display(log, url, user, rein, m.msin),
                                m.mediator_fee,
                                m.contact,
                                m.contact,
@@ -1654,6 +1660,7 @@ def start(multi, identity, setup):
         # build tuple list to populate form.bids
         bid_choices = []
         for b in bids:
+            worker_msin = generate_sin(b['Worker master address'])
             doc_hash = Document.calc_hash(b['original'])
             d = Document.find(rein, doc_hash, 'remote')
             if not d:
@@ -1663,10 +1670,16 @@ def start(multi, identity, setup):
                 id = d.id
             else:
                 id = d[0].id
-            bid_choices.append((str(id), '{}</td><td>{}</td><td>{}</td><td>{}'.format(job_link(b),
-                                                                                           b['Worker'],
-                                                                                           b['Description'],
-                                                                                           b['Bid amount (BTC)'])))
+            bid_choices.append((
+                str(id), 
+                '{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}'.format(
+                    job_link(b),
+                    b['Worker'],
+                    get_average_user_rating_display(log, url, user, rein, worker_msin),
+                    b['Description'],
+                    b['Bid amount (BTC)']
+                )
+                ))
 
         form.bid_id.choices = bid_choices
 
@@ -2235,9 +2248,12 @@ def start(multi, identity, setup):
             time_left = str(days) + 'd ' + str(hours) + 'h'
 
             if state in ['job_posting', 'bid'] and key not in [j['Job creator public key'], j['Mediator public key']]:
-                row = '<a href="http://localhost:'+str(port)+'/job/{}">{}</a></td><td>{}</td><td>{}</td><td><span title="{}">{}</span>'
+                creator_msin = generate_sin(j['Job creator master address'])
+                row = '<a href="http://localhost:'+str(port)+'/job/{}">{}</a></td><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td><span title="{}">{}</span>'
                 job_ids.append((j['Job ID'], row.format(j['Job ID'],
                                                         j['Job name'],
+                                                        j['Job creator'],
+                                                        get_average_user_rating_display(log, url, user, rein, creator_msin),
                                                         j['Description'],
                                                         time_left,
                                                         j['Mediator public key'],

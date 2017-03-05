@@ -10,6 +10,7 @@ from .user import User, Base
 from .util import unique
 from .document import Document
 from .bitcoinaddress import generate_sin
+from .rating import get_average_user_rating_display
 import rein.lib.crypto.bip32 as bip32
 
 
@@ -278,7 +279,7 @@ def enroll(rein):
 
 # ---- Jobs | Mediators | Workers ----
 
-def mediator_prompt(rein, eligible_mediators):
+def mediator_prompt(log, url, user, rein, eligible_mediators):
     mediators = unique(eligible_mediators, 'Mediator public key')
     key = pubkey(rein.user.dkey)
     i = 0
@@ -286,7 +287,15 @@ def mediator_prompt(rein, eligible_mediators):
         if m["Mediator public key"] == key:
             mediators.remove(m)
             continue
-        click.echo('%s - %s - Fee: %s - Public key: %s' % (str(i), m['User'], m['Mediator fee'], m['Mediator public key']))
+
+        click.echo('{} - {} - {} - Fee: {} - Public key: {}'.format(
+            str(i), 
+            m['User'],
+            get_average_user_rating_display(log, url, user, rein, m['Secure Identity Number'], True),
+            m['Mediator fee'], 
+            m['Mediator public key']
+            )
+        )
         i += 1
     if len(mediators) == 0:
         click.echo("None found.")
@@ -298,7 +307,7 @@ def mediator_prompt(rein, eligible_mediators):
 
 
 # called in offer()
-def bid_prompt(rein, bids):
+def bid_prompt(log, url, user, rein, bids):
     """
     Prompts user to choose a bid on one of their jobs. This means they should be the job creator and
     not the worker or mediator.
@@ -309,8 +318,17 @@ def bid_prompt(rein, bids):
     for b in bids:
         if 'Description' not in b or b['Job creator public key'] != key:
             continue 
-        click.echo('%s - %s - %s - %s - %s bitcoin' % (str(i), b['Job name'], b["Worker"],
-                                                  shorten(b['Description']), b['Bid amount (BTC)']))
+
+        worker_msin = generate_sin(b['Worker master address'])
+        click.echo('{} - {} - {} - {} - {} - {} bitcoin'.format(
+            str(i), 
+            b['Job name'], 
+            b["Worker"],
+            get_average_user_rating_display(log, url, user, rein, worker_msin, True),
+            shorten(b['Description']), 
+            b['Bid amount (BTC)']
+            )
+        )
         valid_bids.append(b)
         i += 1
     if len(valid_bids) == 0:
@@ -326,7 +344,7 @@ def bid_prompt(rein, bids):
     return bid
 
 
-def job_prompt(rein, jobs):
+def job_prompt(log, url, user, rein, jobs):
     """
     Prompt user for jobs they can bid on. Filters out jobs they created or are mediator for.
     """
@@ -341,8 +359,15 @@ def job_prompt(rein, jobs):
 
     i = 0
     for j in valid_jobs:
-        click.echo('%s - %s - %s - %s' % (str(i), j["Job creator"],
-                                          j['Job name'], shorten(j['Description'])))
+        creator_msin = generate_sin(j['Job creator master address'])
+        click.echo('{} - {} - {} - {} - {}'.format(
+            str(i), 
+            j["Job creator"], 
+            get_average_user_rating_display(log, url, user, rein, creator_msin, True),
+            j['Job name'], 
+            shorten(j['Description'])
+            )
+        )
         i += 1
     choice = get_choice(valid_jobs, 'job')
     if choice == 'q':
