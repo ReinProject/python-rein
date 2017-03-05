@@ -110,6 +110,7 @@ def add_rating(rein, user, testnet, rating, user_msin, job_id, rated_by_msin, co
     
     return (document and store)
 
+
 def get_average_user_rating(log, url, user, rein, msin):
     """Gets the average rating a user (identified by his msin) has received
     along with the number of ratings he has received"""
