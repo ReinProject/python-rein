@@ -149,7 +149,7 @@ def get_average_user_rating_display(log, url, user, rein, msin, cli=False):
         return 'Not yet rated'
 
     if not cli:
-        return '<a href="/ratings/{}">{} <i class="fa fa-star-o"></i> ({})</a>'.format(msin, rating[0], rating[1])
+        return '{} <i class="fa fa-star-o"></i> <small>(<a href="/ratings/{}">{}</a>)</small>'.format(rating[0], msin, rating[1])
 
     return '{} Stars ({})'.format(rating[0], rating[1]) 
 
