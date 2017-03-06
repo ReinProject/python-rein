@@ -85,8 +85,8 @@ class AcceptResolutionForm(Form):
     resolution_id = RadioField(_('Resolution'))
 
 class RatingForm(Form):
-    job_id = TextField(_('Job ID'), validators = [Required()], default='')
-    user_id = TextField(_('User SIN'), validators = [Required(), avoid_self_rating], default='')
-    rated_by_id = TextField(_('Rated by SIN'), validators = [Required()], default='')
+    job_id = TextField(_('Select job'), validators = [Required()], default='')
+    user_id = TextField(_('Select user'), validators = [Required(), avoid_self_rating], default='')
+    rated_by_id = TextField(_('Your SIN'), validators = [Required()], default='')
     rating = TextField(_('Rating'), validators=[Required()], default=0, widget=HiddenInput())
     comments = TextAreaField(_('Comments'), validators = [], default='')
