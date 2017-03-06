@@ -13,6 +13,7 @@
 
 <br>
 <div class="well">
+    <h3>Submit rating</h3>
     <form class="form-horizontal" role="form" method="POST" onsubmit="return confirm('This will be sync\'d immediately to available servers. Please confirm.');" action="{{ url_for('rate_web') }}">
         {{ form.csrf_token }}
 
@@ -53,12 +54,6 @@
         </div>
 
         <div class="form-group">
-            <label class="col-sm-4 control-label">{{ form.rated_by_id.label }}</label>
-            <div class="col-sm-6">{{ form.rated_by_id(class="form-control", data_toggle="tooltip", title="Unique user identifier: Secure Identity Number", readonly=true) }}</div>
-            {{ render_error(form.rated_by_id) }}
-        </div>
-
-        <div class="form-group">
             <label class="col-sm-4 control-label">{{ form.rating.label }}</label>
             {{ form.rating(class="form-control") }}
             <div class="col-sm-6 ratingdiv">
@@ -84,9 +79,16 @@
 
         <div class="form-group">
             <div class="col-sm-offset-4 col-sm-6">
-                <input type="submit" value="Save">
+                <input type="submit" value="Submit rating">
             </div>
         </div>
+
+        <div class="form-group">
+            <label class="col-sm-4 control-label">{{ form.rated_by_id.label }}</label>
+            <div class="col-sm-6">{{ form.rated_by_id(class="form-control", data_toggle="tooltip", title="Unique user identifier: Secure Identity Number", readonly=true) }}</div>
+            {{ render_error(form.rated_by_id) }}
+        </div>
+
     </form>
 </div>
 
