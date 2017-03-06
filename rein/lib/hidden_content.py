@@ -42,7 +42,7 @@ class HiddenContent(Base):
         button_id = random.getrandbits(32)
         # Sanitize input
         content_description = content_description.replace('"', '&quot;').replace("'", "&quot;")
-        return '<button type="button" onclick="hide(\'{}\', \'{}\', \'{}\', \'{}\')" id="{}">Hide {}</button>'.format(content_type, content_identifier, content_description, button_id, button_id, content_type)
+        return '<button type="button" onclick="hide(\'{}\', \'{}\', \'{}\', \'{}\')" id="{}">Hide&nbsp;{}</button>'.format(content_type, content_identifier, content_description, button_id, button_id, content_type)
 
     @staticmethod
     def unhide_button(content_type, content_identifier):
