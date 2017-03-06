@@ -36,7 +36,6 @@ git merge commit are mentioned.
 - #102 `9ddfe31` Localization and restructured tests (FreakJoe)
 
 ### UX
-- #108 `7097664` Ability to hide (and unhide) list content (FreakJoe)
 - #103 `8f1d964` Update about and setup text (weex)
 - #100 `19120e2` Fix mediator options not being stored in db (weex)
 

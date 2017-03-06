@@ -1615,14 +1615,14 @@ def start(multi, identity, setup):
                 if m.msin in [hidden_mediator['content_identifier'] for hidden_mediator in hidden_mediator_content]:
                     continue
 
-                mediator_maddrs.append((m.maddr, '{}</td><td>{}</td><td>{}%</td><td><a href="mailto:{}" target="_blank">{}</a></td><td>{}</td><td>{}'.\
+                mediator_maddrs.append((m.maddr, '{}</td><td>{}%</td><td>{}</td><td><a href="mailto:{}" target="_blank">{}</a></td><td>{}'.\
                         format(m.username,
-                               get_average_user_rating_display(log, url, user, rein, m.msin),
                                m.mediator_fee,
+                               get_average_user_rating_display(log, url, user, rein, m.msin),
                                m.contact,
                                m.contact,
-                               m.dpubkey,
-                               HiddenContent.hide_button('mediator', m.msin, '{}'.format(m.username)))))
+                               HiddenContent.hide_button('mediator', m.msin, '{}'.format(m.username)),
+                               )))
 
         form.mediator_maddr.choices = mediator_maddrs
 
@@ -1893,7 +1893,7 @@ def start(multi, identity, setup):
         job_ids = []
         for document in documents:
             job_id = Document.get_job_id(document.contents)
-            if job_id not in job_ids:
+            if job_id and job_id not in job_ids:
                 if document.source_url == 'local' and document.doc_type != 'enrollment':
                     job_ids.append(job_id)
 

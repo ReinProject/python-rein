@@ -4,13 +4,12 @@
 
 <br>
 <div class="well">
-    <h1>Settings</h1>
-    <p>This page gives you the opportunity to customize the application to your liking.</p>
+    <h2>Settings</h2>
 
-    <h3>Hidden content</h3>
-    <p>This section lets you view, and, if you so desire, re-enable hidden content.</p>
+    <h4>Hidden content</h4>
+    <p>This section lets you view and unhide hidden content.</p>
 
-    <h4>Jobs</h4>
+    <h5>Jobs</h5>
     {% if hidden_jobs %}
     <table class="table m-table table-bordered table-hover table-heading">
         <thead>
@@ -29,10 +28,10 @@
         </tbody>
     </table>
     {% else %}
-    <p>You haven't hidden any jobs yet.</p>
+    <p>No jobs have been hidden.</p>
     {% endif %}
 
-    <h4>Bids</h4>
+    <h5>Bids</h5>
     {% if hidden_bids %}
     <table class="table m-table table-bordered table-hover table-heading">
         <thead>
@@ -51,10 +50,10 @@
         </tbody>
     </table>
     {% else %}
-    <p>You haven't hidden any bids yet.</p>
+    <p>No bids have been hidden.</p>
     {% endif %}
 
-    <h4>Mediators</h4>
+    <h5>Mediators</h5>
     {% if hidden_mediators %}
     <table class="table m-table table-bordered table-hover table-heading">
         <thead>
@@ -73,7 +72,7 @@
         </tbody>
     </table>
     {% else %}
-    <p>You haven't hidden any mediators yet.</p>
+    <p>No mediators have been hidden.</p>
     {% endif %}
 </div>
 
