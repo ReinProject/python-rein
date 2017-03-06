@@ -170,7 +170,7 @@ def get_all_user_ratings(log, url, user, rein, msin):
         rating = document_to_dict(rating_data['value'])
         ratings.append(
             {
-                'rating_value': '{} <i class="fa fa-star-o"></i>'.format(float(rating['Rating'])),
+                'rating_value': '{} <i class="fa fa-star"></i>'.format(float(rating['Rating'])),
                 'comments': rating['Comments'],
                 'rated_by_name': get_user_name(log, url, user, rein, rating['Rater msin']),
                 'rated_by_rating': get_average_user_rating_display(log, url, user, rein, rating['Rater msin'])
