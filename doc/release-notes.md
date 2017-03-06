@@ -30,7 +30,7 @@ git merge commit are mentioned.
 - #101 `e7278a3` Fix mnemonic bypass method (weex)
 
 ### Reputation
-- #107 ` ` Ratings summary and display (FreakJoe)
+- #107 `821171d` Ratings summary and display (FreakJoe)
 
 ### Localization
 - #102 `9ddfe31` Localization and restructured tests (FreakJoe)
@@ -40,7 +40,7 @@ git merge commit are mentioned.
 - #100 `19120e2` Fix mediator options not being stored in db (weex)
 
 ### Miscellaneous
-- #105 ` ` disabled rating mutability, fixed CLI setup issue (FreakJoe)
+- #105 `63eac7e` disabled rating mutability, fixed CLI setup issue (FreakJoe)
 
 
 Credits
