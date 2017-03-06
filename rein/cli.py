@@ -2129,8 +2129,13 @@ def start(multi, identity, setup):
                 remote_documents += filter_and_parse_valid_sigs(rein, data['by_job_id'])
         unique_documents = unique(remote_documents)
         combined = {}
+
+        the_worker = ''  # to pin worker once offer is made
         for doc in unique_documents:
-            combined.update(doc)
+            if 'Rein Offer' in doc['Title']:
+                the_worker = doc['Worker public key']
+            if 'Worker public key' not in doc or the_worker in doc['Worker public key']:
+                combined.update(doc)
 
         o = Order.get_by_job_id(rein, jobid)
         state = STATE[o.get_state(rein, Document)]
