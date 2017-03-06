@@ -1893,7 +1893,7 @@ def start(multi, identity, setup):
         job_ids = []
         for document in documents:
             job_id = Document.get_job_id(document.contents)
-            if job_id not in job_ids:
+            if job_id and job_id not in job_ids:
                 if document.source_url == 'local' and document.doc_type != 'enrollment':
                     job_ids.append(job_id)
 
