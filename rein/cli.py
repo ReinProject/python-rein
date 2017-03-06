@@ -1587,7 +1587,6 @@ def start(multi, identity, setup):
 
         return render_template('settings.html', user=user, hidden_jobs=hidden_jobs, hidden_bids=hidden_bids, hidden_mediators=hidden_mediators)
 
->>>>>>> upstream/master
     @app.route("/post", methods=['POST', 'GET'])
     def job_post():
         form = JobPostForm(request.form)
@@ -1616,14 +1615,14 @@ def start(multi, identity, setup):
                 if m.msin in [hidden_mediator['content_identifier'] for hidden_mediator in hidden_mediator_content]:
                     continue
 
-                mediator_maddrs.append((m.maddr, '{}</td><td>{}</td><td>{}%</td><td><a href="mailto:{}" target="_blank">{}</a></td><td>{}</td><td>{}'.\
+                mediator_maddrs.append((m.maddr, '{}</td><td>{}%</td><td>{}</td><td><a href="mailto:{}" target="_blank">{}</a></td><td>{}'.\
                         format(m.username,
-                               get_average_user_rating_display(log, url, user, rein, m.msin),
                                m.mediator_fee,
+                               get_average_user_rating_display(log, url, user, rein, m.msin),
                                m.contact,
                                m.contact,
-                               m.dpubkey,
-                               HiddenContent.hide_button('mediator', m.msin, '{}'.format(m.username)))))
+                               HiddenContent.hide_button('mediator', m.msin, '{}'.format(m.username)),
+                               )))
 
         form.mediator_maddr.choices = mediator_maddrs
 
