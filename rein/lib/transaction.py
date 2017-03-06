@@ -73,7 +73,7 @@ def partial_spend_p2sh (redeemScript,rein,daddr=None,alt_amount=None,alt_daddr=N
     for txid,vout in txins:
         txins_str += " "+txid+"-"+str(vout)
         txins_obj.append(CMutableTxIn(COutPoint(lx(txid),vout)))                
-    fee = PersistConfig.get(rein, 'fee', 0.00025)
+    fee = PersistConfig.get(rein, 'fee', 0.001)
     amount = round(total_value-fee,8)
     if alt_amount:
         amount = round(amount-alt_amount,8)
