@@ -1,12 +1,9 @@
-This is a working version of release notes which will become final once the next major or minor version is tagged.
-
 Python-rein version v0.3.1-beta is now available from:
 
   <https://reinproject.org/bin/python-rein-v0.3.1-beta/>
 
-This is a new major version release, including a new
-identity management scheme, ratings, and payment
-features..
+This is a new minor version release, including ratings, 
+internationalization and useability features.
 
 Please report bugs using the issue tracker at github:
 
