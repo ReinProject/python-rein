@@ -8,7 +8,7 @@ dependencies = ['click', 'requests>=2.10', 'flask', 'flask-wtf', 'python-bitcoin
 
 setup(
     name='rein',
-    version='0.3.0',
+    version='0.3.1',
     url='https://github.com/ReinProject/python-rein',
     license='BSD',
     author='David Sterry',

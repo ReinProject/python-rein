@@ -18,6 +18,22 @@ def document_to_dict(content):
 
     return doc
 
+def get_user_name(log, url, user, rein, msin):
+    """Find a user's name by his msin"""
+
+    from .io import safe_get
+
+    sel_url = "{0}query?owner={1}&delegate={2}&query=get_user_name&testnet={3}&msin={4}"
+    data = safe_get(log, sel_url.format(url, user.maddr, user.daddr, rein.testnet, msin))
+    data = data['get_user_name']
+
+    # If there was a server-side error, return None
+    if 'error' in data or not data:
+        return 'No username found'
+
+    user = document_to_dict(data[0]['value'])
+    return user['User']
+
 def unique(the_array, key=None):
     """
     Filter an array of dicts by key. Only lets through dicts that include key.

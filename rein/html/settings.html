@@ -1,0 +1,79 @@
+{% extends "layout.html" %}
+{% from "_form_helpers.html" import render_error %}
+{% block body %}
+
+<br>
+<div class="well">
+    <h2>Settings</h2>
+
+    <h4>Hidden content</h4>
+    <p>This section lets you view and unhide hidden content.</p>
+
+    <h5>Jobs</h5>
+    {% if hidden_jobs %}
+    <table class="table m-table table-bordered table-hover table-heading">
+        <thead>
+            <th class="col-md-2"></th>
+            <th>Job id</th>
+            <th class="col-md-6">Description</th>
+        </thead>
+        <tbody>
+        {% for hidden_job in hidden_jobs %}
+            <tr>
+                <td class="col-md-2">{{ hidden_job.unhide_button|safe }}</td>
+                <td>{{ hidden_job.content_identifier }}</td>
+                <td class="col-md-6">{{ hidden_job.content_description}}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>No jobs have been hidden.</p>
+    {% endif %}
+
+    <h5>Bids</h5>
+    {% if hidden_bids %}
+    <table class="table m-table table-bordered table-hover table-heading">
+        <thead>
+            <th class="col-md-2"></th>
+            <th>Bid document hash</th>
+            <th class="col-md-6">Description</th>
+        </thead>
+        <tbody>
+        {% for hidden_bid in hidden_bids %}
+            <tr>
+                <td class="col-md-2">{{ hidden_bid.unhide_button|safe }}</td>
+                <td>{{ hidden_bid.content_identifier }}</td>
+                <td class="col-md-6">{{ hidden_bid.content_description|safe }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>No bids have been hidden.</p>
+    {% endif %}
+
+    <h5>Mediators</h5>
+    {% if hidden_mediators %}
+    <table class="table m-table table-bordered table-hover table-heading">
+        <thead>
+            <th class="col-md-2"></th>
+            <th>Mediator msin</th>
+            <th class="col-md-6">Description</th>
+        </thead>
+        <tbody>
+        {% for hidden_mediator in hidden_mediators %}
+            <tr>
+                <td class="col-md-2">{{ hidden_mediator.unhide_button|safe }}</td>
+                <td>{{ hidden_mediator.content_identifier }}</td>
+                <td class="col-md-6">{{ hidden_mediator.content_description}}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>No mediators have been hidden.</p>
+    {% endif %}
+</div>
+
+{% endblock %}

@@ -1,4 +1,4 @@
-#How To Setup Rein to Start Earning Bitcoin
+#How To Setup Rein
 
 ##Introduction
 
