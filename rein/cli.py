@@ -1005,7 +1005,14 @@ def sync_core(log, user, key, urls):
     
     failed = []
     succeeded = 0
+    uploaded_hashes = []
     for doc, url in upload:
+        if doc.doc_hash in uploaded_hashes:
+            continue
+
+        else:
+            uploaded_hashes.append(doc.doc_hash)
+
         placements = Placement.get_placements(rein, url, doc.id)
         if len(placements) == 0:
             remote_key = ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits)
