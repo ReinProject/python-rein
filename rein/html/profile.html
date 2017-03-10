@@ -4,7 +4,12 @@
 
 <br>
 <div class="well">
-    This page displays ratings received by <b>{{ user_rated }}</b> (msin: {{ msin }}).
+    <h4>User Profile</h4>
+    Name / handle: {{ user_rated }}<br />
+    Contact: <a href="mailto:{{ user.contact }}">{{ user.contact }}</a><br />
+    Master address: {{ user.maddr }}<br />
+    Direct payment address: <a href="{{ explorer }}/address/{{ user.daddr }}">{{ user.daddr }}</a><br />
+    SIN (<a href="https://en.bitcoin.it/wiki/Identity_protocol_v1">?</a>): {{ msin }}
     <p>
         <table class="table m-table table-bordered table-hover table-heading">
             <thead>
@@ -17,7 +22,7 @@
                 <tr>
                     <td>{{ rating.rating_value|safe }}</td>
                     <td>{{ rating.comments }}</td>
-                    <td>{{ rating.rated_by_name }} - {{ rating.rated_by_rating|safe }}</a></td>
+                    <td><a href="/profile/{{ rating.rated_by_msin }}">{{ rating.rated_by_name }}</a> - {{ rating.rated_by_rating|safe }}</a></td>
                 </tr>
                 {% endfor %}
             </tbody>

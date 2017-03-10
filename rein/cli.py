@@ -1542,10 +1542,14 @@ def start(multi, identity, setup):
             user_jobs = get_user_jobs(rein)
             return render_template("rate.html", form=form, user_sin=user.msin, user=user, user_jobs=user_jobs)
 
-    @app.route('/ratings/<msin>', methods=['GET'])
-    def view_ratings(msin):
+    @app.route('/profile/<msin>', methods=['GET'])
+    def view_profile(msin):
         ratings = get_all_user_ratings(log, url, user, rein, msin)
-        return render_template("ratings.html", user=user, user_rated=get_user_name(log, url, user, rein, msin), msin=msin, ratings=ratings)
+        return render_template("profile.html",
+                               user=user,
+                               user_rated=get_user_name(log, url, user, rein, msin),
+                               msin=msin,
+                               ratings=ratings)
 
     @app.route('/hide', methods=['POST'])
     def hide():
@@ -1752,8 +1756,9 @@ def start(multi, identity, setup):
                 id = d[0].id
             bid_choices.append((
                 str(id), 
-                '{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}'.format(
+                '{}</td><td><a href="/profile/{}">{}</a></td><td>{}</td><td>{}</td><td>{}</td><td>{}'.format(
                     job_link(b),
+                    worker_msin,
                     b['Worker'],
                     get_average_user_rating_display(log, url, user, rein, worker_msin),
                     b['Description'],
@@ -2172,6 +2177,8 @@ def start(multi, identity, setup):
         except ValueError:
             mediator_fee_btc = "NaN"
 
+        worker_msin = generate_sin(combined['Worker master address']) if 'Worker master address' in combined else ''
+
         return render_template('job.html',
                             rein=rein,
                             user=user,
@@ -2184,6 +2191,9 @@ def start(multi, identity, setup):
                             explorer=PersistConfig.get(rein, 'explorer', 'https://blockexplorer.com'),
                             unique=unique_documents,
                             job=combined,
+                            job_creator_msin=generate_sin(combined['Job creator master address']),
+                            mediator_msin=generate_sin(combined['Mediator master address']),
+                            worker_msin=worker_msin,
                             mediator_fee_btc=mediator_fee_btc)
 
 
@@ -2341,9 +2351,13 @@ def start(multi, identity, setup):
                     continue
 
                 creator_msin = generate_sin(j['Job creator master address'])
-                row = '<a href="http://localhost:'+str(port)+'/job/{}">{}</a></td><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td><span title="{}">{}</span></td><td>{}'
+                row = '<a href="http://localhost:'+str(port)+'/job/{}">{}</a></td>' +\
+                      '<td><a href="/profile/{}">{}</a></td>' +\
+                      '<td>{}</td><td>{}</td><td>{}</td>' +\
+                      '<td><span title="{}">{}</span></td><td>{}'
                 job_ids.append((j['Job ID'], row.format(j['Job ID'],
                                                         j['Job name'],
+                                                        creator_msin,
                                                         j['Job creator'],
                                                         get_average_user_rating_display(log, url, user, rein, creator_msin),
                                                         j['Description'],
@@ -2378,6 +2392,7 @@ def start(multi, identity, setup):
                 {'label': 'Job name',                       'value_from': job},
                 {'label': 'Worker',                         'value': user.name},
                 {'label': 'Worker contact',                 'value': user.contact},
+                {'label': 'Worker msin',                    'value': user.msin},
                 {'label': 'Worker delegate address',        'value': user.daddr},
                 {'label': 'Worker master address',          'value': user.maddr},
                 {'label': 'Description',                    'value': form.description.data},
