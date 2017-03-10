@@ -9,9 +9,10 @@ def document_to_dict(content):
         content = content.split('\n')[2:]
         for line in content:
             key_value = line.split(': ')
-            key = key_value[0]
-            value = key_value[1]
-            doc[key] = value
+            if len(key_value) > 1:
+                key = key_value[0]
+                value = key_value[1]
+                doc[key] = value
 
     except:
         return {'error': 'unspecified error'}
