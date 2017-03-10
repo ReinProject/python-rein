@@ -1205,13 +1205,13 @@ def status(multi, identity, jobid):
 
 @cli.command()
 @click.argument('key', required=True)
-@click.argument('value', required=True)
+@click.argument('value', required=False, default=None)
 def config(key, value):
     """
     Set configuration variable. Parses true/false, on/off, and passes
     anything else unaltered to the db.
     """
-    keys = ['testnet', 'tor', 'debug', 'fee']
+    keys = ['testnet', 'tor', 'debug', 'fee', 'blockexplorer', 'api']
     if key not in keys:
         click.echo("Invalid config setting. Try one of " + ', '.join(keys))
         return
@@ -1220,8 +1220,10 @@ def config(key, value):
         PersistConfig.set(rein, key, 'true')
     elif value and value.lower() in ['off', 'false', 'disabled']:
         PersistConfig.set(rein, key, 'false')
-    else:
+    elif value:
         PersistConfig.set(rein, key, value)
+
+    click.echo(PersistConfig.get(rein, key))
 
 
 # leave specific config commands in for backwards compatibility, remove in 0.4
@@ -1279,11 +1281,14 @@ def debug(debug):
 
 def init(multi, identity):
     log = rein.get_log()
+
     if multi:
         rein.set_multiuser()
+
     if rein.has_no_account():
         click.echo("Please run setup.")
         return sys.exit(1)
+
     user = get_user(rein, identity, True)
     key = pubkey(user.dkey)
     urls = Bucket.get_urls(rein)
@@ -1305,11 +1310,13 @@ def is_int(s):
     except ValueError:
         return False
 
+
 def is_tags(s):
     if re.search(r'[^a-z0-9 ,]', s.lower()):
         return False
     else:
         return True
+
 
 def get_user(rein, identity, enrolled):
     if rein.multi and identity:
@@ -2173,7 +2180,8 @@ def start(multi, identity, setup):
                             urls=urls,
                             state=state,
                             found=found,
-                            fee=PersistConfig.get(rein, 'fee', 0.00025),
+                            fee=PersistConfig.get(rein, 'fee', 0.001),
+                            explorer=PersistConfig.get(rein, 'explorer', 'https://blockexplorer.com'),
                             unique=unique_documents,
                             job=combined,
                             mediator_fee_btc=mediator_fee_btc)

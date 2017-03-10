@@ -43,16 +43,26 @@ Description: {{ job['Description'] }}<br />
 <div class="row">
 	<div class="col-xs-3 well" style="margin-right:10px; margin-left:10px;">
         <h5>Job creator</h5>
-        Name: <b>{{ job['Job creator'] }}</b><br />Contact: <a href="mailto:{{ job['Job creator contact'] }}">{{ job['Job creator contact'] }}</a><br />Master: <span title="{{ job['Job creator master address'] }}">{{ job['Job creator master address'][0:10] }}...{{ job['Job creator master address'][-8:] }}</span><br />
+        Name: <b>{{ job['Job creator'] }}</b><br />
+        Contact: <a href="mailto:{{ job['Job creator contact'] }}">{{ job['Job creator contact'] }}</a><br />
+        Direct payment address: <br /><a href="{{ explorer }}/address/{{ job['Job creator delegate address'] }}">
+            {{ job['Job creator delegate address'][0:15] }}<br />{{ job['Job creator delegate address'][15:] }}</a>
     </div>
 	<div class="col-xs-3 well" style="margin-right:10px">
         <h5>Mediator</h5>
-        Name: <b>{{ job['Mediator'] }}</b><br />Contact: <a href="mailto:{{ job['Mediator contact'] }}">{{ job['Mediator contact'] }}</a><br />Master: {{ job['Mediator master address'][0:10] }}...{{ job['Mediator master address'][-8:] }}<br />
+        Name: <b>{{ job['Mediator'] }}</b><br />
+        Contact: <a href="mailto:{{ job['Mediator contact'] }}">{{ job['Mediator contact'] }}</a><br />
+        Direct payment address: <br /><a href="{{ explorer }}/address/{{ job['Mediator delegate address'] }}">
+            {{ job['Mediator delegate address'][0:15] }}<br />{{ job['Mediator delegate address'][15:] }}</a>
+        
 {% if 'Worker' in job  %}
     </div>
     <div class="col-xs-3 well">
         <h5>Worker</h5>
-        Name: <b>{{ job['Worker'] }}</b><br />Contact: <a href="mailto:{{ job['Worker contact'] }}">{{ job['Worker contact'] }}</a><br />Master: {{ job['Worker master address'][0:10] }}...{{ job['Worker master address'][-8:] }}
+        Name: <b>{{ job['Worker'] }}</b><br />
+        Contact: <a href="mailto:{{ job['Worker contact'] }}">{{ job['Worker contact'] }}</a><br />
+        Direct payment address: <br /><a href="{{ explorer }}/address/{{ job['Worker delegate address'] }}">
+            {{ job['Worker delegate address'][0:15] }}<br />{{ job['Worker delegate address'][15:] }}</a>
     </div>
 </div>
 
@@ -65,13 +75,13 @@ Description: {{ job['Description'] }}<br />
         <div id="primary"></div>
     </div>
 	<div class="col-xs-6 well" style="margin-right:10px; margin-left:10px;">
-        Primary escrow: <b>{{ job['Primary escrow address'] }}</b><icon class="qrcode"> should be funded with <b>{{ job['Bid amount (BTC)'] }} BTC</b> plus <b>{{ fee }}</b> for the closing transaction fee.
+        Primary escrow: <b><a href="{{ explorer }}/address/{{ job['Primary escrow address'] }}">{{ job['Primary escrow address'] }}</a></b><icon class="qrcode"> should be funded with <b>{{ job['Bid amount (BTC)'] }} BTC</b> plus <b>{{ fee }}</b> for the closing transaction fee.
     </div>
 </div>
 
 <div class="row" style="margin-top: 10px;">
 	<div class="col-xs-6 well" style="margin-right:10px; margin-left:10px;">
-        Mediator escrow: <b>{{ job['Mediator escrow address'] }}</b><icon class="qrcode"> should be funded with <b>{{ mediator_fee_btc }} BTC</b> ({{ job['Mediator fee'] }}% of the above) plus <b>{{ fee }}</b> for the closing transaction fee.
+        Mediator escrow: <b><a href="{{ explorer }}/address/{{ job['Mediator escrow address'] }}">{{ job['Mediator escrow address'] }}</a></b><icon class="qrcode"> should be funded with <b>{{ mediator_fee_btc }} BTC</b> ({{ job['Mediator fee'] }}% of the above) plus <b>{{ fee }}</b> for the closing transaction fee.
     </div>
     <div class="col-xs-2" style="margin-right:10px">
         <div class="qrcode">
