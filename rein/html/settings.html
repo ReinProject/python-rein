@@ -2,14 +2,18 @@
 {% from "_form_helpers.html" import render_error %}
 {% block body %}
 
+<script src="js/settings.js"></script>
+
 <br>
 <div class="well">
     <h2>Settings</h2>
 
-    <h4>Hidden content</h4>
+    <hr>
+
+    <h3>Hidden content</h3>
     <p>This section lets you view and unhide hidden content.</p>
 
-    <h5>Jobs</h5>
+    <h4>Jobs</h4>
     {% if hidden_jobs %}
     <table class="table m-table table-bordered table-hover table-heading">
         <thead>
@@ -31,7 +35,7 @@
     <p>No jobs have been hidden.</p>
     {% endif %}
 
-    <h5>Bids</h5>
+    <h4>Bids</h4>
     {% if hidden_bids %}
     <table class="table m-table table-bordered table-hover table-heading">
         <thead>
@@ -53,7 +57,7 @@
     <p>No bids have been hidden.</p>
     {% endif %}
 
-    <h5>Mediators</h5>
+    <h4>Mediators</h4>
     {% if hidden_mediators %}
     <table class="table m-table table-bordered table-hover table-heading">
         <thead>
@@ -74,6 +78,17 @@
     {% else %}
     <p>No mediators have been hidden.</p>
     {% endif %}
+
+    <hr>
+
+    <h3>Transaction fee</h3>
+    <p>This section lets you adjust the fee that is used for transactions from escrows to mediators and workers.</p>
+
+    <form>
+        <input type="text" name="feeInput" id="feeInput" pattern="[0-9.]{1,10}" value="{{ fee }}">
+        <input type="submit" value="Set fee" onclick="setFee()"/>
+    </form>
+
 </div>
 
 {% endblock %}

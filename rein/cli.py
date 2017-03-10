@@ -1202,11 +1202,7 @@ def status(multi, identity, jobid):
             else:
                 click.echo("Job id not found")
 
-
-@cli.command()
-@click.argument('key', required=True)
-@click.argument('value', required=True)
-def config(key, value):
+def config_common(key, value):
     """
     Set configuration variable. Parses true/false, on/off, and passes
     anything else unaltered to the db.
@@ -1222,6 +1218,17 @@ def config(key, value):
         PersistConfig.set(rein, key, 'false')
     else:
         PersistConfig.set(rein, key, value)
+
+@cli.command()
+@click.argument('key', required=True)
+@click.argument('value', required=True)
+def config(key, value):
+    """
+    Set configuration variable. Parses true/false, on/off, and passes
+    anything else unaltered to the db.
+    """
+
+    config_common(key, value)
 
 
 # leave specific config commands in for backwards compatibility, remove in 0.4
@@ -1576,6 +1583,20 @@ def start(multi, identity, setup):
         except:
             return 'false'
 
+    @app.route('/config', methods=['POST'])
+    def config_web():
+        """Allows for changes to the user's config via the web interface"""
+
+        try:
+            key = request.json['key']
+            value = request.json['value']
+            config_common(key, value)
+
+        except:
+            return 'false'
+        
+        return 'true'
+
     @app.route('/settings', methods=['GET'])
     def settings():
         """Allows for local customization of the web app."""
@@ -1592,7 +1613,9 @@ def start(multi, identity, setup):
         for hidden_mediator in hidden_mediators:
             hidden_mediator['unhide_button'] = HiddenContent.unhide_button('mediator', hidden_mediator['content_identifier'])
 
-        return render_template('settings.html', user=user, hidden_jobs=hidden_jobs, hidden_bids=hidden_bids, hidden_mediators=hidden_mediators)
+        fee = float(PersistConfig.get(rein, 'fee', 0.001))
+
+        return render_template('settings.html', user=user, hidden_jobs=hidden_jobs, hidden_bids=hidden_bids, hidden_mediators=hidden_mediators, fee=fee)
 
     @app.route("/post", methods=['POST', 'GET'])
     def job_post():
