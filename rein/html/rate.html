@@ -18,12 +18,6 @@
         {{ form.csrf_token }}
 
         <div class="form-group">
-            <label class="col-sm-4 control-label">{{ form.job_id.label }}</label>
-            <div class="col-sm-6">{{ form.job_id(class="form-control", data_toggle="tooltip", title="Unique job identifier", readonly=true) }}</div>
-            {{ render_error(form.job_id) }}
-        </div>
-
-        <div class="form-group">
             <div class="btn-group col-sm-offset-4 col-sm-6" role="group">
                 <button type="button" class="btn btn-default" onclick="lastJob()">
                     <span class="glyphicon glyphicon-chevron-left"></span>
@@ -36,9 +30,9 @@
         </div>
 
         <div class="form-group">
-            <label class="col-sm-4 control-label">{{ form.user_id.label }}</label>
-            <div class="col-sm-6">{{ form.user_id(class="form-control", data_toggle="tooltip", title="Unique user identifier: Secure Identity Number", readonly=true) }}</div>
-            {{ render_error(form.user_id) }}
+            <label class="col-sm-4 control-label">{{ form.job_id.label }}</label>
+            <div class="col-sm-6">{{ form.job_id(class="form-control", data_toggle="tooltip", title="Unique job identifier", readonly=true) }}</div>
+            {{ render_error(form.job_id) }}
         </div>
 
         <div class="form-group">
@@ -51,6 +45,12 @@
                     <span class="glyphicon glyphicon-chevron-right"></span>
                 </button>
             </div>
+        </div>
+
+        <div class="form-group">
+            <label class="col-sm-4 control-label">{{ form.user_id.label }}</label>
+            <div class="col-sm-6">{{ form.user_id(class="form-control", data_toggle="tooltip", title="Unique user identifier: Secure Identity Number", readonly=true) }}</div>
+            {{ render_error(form.user_id) }}
         </div>
 
         <div class="form-group">
