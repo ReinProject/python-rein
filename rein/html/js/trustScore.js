@@ -4,5 +4,19 @@ function setTrustScore(msin, displayId) {
 }
 
 function getTrustScore(msin) {
-    return msin;
+    result = 'Trust score could not be calculated';
+    $.ajax({
+        method: "GET",
+        url: "/trust_score/" + msin,
+        contentType: "application/json",
+        async: false,
+        success: function(data) {
+            data = JSON.parse(data);
+            result = 'No trust links between you and the user were found. A trust score could not be calculated.'
+            if (data['links'] != 0) {
+                result = 'Trust score: ' + data['sum'] + ', Trust links: ' + data['links'];
+            }
+        }
+    })
+    return result;
 }
