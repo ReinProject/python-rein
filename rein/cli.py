@@ -1207,7 +1207,7 @@ def config_common(key, value):
     Set configuration variable. Parses true/false, on/off, and passes
     anything else unaltered to the db.
     """
-    keys = ['testnet', 'tor', 'debug', 'fee']
+    keys = ['testnet', 'tor', 'debug', 'fee', 'trust_score']
     if key not in keys:
         click.echo("Invalid config setting. Try one of " + ', '.join(keys))
         return

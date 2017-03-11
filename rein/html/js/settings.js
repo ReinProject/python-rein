@@ -1,3 +1,11 @@
+function postError(data) {
+    if (data != 'true') {
+        alert('Your desired setting could not be saved.')
+    } else {
+        alert('Setting saved successfully!')
+    }
+}
+
 function setFee() {
     fee = $('#feeInput').val();
     $.ajax({
@@ -9,9 +17,23 @@ function setFee() {
             'value': fee
         }),
         success: function(data) {
-            if (data != 'true') {
-                alert('Your desired fee could not be saved.')
-            }
+            postError(data);
+        }
+    })
+}
+
+function setTrustScore() {
+    trustScoreEnabled = $('#trustScore').is(':checked');
+    $.ajax({
+        method: "POST",
+        url: "/config",
+        contentType: "application/json",
+        data: JSON.stringify({
+            'key': 'trust_score',
+            'value': trustScoreEnabled.toString()
+        }),
+        success: function(data) {
+            postError(data);
         }
     })
 }

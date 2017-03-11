@@ -84,9 +84,29 @@
     <h3>Transaction fee</h3>
     <p>This section lets you adjust the fee that is used for transactions from escrows to mediators and workers.</p>
 
-    <form onsubmit="setFee()">
-        <input type="text" name="feeInput" id="feeInput" pattern="[0-9.]{1,10}" value="{{ fee }}">
-        <input type="submit" value="Set fee (in BTC)"/>
+    <form onsubmit="setFee(); return false;">
+        <div class="form-group">
+            <label for="feeInput" class="control-label">Fee (in BTC):</label>
+            <input type="text" name="feeInput" id="feeInput" pattern="[0-9.]{1,10}" value="{{ fee }}">
+        </div>
+        <div class="form-group">
+            <input type="submit" value="Save setting"/>
+        </div>        
+    </form>
+
+    <hr>
+
+    <h3>Trust score</h3>
+    <p>Would you like to automatically trust scores for users on their ratings page? If so, check the box below. This may make ratings pages slower to load.</p>
+
+    <form onsubmit="setTrustScore(); return false;">
+        <div class="form-group">
+            <input type="checkbox" name="trustScore" id="trustScore" value="false">
+            <label for="trustScore" class="control-label">Enable automatic trust score calculations</label>
+        </div>
+        <div class="form-group">
+            <input type="submit" value="Save setting"/>
+        </div>
     </form>
 
 </div>
