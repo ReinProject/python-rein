@@ -2,7 +2,7 @@
 {% from "_form_helpers.html" import render_error %}
 {% block body %}
 
-<script src="js/settings.js"></script>
+<script src="/js/settings.js"></script>
 
 <br>
 <div class="well">
@@ -101,7 +101,14 @@
 
     <form onsubmit="setTrustScore(); return false;">
         <div class="form-group">
-            <input type="checkbox" name="trustScore" id="trustScore" value="false">
+            <input type="checkbox" name="trustScore" id="trustScore">
+            {% if trust_score %}
+            <script type="text/javascript">
+                document.addEventListener("DOMContentLoaded", function(event) {
+                    $('#trustScore').prop('checked', true);
+                });
+            </script>
+            {% endif %}
             <label for="trustScore" class="control-label">Enable automatic trust score calculations</label>
         </div>
         <div class="form-group">

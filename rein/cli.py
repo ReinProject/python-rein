@@ -1544,8 +1544,9 @@ def start(multi, identity, setup):
 
     @app.route('/ratings/<msin>', methods=['GET'])
     def view_ratings(msin):
+        display_trust_score = PersistConfig.get(rein, 'trust_score', False)
         ratings = get_all_user_ratings(log, url, user, rein, msin)
-        return render_template("ratings.html", user=user, user_rated=get_user_name(log, url, user, rein, msin), msin=msin, ratings=ratings)
+        return render_template("ratings.html", user=user, user_rated=get_user_name(log, url, user, rein, msin), msin=msin, ratings=ratings, display_trust_score=display_trust_score)
 
     @app.route('/hide', methods=['POST'])
     def hide():
@@ -1614,8 +1615,9 @@ def start(multi, identity, setup):
             hidden_mediator['unhide_button'] = HiddenContent.unhide_button('mediator', hidden_mediator['content_identifier'])
 
         fee = float(PersistConfig.get(rein, 'fee', 0.001))
+        trust_score = PersistConfig.get(rein, 'trust_score', False)
 
-        return render_template('settings.html', user=user, hidden_jobs=hidden_jobs, hidden_bids=hidden_bids, hidden_mediators=hidden_mediators, fee=fee)
+        return render_template('settings.html', user=user, hidden_jobs=hidden_jobs, hidden_bids=hidden_bids, hidden_mediators=hidden_mediators, fee=fee, trust_score=trust_score)
 
     @app.route("/post", methods=['POST', 'GET'])
     def job_post():
