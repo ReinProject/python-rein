@@ -14,7 +14,7 @@ function getTrustScore(msin) {
             data = JSON.parse(data);
             result = 'No trust links between you and the user were found. A trust score could not be calculated.'
             if (data['links'] != 0) {
-                result = 'Trust score: ' + data['sum'] + ', Trust links: ' + data['links'];
+                result = 'Trust score: ' + data['score'] + ', Trust links: ' + data['links'];
             }
         }
     })

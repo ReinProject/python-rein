@@ -1640,7 +1640,7 @@ def start(multi, identity, setup):
                 ]
                 trust_links.append(min(trust_values))
 
-        dest_trust_score = json.dumps({'sum': sum(trust_links), 'links': len(trust_links)})
+        dest_trust_score = json.dumps({'score': float(sum(trust_links)) / float(len(trust_links)), 'links': len(trust_links)})
         return dest_trust_score
 
     @app.route('/settings', methods=['GET'])
