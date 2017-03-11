@@ -84,9 +84,9 @@
     <h3>Transaction fee</h3>
     <p>This section lets you adjust the fee that is used for transactions from escrows to mediators and workers.</p>
 
-    <form>
+    <form onsubmit="setFee()">
         <input type="text" name="feeInput" id="feeInput" pattern="[0-9.]{1,10}" value="{{ fee }}">
-        <input type="submit" value="Set fee" onclick="setFee()"/>
+        <input type="submit" value="Set fee (in BTC)"/>
     </form>
 
 </div>
