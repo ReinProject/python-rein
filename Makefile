@@ -3,7 +3,16 @@ clean:
 	rm -f enrollment.txt.sig
 
 test:
-	nosetests -v --ignore-files="test_cli.py"
+	nosetests \
+		--with-coverage \
+		--cover-erase \
+		--cover-package="rein" \
+		--verbose \
+		--ignore-files="test_cli.py"
 	
 test_all:
-	nosetests -v
+	nosetests \
+		--with_coverage \
+		--cover-erase \
+		--cover-package="rein" \
+		--verbose

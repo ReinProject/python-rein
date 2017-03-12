@@ -9,7 +9,9 @@ venv/
 *.log
 *.db
 *.pyc
+*.swp
 rein.egg-info
 backup-rein.json*
 !requirements.txt
 task.txt
+.coverage
