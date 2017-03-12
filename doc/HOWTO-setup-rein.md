@@ -29,8 +29,8 @@ The first step in using Rein is to install python-rein on your computer.
 
 Let's download `python-rein` now from one of these links:
 
-    [Download (reinproject.org)](https://reinproject.org/bin/latest)
-    [Download (github)](https://github.com/ReinProject/python-rein/archive/v0.3.0-beta.zip)
+ * [Download (reinproject.org)](https://reinproject.org/bin/latest)
+ * [Download (github)](https://github.com/ReinProject/python-rein/archive/v0.3.0-beta.zip)
 
 Unzip this into folder python-rein.
 
