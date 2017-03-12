@@ -18,7 +18,7 @@ You should have Python 2.7 with pip installed on your computer and be reasonably
 
 You should also have Python's setuptools and flask packages installed.
 
-    pip install setuptools flask
+    sudo pip install setuptools flask
 
 You should have a flash drive or two and a piece of paper. These will be used to save copies of the seed, a list of words that can be used to recover your identity should your computer be compromised or your data lost.
 
