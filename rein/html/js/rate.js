@@ -72,6 +72,7 @@ function nextJob() {
 document.addEventListener("DOMContentLoaded", function(event) {
 	// Initialize contents of the job and user id fields and their labels
 	$(".ratingdiv").raty();
+	$(".ratingdiv").raty({score: 1});
 	$(".ratingdiv").click(function() {
 		$("input[name='rating']").val($(".ratingdiv").raty('score'));
 	});
