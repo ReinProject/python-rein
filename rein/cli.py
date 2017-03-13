@@ -28,7 +28,7 @@ from .lib.io import safe_get
 from .lib.script import build_2_of_3, build_mandatory_multisig, check_redeem_scripts
 from .lib.localization import init_localization
 from .lib.transaction import partial_spend_p2sh, spend_p2sh, spend_p2sh_mediator, partial_spend_p2sh_mediator, partial_spend_p2sh_mediator_2
-from .lib.rating import add_rating, get_user_jobs, get_average_user_rating, get_average_user_rating_display, get_all_user_ratings
+from .lib.rating import add_rating, get_user_jobs, get_average_user_rating, get_average_user_rating_display, get_all_user_ratings, calculate_trust_score
 
 # Import config
 import rein.lib.config as config
@@ -1203,15 +1203,12 @@ def status(multi, identity, jobid):
                 click.echo("Job id not found")
 
 
-@cli.command()
-@click.argument('key', required=True)
-@click.argument('value', required=False, default=None)
-def config(key, value):
+def config_common(key, value):
     """
     Set configuration variable. Parses true/false, on/off, and passes
     anything else unaltered to the db.
     """
-    keys = ['testnet', 'tor', 'debug', 'fee', 'blockexplorer', 'api']
+    keys = ['testnet', 'tor', 'debug', 'fee', 'blockexplorer', 'api', 'trust_score']
     if key not in keys:
         click.echo("Invalid config setting. Try one of " + ', '.join(keys))
         return
@@ -1224,6 +1221,18 @@ def config(key, value):
         PersistConfig.set(rein, key, value)
 
     click.echo(PersistConfig.get(rein, key))
+
+
+@cli.command()
+@click.argument('key', required=True)
+@click.argument('value', required=True)
+def config(key, value):
+    """
+    Set configuration variable. Parses true/false, on/off, and passes
+    anything else unaltered to the db.
+    """
+
+    config_common(key, value)
 
 
 # leave specific config commands in for backwards compatibility, remove in 0.4
@@ -1544,12 +1553,14 @@ def start(multi, identity, setup):
 
     @app.route('/profile/<msin>', methods=['GET'])
     def view_profile(msin):
+        display_trust_score = PersistConfig.get(rein, 'trust_score', False)
         ratings = get_all_user_ratings(log, url, user, rein, msin)
         return render_template("profile.html",
                                user=user,
                                user_rated=get_user_name(log, url, user, rein, msin),
                                msin=msin,
-                               ratings=ratings)
+                               ratings=ratings,
+                               display_trust_score=display_trust_score)
 
     @app.route('/hide', methods=['POST'])
     def hide():
@@ -1587,6 +1598,25 @@ def start(multi, identity, setup):
         except:
             return 'false'
 
+    @app.route('/config', methods=['POST'])
+    def config_web():
+        """Allows for changes to the user's config via the web interface"""
+
+        try:
+            key = request.json['key']
+            value = request.json['value']
+            config_common(key, value)
+
+        except:
+            return 'false'
+        
+        return 'true'
+
+    @app.route('/trust_score/<dest_msin>', defaults={'source_msin': user.msin})
+    @app.route('/trust_score/<dest_msin>/<source_msin>', methods=['GET'])
+    def trust_score(dest_msin, source_msin):
+        return calculate_trust_score(dest_msin, source_msin, rein)
+
     @app.route('/settings', methods=['GET'])
     def settings():
         """Allows for local customization of the web app."""
@@ -1603,7 +1633,10 @@ def start(multi, identity, setup):
         for hidden_mediator in hidden_mediators:
             hidden_mediator['unhide_button'] = HiddenContent.unhide_button('mediator', hidden_mediator['content_identifier'])
 
-        return render_template('settings.html', user=user, hidden_jobs=hidden_jobs, hidden_bids=hidden_bids, hidden_mediators=hidden_mediators)
+        fee = float(PersistConfig.get(rein, 'fee', 0.001))
+        trust_score = PersistConfig.get(rein, 'trust_score', False)
+
+        return render_template('settings.html', user=user, hidden_jobs=hidden_jobs, hidden_bids=hidden_bids, hidden_mediators=hidden_mediators, fee=fee, trust_score=trust_score)
 
     @app.route("/post", methods=['POST', 'GET'])
     def job_post():

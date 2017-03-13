@@ -2,14 +2,18 @@
 {% from "_form_helpers.html" import render_error %}
 {% block body %}
 
+<script src="/js/settings.js"></script>
+
 <br>
 <div class="well">
     <h2>Settings</h2>
 
-    <h4>Hidden content</h4>
+    <hr>
+
+    <h3>Hidden content</h3>
     <p>This section lets you view and unhide hidden content.</p>
 
-    <h5>Jobs</h5>
+    <h4>Jobs</h4>
     {% if hidden_jobs %}
     <table class="table m-table table-bordered table-hover table-heading">
         <thead>
@@ -31,7 +35,7 @@
     <p>No jobs have been hidden.</p>
     {% endif %}
 
-    <h5>Bids</h5>
+    <h4>Bids</h4>
     {% if hidden_bids %}
     <table class="table m-table table-bordered table-hover table-heading">
         <thead>
@@ -53,7 +57,7 @@
     <p>No bids have been hidden.</p>
     {% endif %}
 
-    <h5>Mediators</h5>
+    <h4>Mediators</h4>
     {% if hidden_mediators %}
     <table class="table m-table table-bordered table-hover table-heading">
         <thead>
@@ -74,6 +78,44 @@
     {% else %}
     <p>No mediators have been hidden.</p>
     {% endif %}
+
+    <hr>
+
+    <h3>Transaction fee</h3>
+    <p>This section lets you adjust the fee that is used for transactions from escrows to mediators and workers.</p>
+
+    <form onsubmit="setFee(); return false;">
+        <div class="form-group">
+            <label for="feeInput" class="control-label">Fee (in BTC):</label>
+            <input type="text" name="feeInput" id="feeInput" pattern="[0-9.]{1,10}" value="{{ fee }}">
+        </div>
+        <div class="form-group">
+            <input type="submit" value="Save setting"/>
+        </div>        
+    </form>
+
+    <hr>
+
+    <h3>Trust score</h3>
+    <p>Would you like to automatically display trust scores for users on their ratings page? If so, check the box below. This may make ratings pages slower to load.</p>
+
+    <form onsubmit="setTrustScore(); return false;">
+        <div class="form-group">
+            <input type="checkbox" name="trustScore" id="trustScore">
+            {% if trust_score %}
+            <script type="text/javascript">
+                document.addEventListener("DOMContentLoaded", function(event) {
+                    $('#trustScore').prop('checked', true);
+                });
+            </script>
+            {% endif %}
+            <label for="trustScore" class="control-label">Enable automatic trust score calculations</label>
+        </div>
+        <div class="form-group">
+            <input type="submit" value="Save setting"/>
+        </div>
+    </form>
+
 </div>
 
 {% endblock %}

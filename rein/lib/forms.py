@@ -88,5 +88,5 @@ class RatingForm(Form):
     job_id = TextField(_('Select job'), validators = [Required()], default='')
     user_id = TextField(_('Select user'), validators = [Required(), avoid_self_rating], default='')
     rated_by_id = TextField(_('Your SIN'), validators = [Required()], default='')
-    rating = TextField(_('Rating'), validators=[Required()], default=0, widget=HiddenInput())
+    rating = TextField(_('Rating'), validators=[Required()], default=1, widget=HiddenInput())
     comments = TextAreaField(_('Comments'), validators = [], default='')

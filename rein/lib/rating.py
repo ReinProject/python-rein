@@ -179,3 +179,78 @@ def get_all_user_ratings(log, url, user, rein, msin):
         )
 
     return ratings
+
+def calculate_trust_score(dest_msin=None, source_msin=None, rein=None, test=False, test_ratings=[]):
+    """Calculates the trust score for a user as identified by his msin.
+    Algorithm based on the level 2 trust system implemented by Bitcoin OTC
+    and outlined at https://wiki.bitcoin-otc.com/wiki/OTC_Rating_System#Notes_about_gettrust."""
+
+    # Grab all ratings commited by source_msin (the client)
+    ratings_by_source = None
+    if not test:
+        ratings_by_source = rein.session.query(Document).filter(and_(
+            Document.doc_type == 'rating',
+            Document.contents.like('%\nRater msin: {}%'.format(source_msin))
+        )).all()
+
+    else:
+        ratings_by_source = [test_rating for test_rating in test_ratings if test_rating['Rater msin'] == 'SourceMsin']
+
+    # Compile list of users (by msin) that have been rated by source and their ratings
+    rated_by_source = []
+    for rating in ratings_by_source:
+        rating_dict = None
+        if not test:
+            rating_dict = document_to_dict(rating.contents)
+
+        else:
+            rating_dict = rating
+
+        msin_rated = rating_dict['User msin']
+        rating_value = int(rating_dict['Rating'])
+        if not msin_rated in rated_by_source:
+            rated_by_source.append((msin_rated, rating_value))
+
+    # Determine if any of the users rated by source or source have rated dest
+    # Add source to the list of users source has vouched for with full trust
+    vouched_users = rated_by_source + [(source_msin, 5)]
+    # Calculate trust links between source and dest
+    trust_links = []
+    for vouched_user in vouched_users:
+        (vouched_user_msin, vouched_user_trust) = vouched_user
+        dest_ratings_by_vouched_user = None
+        if not test:
+            dest_ratings_by_vouched_user = rein.session.query(Document).filter(
+                and_(
+                    Document.doc_type == 'rating',
+                    Document.contents.like('%\nRater msin: {}%'.format(vouched_user_msin)),
+                    Document.contents.like('%\nUser msin: {}%'.format(dest_msin))
+                )).all()
+        else:
+            dest_ratings_by_vouched_user = [test_rating for test_rating in test_ratings if test_rating['Rater msin'] == vouched_user_msin and test_rating['User msin'] == 'DestMsin']
+
+        for rating in dest_ratings_by_vouched_user:
+            link_rating = None
+            if not test:
+                link_rating = document_to_dict(rating.contents)
+
+            else:
+                link_rating = rating
+
+            trust_values = [
+                vouched_user_trust, 
+                int(link_rating['Rating'])
+            ]
+            trust_links.append(min(trust_values))
+
+    dest_trust_score = {
+            'score': 0, 
+            'links': 0
+    }
+    if len(trust_links) != 0:
+        dest_trust_score['score'] = float(sum(trust_links)) / float(len(trust_links))
+        dest_trust_score['links'] = len(trust_links)        
+    if not test:
+        dest_trust_score = json.dumps(dest_trust_score)
+        
+    return dest_trust_score

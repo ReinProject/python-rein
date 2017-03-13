@@ -2154,6 +2154,9 @@ border-radius: 50%;}
 }
 .thumbnail {margin-bottom:0;}
 .control-group {margin-bottom:30px;}
+hr {
+  border-top: 1px solid #000;
+}
 @media (min-width: 768px) {
   #sidebar-left.col-sm-2 {
     opacity: 1;
