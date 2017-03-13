@@ -28,7 +28,7 @@ from .lib.io import safe_get
 from .lib.script import build_2_of_3, build_mandatory_multisig, check_redeem_scripts
 from .lib.localization import init_localization
 from .lib.transaction import partial_spend_p2sh, spend_p2sh, spend_p2sh_mediator, partial_spend_p2sh_mediator, partial_spend_p2sh_mediator_2
-from .lib.rating import add_rating, get_user_jobs, get_average_user_rating, get_average_user_rating_display, get_all_user_ratings
+from .lib.rating import add_rating, get_user_jobs, get_average_user_rating, get_average_user_rating_display, get_all_user_ratings, calculate_trust_score
 
 # Import config
 import rein.lib.config as config
@@ -1601,47 +1601,7 @@ def start(multi, identity, setup):
     @app.route('/trust_score/<dest_msin>', defaults={'source_msin': user.msin})
     @app.route('/trust_score/<dest_msin>/<source_msin>', methods=['GET'])
     def trust_score(dest_msin, source_msin):
-        """Calculates the trust score for a user as identified by his msin.
-        Algorithm based on the level 2 trust system implemented by Bitcoin OTC
-        and outlined at https://wiki.bitcoin-otc.com/wiki/OTC_Rating_System#Notes_about_gettrust."""
-
-        # Grab all ratings commited by source_msin (the client)
-        ratings_by_source = rein.session.query(Document).filter(and_(
-            Document.doc_type == 'rating',
-            Document.contents.like('%\nRater msin: {}%'.format(source_msin))
-        )).all()
-
-        # Compile list of users (by msin) that have been rated by source and their ratings
-        rated_by_source = []
-        for rating in ratings_by_source:
-            rating_dict = document_to_dict(rating.contents)
-            msin_rated = rating_dict['User msin']
-            rating_value = int(rating_dict['Rating'])
-            if not msin_rated in rated_by_source:
-                rated_by_source.append((msin_rated, rating_value))
-
-        # Determine if any of the users rated by source or source have rated dest
-        # Add source to the list of users source has vouched for with full trust
-        vouched_users = rated_by_source + [(source_msin, 5)]
-        # Calculate trust links between source and dest
-        trust_links = []
-        for vouched_user in vouched_users:
-            (vouched_user_msin, vouched_user_trust) = vouched_user
-            dest_ratings_by_vouched_user = rein.session.query(Document).filter(
-                and_(
-                    Document.doc_type == 'rating',
-                    Document.contents.like('%\nRater msin: {}%'.format(vouched_user_msin)),
-                    Document.contents.like('%\nUser msin: {}%'.format(dest_msin))
-                )).all()
-            for rating in dest_ratings_by_vouched_user:
-                trust_values = [
-                    vouched_user_trust, 
-                    int(document_to_dict(rating.contents)['Rating'])
-                ]
-                trust_links.append(min(trust_values))
-
-        dest_trust_score = json.dumps({'score': float(sum(trust_links)) / float(len(trust_links)), 'links': len(trust_links)})
-        return dest_trust_score
+        return calculate_trust_score(dest_msin, source_msin, rein)
 
     @app.route('/settings', methods=['GET'])
     def settings():
