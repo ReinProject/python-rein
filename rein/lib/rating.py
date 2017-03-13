@@ -243,9 +243,12 @@ def calculate_trust_score(dest_msin=None, source_msin=None, rein=None, test=Fals
             trust_links.append(min(trust_values))
 
     dest_trust_score = {
-            'score': float(sum(trust_links)) / float(len(trust_links)), 
-            'links': len(trust_links)
+            'score': 0, 
+            'links': 0
     }
+    if len(trust_links) != 0:
+        dest_trust_score['score'] = float(sum(trust_links)) / float(len(trust_links))
+        dest_trust_score['links'] = len(trust_links)        
     if not test:
         dest_trust_score = json.dumps(dest_trust_score)
         
