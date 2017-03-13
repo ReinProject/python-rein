@@ -1,6 +1,8 @@
 ## Python-Rein
 
 [![Build Status](https://travis-ci.org/ReinProject/python-rein.svg?branch=master)](https://travis-ci.org/ReinProject/python-rein)
+[![Coverage
+Status](https://coveralls.io/repos/ReinProject/python-rein/badge.svg?branch=master&service=github)](https://coveralls.io/github/ReinProject/python-rein?branch=master)
 
 Rein makes freelancing for Bitcoin easier than ever. The simple, web-based python-rein client helps create jobs and bids as well as multisig escrows that keep funds safe. You don't need to stay online for others to find, bid or deliver on jobs.
 

@@ -2,9 +2,23 @@
 {% from "_form_helpers.html" import render_error %}
 {% block body %}
 
+<script src="/js/trustScore.js"></script>
+
 <br>
 <div class="well">
-    This page displays ratings received by <b>{{ user_rated }}</b> (msin: {{ msin }}).
+    <p>This page displays ratings received by <b>{{ user_rated }}</b> (msin: {{ msin }}).</p>
+    <p><div id="trustScoreDisplay"></div></p>
+
+    {% if display_trust_score %}
+    <script type="text/javascript">
+        document.addEventListener("DOMContentLoaded", function(event) {
+            setTrustScore('{{ msin }}', 'trustScoreDisplay');
+        });
+    </script>
+    {% else %}
+    <p><button onclick="setTrustScore('{{ msin }}', 'trustScoreDisplay')">Calculate trust score</button></p>
+    {% endif %}
+    
     <p>
         <table class="table m-table table-bordered table-hover table-heading">
             <thead>

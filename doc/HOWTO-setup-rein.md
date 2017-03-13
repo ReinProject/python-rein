@@ -16,8 +16,11 @@ Before following this tutorial, you'll need a few things.
 
 You should have Python 2.7 with pip installed on your computer and be reasonably certain that the computer is free of malware.
 
-You should have a flash drive or two and a piece of paper. These will be used to save copies of the seed, a list of words that can be used to recover your
-identity should your computer be compromised or your data lost.
+You should also have Python's setuptools and flask packages installed.
+
+    sudo pip install setuptools flask
+
+You should have a flash drive or two and a piece of paper. These will be used to save copies of the seed, a list of words that can be used to recover your identity should your computer be compromised or your data lost.
 
 Once you have all of the prerequisites out of the way, let's move on to installing the python-rein client.
 
@@ -29,8 +32,8 @@ The first step in using Rein is to install python-rein on your computer.
 
 Let's download `python-rein` now from one of these links:
 
-    [Download (reinproject.org)](https://reinproject.org/bin/latest)
-    [Download (github)](https://github.com/ReinProject/python-rein/archive/v0.3.0-beta.zip)
+ * [Download (reinproject.org)](https://reinproject.org/bin/latest)
+ * [Download (github)](https://github.com/ReinProject/python-rein/archive/v0.3.0-beta.zip)
 
 Unzip this into folder python-rein.
 
