@@ -64,7 +64,7 @@ function confirmMnemonic() {
     conditions = [];
     for (var i = 0; i < wordsToCheck.length; i++) {
         wordNo = wordsToCheck[i];
-        conditions[i] = document.getElementById('word' + wordNo).value == mnemonic[wordNo - 1];
+        conditions[i] = $.trim(document.getElementById('word' + wordNo).value) == mnemonic[wordNo - 1];
     }
     for (var i = 0; i < conditions.length; i++) {
         if (conditions[i] == false) {
