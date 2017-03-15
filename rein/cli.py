@@ -1684,6 +1684,7 @@ def start(multi, identity, setup):
 
         return render_template('settings.html', user=user, hidden_jobs=hidden_jobs, hidden_bids=hidden_bids, hidden_mediators=hidden_mediators, fee=fee, trust_score=trust_score)
 
+<<<<<<< HEAD
     @app.route("/wallet", methods=['GET'])
     def wallet():
         fee = float(PersistConfig.get(rein, 'fee', 0.001))
@@ -1732,6 +1733,11 @@ def start(multi, identity, setup):
             print "Unexpected error: ", detail
             return 'false'
         return 'true'
+
+    @app.route('/user_search/<search_input>', methods=['GET'])
+    def user_search(search_input):
+        if not search_input:
+            return 'false'
 
     @app.route("/post", methods=['POST', 'GET'])
     def job_post():
