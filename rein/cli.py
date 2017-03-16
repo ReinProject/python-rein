@@ -1684,7 +1684,6 @@ def start(multi, identity, setup):
 
         return render_template('settings.html', user=user, hidden_jobs=hidden_jobs, hidden_bids=hidden_bids, hidden_mediators=hidden_mediators, fee=fee, trust_score=trust_score)
 
-<<<<<<< HEAD
     @app.route("/wallet", methods=['GET'])
     def wallet():
         fee = float(PersistConfig.get(rein, 'fee', 0.001))
@@ -1738,6 +1737,16 @@ def start(multi, identity, setup):
     def user_search(search_input):
         if not search_input:
             return 'false'
+        sel_url = "{0}query?owner={1}&query=get_user&testnet={2}&search_input={3}"
+        data = safe_get(log, sel_url.format(url, user.maddr, rein.testnet, search_input))
+        data = data['get_user']
+
+        if 'error' in data or not data:
+            return 'false'
+
+        # Reroute to display page with data
+
+        return 'true'
 
     @app.route("/post", methods=['POST', 'GET'])
     def job_post():
