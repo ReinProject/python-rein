@@ -1629,6 +1629,15 @@ def start(multi, identity, setup):
         if not search_input:
             return 'false'
 
+        sel_url = "{0}query?owner={1}&query=get_user&testnet={2}&search_input={3}"
+        data = safe_get(log, sel_url.format(url, user.maddr, rein.testnet, search_input))
+        data = data['get_user']
+
+        if 'error' in data or not data:
+            return 'false'
+
+        # Reroute to display page with data
+
         return 'true'
 
     @app.route("/post", methods=['POST', 'GET'])
