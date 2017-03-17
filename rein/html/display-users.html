@@ -1,0 +1,30 @@
+{% extends "layout.html" %}
+{% from "_form_helpers.html" import render_error %}
+{% block body %}
+
+<br>
+<div class="well">    
+    <p>
+        name/handle (linked to /profile/<msin>), contact (linked with mailto:), SIN, simple rating
+        <table class="table m-table table-bordered table-hover table-heading">
+            <thead>
+                <th>Handle</th>
+                <th>Contact</th>
+                <th>SIN</th>
+                <th>Rating</th>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr>
+                    <td>{{ user.User|safe }}</td>
+                    <td>{{ user.Contact|safe }}</td>
+                    <td>{{ user.MSIN|safe }}</td>
+                    <td>{{ user.Rating|safe }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </p>
+</div>
+
+{% endblock %}

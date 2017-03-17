@@ -1624,6 +1624,28 @@ def start(multi, identity, setup):
 
         return render_template('settings.html', user=user, hidden_jobs=hidden_jobs, hidden_bids=hidden_bids, hidden_mediators=hidden_mediators, fee=fee, trust_score=trust_score)
 
+    @app.route('/display-users', methods=['GET'])
+    def display_users():
+        data = []
+        try:
+            data = request.args['data']
+
+        except:
+            pass
+
+        data = json.loads(data)
+        users = []
+        for enrollment in data:
+            enrolled_user = {}
+            enrollment = document_to_dict(enrollment)
+            enrolled_user['User'] = '<a href="/profile/{}">{}</a>'.format(enrollment['Master signing address'], enrollment['User'])
+            enrolled_user['Contact'] = '<a href="mailto:/" target="_blank">{}</a>'.format(enrollment['Contact'])
+            enrolled_user['MSIN'] = enrollment['Master signing address']
+            enrolled_user['Rating'] = get_average_user_rating_display(log, url, user, rein, enrolled_user['MSIN'])
+            users.append(enrolled_user)
+
+        return render_template('display-users.html', user=user, users=users)
+
     @app.route('/user_search/<search_input>', methods=['GET'])
     def user_search(search_input):
         if not search_input:
@@ -1636,9 +1658,7 @@ def start(multi, identity, setup):
         if 'error' in data or not data:
             return 'false'
 
-        # Reroute to display page with data
-
-        return 'true'
+        return json.dumps(data)
 
     @app.route("/post", methods=['POST', 'GET'])
     def job_post():
