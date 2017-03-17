@@ -59,7 +59,7 @@ You can use --help with any of the commands to get more information; for example
 
     $ rein setup --help
 
-##Step 2 -- Create Your Account
+## Step 2 -- Create Your Account
 
 Let's create your Rein user account.
 
