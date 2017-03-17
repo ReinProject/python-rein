@@ -9,8 +9,10 @@ function search(inputId) {
         url: "/user_search/" + searchInput,
         contentType: "application/json",
         success: function(data) {
-            if (data != 'true') {
-                alert('User could not be found')
+            if (data == 'false') {
+                alert('User could not be found');
+            } else {
+                document.location = '/display-users?data=' + data;
             }
         }
     })
