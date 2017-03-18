@@ -2,11 +2,13 @@
 {% from "_form_helpers.html" import render_error %}
 {% block body %}
 
+<link href="/plugins/datatables/dataTables.bootstrap.min.css" rel="stylesheet">
+<script src="/js/displayUsers.js"></script>
+
 <br>
 <div class="well">    
     <p>
-        name/handle (linked to /profile/<msin>), contact (linked with mailto:), SIN, simple rating
-        <table class="table m-table table-bordered table-hover table-heading">
+        <table class="table m-table table-bordered table-hover table-heading" id="userTable"> 
             <thead>
                 <th>Handle</th>
                 <th>Contact</th>
