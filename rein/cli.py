@@ -2215,6 +2215,12 @@ def start(multi, identity, setup):
 
         worker_msin = generate_sin(combined['Worker master address']) if 'Worker master address' in combined else ''
 
+        explorer = PersistConfig.get(
+                      rein,
+                      'explorer',
+                      'https://testnet.blockexplorer.com' if rein.testnet else 'https://blockexplorer.com'
+                   )
+
         return render_template('job.html',
                             rein=rein,
                             user=user,
@@ -2224,7 +2230,7 @@ def start(multi, identity, setup):
                             state=state,
                             found=found,
                             fee=PersistConfig.get(rein, 'fee', 0.001),
-                            explorer=PersistConfig.get(rein, 'explorer', 'https://blockexplorer.com'),
+                            explorer=explorer,
                             unique=unique_documents,
                             job=combined,
                             job_creator_msin=generate_sin(combined['Job creator master address']),
