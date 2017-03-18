@@ -129,18 +129,17 @@ def get_average_user_rating(log, url, user, rein, msin):
     """Gets the average rating a user (identified by his msin) has received
     along with the number of ratings he has received"""
 
-    sel_url = "{0}query?owner={1}&delegate={2}&query=get_user_ratings&testnet={3}&msin={4}"
-    data = safe_get(log, sel_url.format(url, user.maddr, user.daddr, rein.testnet, msin))
-    data = data['get_user_ratings']
-
-    # If there was a server-side error, return None
-    if 'error' in data:
-        return None
+    ratings = rein.session.query(Document).filter(and_(
+        Document.testnet == rein.testnet,
+        Document.contents.like('%\nRein Rating%')
+    )).filter(
+        Document.contents.like('%\nUser msin: {}%'.format(msin))
+    ).limit(100).all()
 
     # Create a list of all the ratings the user has received
     rating_values = []
-    for rating_data in data:
-        rating = document_to_dict(rating_data['value'])
+    for rating_data in ratings:
+        rating = document_to_dict(rating_data.contents)
         try:
             rating_value = int(rating['Rating'])
             rating_values.append(rating_value)
@@ -170,18 +169,17 @@ def get_average_user_rating_display(log, url, user, rein, msin, cli=False):
 def get_all_user_ratings(log, url, user, rein, msin):
     """Returns a list of a user's ratings."""
 
-    sel_url = "{0}query?owner={1}&delegate={2}&query=get_user_ratings&testnet={3}&msin={4}"
-    data = safe_get(log, sel_url.format(url, user.maddr, user.daddr, rein.testnet, msin))
-    data = data['get_user_ratings']
-
-    # If there was a server-side error, return None
-    if 'error' in data:
-        return []
+    rating_docs = rein.session.query(Document).filter(and_(
+        Document.testnet == rein.testnet,
+        Document.contents.like('%\nRein Rating%')
+    )).filter(
+        Document.contents.like('%\nUser msin: {}%'.format(msin))
+    ).limit(100).all()
 
     # Create a list of all the ratings the user has received
     ratings = []
-    for rating_data in data:
-        rating = document_to_dict(rating_data['value'])
+    for rating_data in rating_docs:
+        rating = document_to_dict(rating_data.contents)
         ratings.append(
             {
                 'rating_value': '{} <i class="fa fa-star"></i>'.format(float(rating['Rating'])),
