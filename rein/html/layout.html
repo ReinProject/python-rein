@@ -62,7 +62,12 @@
 						<a href="#" class="about">about</a>
 						<ul class="nav navbar-nav pull-right panel-menu">
                             <li>
-                                <input type="text" placeholder="Msin, username or contact", id="searchInput">
+                                <input 
+                                    type="text" 
+                                    placeholder="Search..." 
+                                    id="searchInput"
+                                    onkeydown = "if (event.keyCode == 13) {search('searchInput')}" 
+                                >
                             </li>
                             <li>
                                 <button onclick="search('searchInput')">Search</button>
