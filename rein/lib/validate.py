@@ -113,7 +113,7 @@ def parse_sig(sig):
         m = re.search('\n(Rein .*)\n', sig)
         if m:
             ret['Title'] = m.group(1)
-        matches = re.finditer("(.+?):\s(.+)\n", sig)
+        matches = re.finditer("(.+?):\s(.*)\n", sig)
         for match in matches:
             ret[match.group(1)] = match.group(2)
         m = re.search(
