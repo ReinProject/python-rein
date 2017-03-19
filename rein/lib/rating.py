@@ -157,7 +157,7 @@ def get_average_user_rating(log, url, user, rein, msin):
         return None
 
     average_rating = float(sum(rating_values)) / float(len(rating_values))
-    return (average_rating, len(rating_values))
+    return (round(average_rating, 1), len(rating_values))
 
 def get_average_user_rating_display(log, url, user, rein, msin, cli=False):
     """Returns a user's average rating in html format (as a link to the user's ratings page)."""
@@ -262,7 +262,7 @@ def calculate_trust_score(dest_msin=None, source_msin=None, rein=None, test=Fals
             'links': 0
     }
     if len(trust_links) != 0:
-        dest_trust_score['score'] = float(sum(trust_links)) / float(len(trust_links))
+        dest_trust_score['score'] = round(float(sum(trust_links)) / float(len(trust_links)), 1)
         dest_trust_score['links'] = len(trust_links)        
     if not test:
         dest_trust_score = json.dumps(dest_trust_score)
