@@ -1615,7 +1615,7 @@ def start(multi, identity, setup):
     @app.route('/trust_score/<dest_msin>', defaults={'source_msin': user.msin})
     @app.route('/trust_score/<dest_msin>/<source_msin>', methods=['GET'])
     def trust_score(dest_msin, source_msin):
-        return calculate_trust_score(dest_msin, source_msin, rein)
+        return calculate_trust_score(dest_msin, source_msin, rein, url=url, user=user, log=log)
 
     @app.route('/settings', methods=['GET'])
     def settings():

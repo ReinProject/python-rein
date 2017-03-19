@@ -1,3 +1,5 @@
+import itertools
+
 from flask import flash
 
 from .market import assemble_document, sign_and_store_document
@@ -116,7 +118,7 @@ def get_average_user_rating(log, url, user, rein, msin):
     """Gets the average rating a user (identified by his msin) has received
     along with the number of ratings he has received"""
 
-    sel_url = "{0}query?owner={1}&delegate={2}&query=get_user_ratings&testnet={3}&msin={4}"
+    sel_url = "{0}query?owner={1}&delegate={2}&query=get_user_ratings&testnet={3}&dest={4}"
     raw_data = safe_get(log, sel_url.format(url, user.maddr, user.daddr, rein.testnet, msin))
     raw_data = raw_data['get_user_ratings']
 
@@ -158,7 +160,7 @@ def get_average_user_rating_display(log, url, user, rein, msin, cli=False):
 def get_all_user_ratings(log, url, user, rein, msin):
     """Returns a list of a user's ratings."""
 
-    sel_url = "{0}query?owner={1}&delegate={2}&query=get_user_ratings&testnet={3}&msin={4}"
+    sel_url = "{0}query?owner={1}&delegate={2}&query=get_user_ratings&testnet={3}&dest={4}"
     raw_data = safe_get(log, sel_url.format(url, user.maddr, user.daddr, rein.testnet, msin))
     raw_data = raw_data['get_user_ratings']
 
@@ -183,18 +185,24 @@ def get_all_user_ratings(log, url, user, rein, msin):
 
     return ratings
 
-def calculate_trust_score(dest_msin=None, source_msin=None, rein=None, test=False, test_ratings=[]):
+def calculate_trust_score(dest_msin=None, source_msin=None, rein=None, test=False, test_ratings=[], url=None, user=None, log=None):
     """Calculates the trust score for a user as identified by his msin.
     Algorithm based on the level 2 trust system implemented by Bitcoin OTC
     and outlined at https://wiki.bitcoin-otc.com/wiki/OTC_Rating_System#Notes_about_gettrust."""
 
     # Grab all ratings commited by source_msin (the client)
-    ratings_by_source = None
+    ratings_by_source = []
     if not test:
-        ratings_by_source = rein.session.query(Document).filter(and_(
-            Document.doc_type == 'rating',
-            Document.contents.like('%\nRater msin: {}%'.format(source_msin))
-        )).all()
+        sel_url = "{0}query?owner={1}&delegate={2}&query=get_user_ratings&testnet={3}&source={4}"
+        raw_data = safe_get(log, sel_url.format(url, user.maddr, user.daddr, rein.testnet, source_msin))
+        raw_data = raw_data['get_user_ratings']
+
+        # If there was a server-side error, return None
+        if 'error' in raw_data:
+            return []
+
+        data = [rating['value'] for rating in raw_data]
+        ratings_by_source = filter_and_parse_valid_sigs(rein, data)
 
     else:
         ratings_by_source = [test_rating for test_rating in test_ratings if test_rating['Rater msin'] == 'SourceMsin']
@@ -202,16 +210,9 @@ def calculate_trust_score(dest_msin=None, source_msin=None, rein=None, test=Fals
     # Compile list of users (by msin) that have been rated by source and their ratings
     rated_by_source = []
     for rating in ratings_by_source:
-        rating_dict = None
-        if not test:
-            rating_dict = document_to_dict(rating.contents)
-
-        else:
-            rating_dict = rating
-
-        msin_rated = rating_dict['User msin']
-        rating_value = int(rating_dict['Rating'])
-        if not msin_rated in rated_by_source:
+        msin_rated = rating['User msin']
+        rating_value = int(rating['Rating'])
+        if not msin_rated in list(itertools.chain(*rated_by_source)):
             rated_by_source.append((msin_rated, rating_value))
 
     # Determine if any of the users rated by source or source have rated dest
@@ -221,28 +222,26 @@ def calculate_trust_score(dest_msin=None, source_msin=None, rein=None, test=Fals
     trust_links = []
     for vouched_user in vouched_users:
         (vouched_user_msin, vouched_user_trust) = vouched_user
-        dest_ratings_by_vouched_user = None
+        dest_ratings_by_vouched_user = []
         if not test:
-            dest_ratings_by_vouched_user = rein.session.query(Document).filter(
-                and_(
-                    Document.doc_type == 'rating',
-                    Document.contents.like('%\nRater msin: {}%'.format(vouched_user_msin)),
-                    Document.contents.like('%\nUser msin: {}%'.format(dest_msin))
-                )).all()
+            sel_url = "{0}query?owner={1}&delegate={2}&query=get_user_ratings&testnet={3}&source={4}&dest={5}"
+            raw_data = safe_get(log, sel_url.format(url, user.maddr, user.daddr, rein.testnet, vouched_user_msin, dest_msin))
+            raw_data = raw_data['get_user_ratings']
+
+            # If there was a server-side error, return None
+            if 'error' in raw_data:
+                return []
+
+            data = [rating['value'] for rating in raw_data]
+            dest_ratings_by_vouched_user = filter_and_parse_valid_sigs(rein, data)
+
         else:
             dest_ratings_by_vouched_user = [test_rating for test_rating in test_ratings if test_rating['Rater msin'] == vouched_user_msin and test_rating['User msin'] == 'DestMsin']
 
         for rating in dest_ratings_by_vouched_user:
-            link_rating = None
-            if not test:
-                link_rating = document_to_dict(rating.contents)
-
-            else:
-                link_rating = rating
-
             trust_values = [
                 vouched_user_trust, 
-                int(link_rating['Rating'])
+                int(rating['Rating'])
             ]
             trust_links.append(min(trust_values))
 
