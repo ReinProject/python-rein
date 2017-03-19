@@ -3,6 +3,7 @@ from flask import flash
 from .market import assemble_document, sign_and_store_document
 from .document import Document
 from .io import safe_get
+from .validate import filter_and_parse_valid_sigs
 from .util import document_to_dict, get_user_name
 from .order import Order, STATE
 from .document import Document
@@ -115,19 +116,21 @@ def get_average_user_rating(log, url, user, rein, msin):
     """Gets the average rating a user (identified by his msin) has received
     along with the number of ratings he has received"""
 
-    ratings = rein.session.query(Document).filter(and_(
-        Document.testnet == rein.testnet,
-        Document.contents.like('%\nRein Rating%')
-    )).filter(
-        Document.contents.like('%\nUser msin: {}%'.format(msin))
-    ).limit(100).all()
+    sel_url = "{0}query?owner={1}&delegate={2}&query=get_user_ratings&testnet={3}&msin={4}"
+    raw_data = safe_get(log, sel_url.format(url, user.maddr, user.daddr, rein.testnet, msin))
+    raw_data = raw_data['get_user_ratings']
 
+    # If there was a server-side error, return None
+    if 'error' in raw_data:
+        return None
+
+    data = [rating['value'] for rating in raw_data]
+    data = filter_and_parse_valid_sigs(rein, data)
     # Create a list of all the ratings the user has received
     rating_values = []
-    for rating_data in ratings:
-        rating = document_to_dict(rating_data.contents)
+    for rating_data in data:
         try:
-            rating_value = int(rating['Rating'])
+            rating_value = int(rating_data['Rating'])
             rating_values.append(rating_value)
 
         except:
@@ -155,24 +158,26 @@ def get_average_user_rating_display(log, url, user, rein, msin, cli=False):
 def get_all_user_ratings(log, url, user, rein, msin):
     """Returns a list of a user's ratings."""
 
-    rating_docs = rein.session.query(Document).filter(and_(
-        Document.testnet == rein.testnet,
-        Document.contents.like('%\nRein Rating%')
-    )).filter(
-        Document.contents.like('%\nUser msin: {}%'.format(msin))
-    ).limit(100).all()
+    sel_url = "{0}query?owner={1}&delegate={2}&query=get_user_ratings&testnet={3}&msin={4}"
+    raw_data = safe_get(log, sel_url.format(url, user.maddr, user.daddr, rein.testnet, msin))
+    raw_data = raw_data['get_user_ratings']
 
+    # If there was a server-side error, return None
+    if 'error' in raw_data:
+        return []
+
+    data = [rating['value'] for rating in raw_data]
+    data = filter_and_parse_valid_sigs(rein, data)
     # Create a list of all the ratings the user has received
     ratings = []
-    for rating_data in rating_docs:
-        rating = document_to_dict(rating_data.contents)
+    for rating_data in data:
         ratings.append(
             {
-                'rating_value': '{} <i class="fa fa-star"></i>'.format(float(rating['Rating'])),
-                'comments': rating['Comments'],
-                'rated_by_msin': rating['Rater msin'],
-                'rated_by_name': get_user_name(log, url, user, rein, rating['Rater msin']),
-                'rated_by_rating': get_average_user_rating_display(log, url, user, rein, rating['Rater msin'])
+                'rating_value': '{} <i class="fa fa-star"></i>'.format(float(rating_data['Rating'])),
+                'comments': rating_data['Comments'],
+                'rated_by_msin': rating_data['Rater msin'],
+                'rated_by_name': get_user_name(log, url, user, rein, rating_data['Rater msin']),
+                'rated_by_rating': get_average_user_rating_display(log, url, user, rein, rating_data['Rater msin'])
             }
         )
 
