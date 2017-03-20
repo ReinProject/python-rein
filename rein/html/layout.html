@@ -61,6 +61,17 @@
 					<div class="col-xs-4 col-sm-8 top-panel-right">
 						<a href="#" class="about">about</a>
 						<ul class="nav navbar-nav pull-right panel-menu">
+                            <li>
+                                <input 
+                                    type="text" 
+                                    placeholder="Search..." 
+                                    id="searchInput"
+                                    onkeydown = "if (event.keyCode == 13) {search('searchInput')}" 
+                                >
+                            </li>
+                            <li>
+                                <button onclick="search('searchInput')">Search</button>
+                            </li>
 							<!--<li class="hidden-xs">
 								<a href="index.html" class="modal-link">
 									<i class="fa fa-bell"></i>
@@ -214,7 +225,10 @@
 <!-- Include all compiled plugins (below), or include individual files as needed -->
 <script src="/plugins/bootstrap/bootstrap.min.js"></script>
 <script src="/plugins/raty-fa/jquery.raty-fa.js"></script>
+<script src="/plugins/datatables/jquery.dataTables.min.js"></script>
+<script src="/plugins/datatables/dataTables.bootstrap.min.js"></script>
 <script src="/js/hide.js"></script>
+<script src="/js/search.js"></script>
 <!-- All functions for this theme + document.ready processing -->
 <script src="/js/devoops.js"></script>
 </body>

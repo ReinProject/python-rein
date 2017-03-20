@@ -1,0 +1,32 @@
+{% extends "layout.html" %}
+{% from "_form_helpers.html" import render_error %}
+{% block body %}
+
+<link href="/plugins/datatables/dataTables.bootstrap.min.css" rel="stylesheet">
+<script src="/js/displayUsers.js"></script>
+
+<br>
+<div class="well">    
+    <p>
+        <table class="table m-table table-bordered table-hover table-heading" id="userTable"> 
+            <thead>
+                <th>Handle</th>
+                <th>Contact</th>
+                <th>SIN</th>
+                <th>Rating</th>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr>
+                    <td>{{ user.User|safe }}</td>
+                    <td>{{ user.Contact|safe }}</td>
+                    <td>{{ user.MSIN|safe }}</td>
+                    <td>{{ user.Rating|safe }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </p>
+</div>
+
+{% endblock %}

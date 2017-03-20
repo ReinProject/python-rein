@@ -1615,7 +1615,7 @@ def start(multi, identity, setup):
     @app.route('/trust_score/<dest_msin>', defaults={'source_msin': user.msin})
     @app.route('/trust_score/<dest_msin>/<source_msin>', methods=['GET'])
     def trust_score(dest_msin, source_msin):
-        return calculate_trust_score(dest_msin, source_msin, rein)
+        return calculate_trust_score(dest_msin, source_msin, rein, url=url, user=user, log=log)
 
     @app.route('/settings', methods=['GET'])
     def settings():
@@ -1637,6 +1637,42 @@ def start(multi, identity, setup):
         trust_score = PersistConfig.get(rein, 'trust_score', False)
 
         return render_template('settings.html', user=user, hidden_jobs=hidden_jobs, hidden_bids=hidden_bids, hidden_mediators=hidden_mediators, fee=fee, trust_score=trust_score)
+
+    @app.route('/display-users', methods=['GET'])
+    def display_users():
+        data = []
+        try:
+            data = request.args['data']
+
+        except:
+            pass
+
+        data = json.loads(data)
+        users = []
+        for enrollment in data:
+            enrolled_user = {}
+            enrollment = document_to_dict(enrollment)
+            enrolled_user['User'] = '<a href="/profile/{}">{}</a>'.format(enrollment['Master signing address'], enrollment['User'])
+            enrolled_user['Contact'] = '<a href="mailto:/" target="_blank">{}</a>'.format(enrollment['Contact'])
+            enrolled_user['MSIN'] = enrollment['Secure Identity Number']
+            enrolled_user['Rating'] = get_average_user_rating_display(log, url, user, rein, enrolled_user['MSIN'])
+            users.append(enrolled_user)
+
+        return render_template('display-users.html', user=user, users=users)
+
+    @app.route('/user_search/<search_input>', methods=['GET'])
+    def user_search(search_input):
+        if not search_input:
+            return 'false'
+
+        sel_url = "{0}query?owner={1}&query=get_user&testnet={2}&search_input={3}"
+        data = safe_get(log, sel_url.format(url, user.maddr, rein.testnet, search_input))
+        data = data['get_user']
+
+        if 'error' in data or not data:
+            return 'false'
+
+        return json.dumps(data)
 
     @app.route("/post", methods=['POST', 'GET'])
     def job_post():
