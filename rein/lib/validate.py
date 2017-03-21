@@ -80,15 +80,18 @@ def strip_armor(sig, dash_space=False):
 
 
 def parse_document(document):
-    ret = {}
-    m = re.search('(Rein .*)\n', document)
-    if m:
-        ret['Title'] = m.group(1)
-    matches = re.finditer("(.+?):\s(.+)(\n|$)", document)
-    for match in matches:
-        ret[match.group(1)] = match.group(2)
-    return ret
-
+    try:
+        json_object = json.loads(document)
+    except ValueError, e: #for backwards compatibility
+        ret = {}
+        m = re.search('(Rein .*)\n', document)
+        if m:
+            ret['Title'] = m.group(1)
+        matches = re.finditer("(.+?):\s(.+)(\n|$)", document)
+        for match in matches:
+            ret[match.group(1)] = match.group(2)
+        return ret
+    return json_object
 
 def parse_sig(sig):
     '''
@@ -97,25 +100,27 @@ def parse_sig(sig):
     assigned within the message, for example:
        parse_sig(sig)['Name/handle'] === "David Sterry"
     '''
-    ret = {}
-    m = re.search('\n(Rein .*)\n', sig)
-    if m:
-        ret['Title'] = m.group(1)
-    matches = re.finditer("(.+?):\s(.+)\n", sig)
-    for match in matches:
-        ret[match.group(1)] = match.group(2)
-    m = re.search(
-        "-{5}BEGIN SIGNATURE-{5}\n([A-z\d=+/]+)\n([A-z\d=+/]+)"
-        "\n-{5}END BITCOIN SIGNED MESSAGE-{5}",
-        sig
-    )
-    if m:
-        ret['signature_address'] = m.group(1)
-        ret['signature'] = m.group(2)
-    else:
-        return False
-    return ret
-
+    try:
+        json_object = json.loads(document)
+    except ValueError, e: #for backwards compatibility
+        ret = {}
+        m = re.search('\n(Rein .*)\n', sig)
+        if m:
+            ret['Title'] = m.group(1)
+        matches = re.finditer("(.+?):\s(.+)\n", sig)
+        for match in matches:
+            ret[match.group(1)] = match.group(2)
+        m = re.search(
+            "-{5}BEGIN SIGNATURE-{5}\n([A-z\d=+/]+)\n([A-z\d=+/]+)"
+            "\n-{5}END BITCOIN SIGNED MESSAGE-{5}",
+            sig
+        )
+        if m:
+            ret['signature_address'] = m.group(1)
+            ret['signature'] = m.group(2)
+        else:
+            return False
+    return json_object
 
 def filter_valid_sigs(rein, docs, expected_field=None):
     valid = []

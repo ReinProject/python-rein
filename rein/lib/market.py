@@ -7,7 +7,7 @@ from .io import safe_get
 from sqlalchemy import and_
 import os
 import click
-
+import json
 
 def assemble_document(title, fields):
     """
@@ -35,11 +35,12 @@ def assemble_document(title, fields):
         else:
             entry['value'] = click.prompt(prompt)
         data.append(entry)
-    document = "Rein %s\n" % title
-    for entry in data:
-        document = document + entry['label'] + ": " + entry['value'] + "\n"
-    return document[:-1]
 
+    document = {}
+    document['Title'] = "Rein %s\n" % title
+    for entry in data:
+        document[entry['label']] = entry['value']
+    return json.dumps(document,sort_keys=True)
 
 def sign_and_store_document(rein, doc_type, document, signature_address=None, signature_key=None, store=True, overwrite_hash=None):
     """
@@ -67,10 +68,10 @@ def sign_and_store_document(rein, doc_type, document, signature_address=None, si
 
     if validated:
         # insert signed document into documents table
-        b = "-----BEGIN BITCOIN SIGNED MESSAGE-----"
-        c = "-----BEGIN SIGNATURE-----"
-        d = "-----END BITCOIN SIGNED MESSAGE-----"
-        signed = "%s\n%s\n%s\n%s\n%s\n%s" % (b, document, c, signature_address, signature, d)
+        document_json = json.loads(document)
+        document_json["signature_address"] = signature_address
+        document_json["signature"] = signature
+        signed = json.dumps(document_json,sort_keys=True)
         click.echo('\n' + signed + '\n')
         # If document doesn't already exist, create
         if store and not overwrite_hash:

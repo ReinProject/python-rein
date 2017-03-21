@@ -212,6 +212,7 @@ def post(multi, identity, defaults, dry_run):
                 {'label': 'Job creator delegate address',   'value': user.daddr},
              ]
     document_text = assemble_document('Job', fields)
+    print("document_text = "+document_text)
     if not rein.testnet:
         m = re.search('test', document_text, re.IGNORECASE)
         if m:
@@ -1389,7 +1390,7 @@ def start(multi, identity, setup):
     from .lib.bitcoinaddress import generate_sin
 
     host = '127.0.0.1'
-    port = 5001
+    port = 5002
 
     tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'html')
 
@@ -1501,7 +1502,8 @@ def start(multi, identity, setup):
         return send_from_directory(tmpl_dir, path)
 
     if rein.has_no_account() or setup:
-        webbrowser.open('http://'+host+':' + str(port) + '/setup')
+        #webbrowser.open('http://'+host+':' + str(port) + '/setup')
+        print('open '+'http://'+host+':' + str(port) + '/setup')
         app.run(host=host, port=port, debug=rein.debug)
         return
     else:
@@ -2597,8 +2599,8 @@ def start(multi, identity, setup):
                         documents=documents,
                         orders=relevant_orders)
 
-    webbrowser.open('http://'+host+':' + str(port))
-    print("testnet = "+str(rein.testnet))
+    #webbrowser.open('http://'+host+':' + str(port))
+    print('open '+'http://'+host+':' + str(port))
     app.run(host=host, port=port, debug=rein.debug)
 
     # testing steps: Disable tor. Then turn on debug because debug doesn't work when socket is overriden
