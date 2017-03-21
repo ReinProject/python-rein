@@ -120,6 +120,7 @@ def parse_sig(sig):
             ret['signature'] = m.group(2)
         else:
             return False
+        return ret
     return json_object
 
 def filter_valid_sigs(rein, docs, expected_field=None):
