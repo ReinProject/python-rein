@@ -67,18 +67,23 @@ def choose_best_block(blocks):
 
 
 def strip_armor(sig, dash_space=False):
-    '''Removes ASCII-armor from a signed message by default exlcudes 'dash-space' headers'''
-    sig = sig.replace('- ----', '-' * 5) if dash_space else sig
-    sig = re.sub("-{5}BEGIN BITCOIN SIGNED MESSAGE-{5}", "", sig)
-    sig = re.sub(
-        "\n+-{5}BEGIN SIGNATURE-{5}[\n\dA-z+=/]+-{5}END BITCOIN SIGNED MESSAGE-{5}\n*",
-        "",
-        sig
-    )
-    sig = re.sub("^\n", "", sig)
-    sig = re.sub("\n\n", "", sig)
-    return sig
-
+    try:
+        json_object = json.loads(sig)
+        json_object.pop("signature")
+        json_object.pop("signature_address")
+        return json.dumps(json_object,sort_keys=True)
+    except ValueError, e:
+        '''Removes ASCII-armor from a signed message by default exlcudes 'dash-space' headers'''
+        sig = sig.replace('- ----', '-' * 5) if dash_space else sig
+        sig = re.sub("-{5}BEGIN BITCOIN SIGNED MESSAGE-{5}", "", sig)
+        sig = re.sub(
+            "\n+-{5}BEGIN SIGNATURE-{5}[\n\dA-z+=/]+-{5}END BITCOIN SIGNED MESSAGE-{5}\n*",
+            "",
+            sig
+        )
+        sig = re.sub("^\n", "", sig)
+        sig = re.sub("\n\n", "", sig)
+        return sig
 
 def parse_document(document):
     try:

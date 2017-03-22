@@ -37,7 +37,7 @@ def assemble_document(title, fields):
         data.append(entry)
 
     document = {}
-    document['Title'] = "Rein %s\n" % title
+    document['Title'] = "Rein %s" % title
     for entry in data:
         document[entry['label']] = entry['value']
     return json.dumps(document,sort_keys=True)
