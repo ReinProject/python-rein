@@ -7,6 +7,7 @@ import time
 from .io import safe_get
 from .util import unique
 from .block import Block
+import json
 
 def filter_out_expired(rein, user, urls, jobs):
     live = []
@@ -101,7 +102,7 @@ def parse_sig(sig):
        parse_sig(sig)['Name/handle'] === "David Sterry"
     '''
     try:
-        json_object = json.loads(document)
+        json_object = json.loads(sig)
     except ValueError, e: #for backwards compatibility
         ret = {}
         m = re.search('\n(Rein .*)\n', sig)

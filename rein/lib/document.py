@@ -6,6 +6,7 @@ from .validate import filter_valid_sigs, parse_document
 from .order import Order
 from .io import safe_get
 from .util import document_to_dict
+import json
 
 Base = declarative_base()
 
@@ -106,11 +107,15 @@ class Document(Base):
 
     @staticmethod
     def get_job_id(text):
-        m = re.search('Job ID: (.+)\n', text)
-        if m:
-            return m.group(1)
-        else:
-            return None
+        try:
+            json_object = json.loads(text)
+            return json_object["Job ID"]
+        except ValueError, e:
+            m = re.search('Job ID: (.+)\n', text)
+            if m:
+                return m.group(1)
+            else:
+                return None
 
     @staticmethod
     def get_document_type(document):

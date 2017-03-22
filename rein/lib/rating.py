@@ -80,8 +80,7 @@ def rating_identifier(fields):
 	relevant_fields = ['User msin', 'Job id', 'Rater msin']
 	for field in fields:
 		if field['label'] in relevant_fields:
-			identifier += field['label'] + ": " + field['value'] + "\n"
-
+			identifier += '"'+field['label']+'": "'+field['value']+'"%'
 	return identifier
 
 def add_rating(rein, user, testnet, rating, user_msin, job_id, rated_by_msin, comments):
@@ -89,15 +88,15 @@ def add_rating(rein, user, testnet, rating, user_msin, job_id, rated_by_msin, co
     rating is adjusted"""
     fields = [
         {'label': 'Rating',     'value': rating},
-        {'label': 'User msin',    'value': user_msin},
         {'label': 'Job id',     'value': job_id},
         {'label': 'Rater msin',   'value': rated_by_msin},
+        {'label': 'User msin',    'value': user_msin},
         {'label': 'Comments',   'value': comments},
      ]
     
     document_text = assemble_document('Rating', fields)
     update_identifier = rating_identifier(fields)
-    look_for = '%\n{}%'.format(update_identifier)
+    look_for = '%{}'.format(update_identifier)
     update_rating = rein.session.query(Document).filter(and_(Document.testnet == testnet, Document.contents.like(look_for), Document.doc_type == 'rating')).first()
 
     store = True
@@ -190,7 +189,7 @@ def calculate_trust_score(dest_msin=None, source_msin=None, rein=None, test=Fals
     if not test:
         ratings_by_source = rein.session.query(Document).filter(and_(
             Document.doc_type == 'rating',
-            Document.contents.like('%\nRater msin: {}%'.format(source_msin))
+            Document.contents.like('%"Rater msin": "{}"%'.format(source_msin))
         )).all()
 
     else:
@@ -223,8 +222,8 @@ def calculate_trust_score(dest_msin=None, source_msin=None, rein=None, test=Fals
             dest_ratings_by_vouched_user = rein.session.query(Document).filter(
                 and_(
                     Document.doc_type == 'rating',
-                    Document.contents.like('%\nRater msin: {}%'.format(vouched_user_msin)),
-                    Document.contents.like('%\nUser msin: {}%'.format(dest_msin))
+                    Document.contents.like('%"Rater msin": "{}"%'.format(vouched_user_msin)),
+                    Document.contents.like('%"User msin": "{}"%'.format(dest_msin))
                 )).all()
         else:
             dest_ratings_by_vouched_user = [test_rating for test_rating in test_ratings if test_rating['Rater msin'] == vouched_user_msin and test_rating['User msin'] == 'DestMsin']
