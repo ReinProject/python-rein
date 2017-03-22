@@ -1747,7 +1747,11 @@ def start(multi, identity, setup):
         for enrollment in data:
             enrolled_user = {}
             enrollment = document_to_dict(enrollment)
-            enrolled_user['User'] = '<a href="/profile/{}">{}</a>'.format(enrollment['Master signing address'], enrollment['User'])
+
+            if not 'Secure Identity Number' in enrollment:
+                continue
+
+            enrolled_user['User'] = '<a href="/profile/{}">{}</a>'.format(enrollment['Secure Identity Number'], enrollment['User'])
             enrolled_user['Contact'] = '<a href="mailto:/" target="_blank">{}</a>'.format(enrollment['Contact'])
             enrolled_user['MSIN'] = enrollment['Secure Identity Number']
             enrolled_user['Rating'] = get_average_user_rating_display(log, url, user, rein, enrolled_user['MSIN'])
