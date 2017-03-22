@@ -6,18 +6,24 @@
 
 <br>
 <div class="well">
-    <p>This page displays ratings received by <b>{{ user_rated }}</b> (msin: {{ msin }}).</p>
+    <h4>User Profile</h4>
+    <p>Name / handle: {{ user_rated }}<br />
+    Contact: <a href="mailto:{{ user.contact }}">{{ user.contact }}</a><br />
+    Master address: {{ user.maddr }}<br />
+    Direct payment address: <a href="{{ explorer }}/address/{{ user.daddr }}">{{ user.daddr }}</a><br />
+    SIN (<a href="https://en.bitcoin.it/wiki/Identity_protocol_v1">?</a>): {{ msin }}</p>
+
     <p><div id="trustScoreDisplay"></div></p>
 
-    {% if display_trust_score %}
+ {% if display_trust_score %}
     <script type="text/javascript">
         document.addEventListener("DOMContentLoaded", function(event) {
             setTrustScore('{{ msin }}', 'trustScoreDisplay');
         });
     </script>
-    {% else %}
+ {% else %}
     <p><button onclick="setTrustScore('{{ msin }}', 'trustScoreDisplay')">Calculate trust score</button></p>
-    {% endif %}
+ {% endif %}
     
     <p>
         <table class="table m-table table-bordered table-hover table-heading">
@@ -31,7 +37,7 @@
                 <tr>
                     <td>{{ rating.rating_value|safe }}</td>
                     <td>{{ rating.comments }}</td>
-                    <td>{{ rating.rated_by_name }} - {{ rating.rated_by_rating|safe }}</a></td>
+                    <td><a href="/profile/{{ rating.rated_by_msin }}">{{ rating.rated_by_name }}</a> - {{ rating.rated_by_rating|safe }}</a></td>
                 </tr>
                 {% endfor %}
             </tbody>

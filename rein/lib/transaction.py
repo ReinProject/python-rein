@@ -5,13 +5,15 @@ from bitcoin.wallet import CBitcoinAddress, CBitcoinSecret, P2PKHBitcoinAddress
 import urllib2, urllib
 import json
 from hashlib import sha256
-api = "blocktrail" #handle this
 from .bucket import Bucket
 from .io import safe_get
 from .persistconfig import PersistConfig
 import click
 
-def unspent_txins(address,testnet):
+
+def unspent_txins(rein, address, testnet):
+    api = PersistConfig.get(rein, 'api', 'blockr')
+    
     if (api == "blockr"):
         if testnet:
             url = "https://tbtc.blockr.io/api/v1/address/unspent/"+str(address)
@@ -65,7 +67,7 @@ def partial_spend_p2sh (redeemScript,rein,daddr=None,alt_amount=None,alt_daddr=N
     txin_redeemScript = CScript(x(redeemScript))
     txin_scriptPubKey = txin_redeemScript.to_p2sh_scriptPubKey()
     txin_p2sh_address = CBitcoinAddress.from_scriptPubKey(txin_scriptPubKey)
-    (txins,total_value) = unspent_txins(txin_p2sh_address,rein.testnet)
+    (txins,total_value) = unspent_txins(rein, txin_p2sh_address,rein.testnet)
     if len(txins)==0:
         raise ValueError('Primary escrow is empty. Please inform client to add funds.')
     txins_str = ""
@@ -101,7 +103,7 @@ def partial_spend_p2sh_mediator (redeemScript,rein,mediator_address,mediator_sig
     txin_redeemScript = CScript(x(redeemScript))
     txin_scriptPubKey = txin_redeemScript.to_p2sh_scriptPubKey()
     txin_p2sh_address = CBitcoinAddress.from_scriptPubKey(txin_scriptPubKey)
-    (txins,total_value) = unspent_txins(txin_p2sh_address,rein.testnet)
+    (txins,total_value) = unspent_txins(rein, txin_p2sh_address,rein.testnet)
     if len(txins)==0:
         raise ValueError('Mediator escrow is empty. Please inform client to add funds.')
     txins_str = ""

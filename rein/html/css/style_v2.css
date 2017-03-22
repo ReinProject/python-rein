@@ -2143,6 +2143,12 @@ border-radius: 50%;}
   right: 36px;
   background: url(../img/chevron-right.png) 0 0 no-repeat;
 }
+ul li input {
+  line-height: normal;
+}
+ul li button {
+  line-height: normal;
+}
 #social a {
   margin:0 15px 0 0;
   color:#e6e6e9;

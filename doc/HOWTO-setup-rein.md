@@ -1,6 +1,6 @@
-#How To Setup Rein
+# How To Setup Rein
 
-##Introduction
+## Introduction
 
 Rein is a new decentralized labor market that provides a safe and easy way to earn Bitcoin and to obtain services from professionals globally. It simplifies the process of entering into a digitally-signed contract and behaving honestly to get what you want whether that's work or money. Currently, as Rein is in beta and the process requires use of a command line client. However, the software is easy to install and we appreciate your feedback to help make it easier.
 
@@ -10,7 +10,7 @@ In this tutorial, we will show you how to install the software, setup your accou
 
 3-5 minutes
 
-##Prerequisites
+## Prerequisites
 
 Before following this tutorial, you'll need a few things.
 
@@ -24,11 +24,11 @@ You should have a flash drive or two and a piece of paper. These will be used to
 
 Once you have all of the prerequisites out of the way, let's move on to installing the python-rein client.
 
-##Step 1 -- Install python-rein
+## Step 1 -- Install python-rein
 
 The first step in using Rein is to install python-rein on your computer.
 
-###Download the software    
+### Download the software    
 
 Let's download `python-rein` now from one of these links:
 
@@ -39,7 +39,7 @@ Unzip this into folder python-rein.
 
 You should now have a copy of the `python-rein` repository in ~/python-rein
 
-###Install the client
+### Install the client
 
 Before installing, change to the `python-rein` directory:
 
@@ -59,7 +59,7 @@ You can use --help with any of the commands to get more information; for example
 
     $ rein setup --help
 
-##Step 2 -- Create Your Account
+## Step 2 -- Create Your Account
 
 Let's create your Rein user account.
 
@@ -75,13 +75,13 @@ It is NOT advisable to save these words to your computer. If you think of these 
 
 The next screen will require that you type certain words from the seed in to confirm that you have written them down. Click next.
 
-##Step 3 -- Enable Tor (optional)
+## Step 3 -- Enable Tor (optional)
 
 Privacy is an important feature that Rein aims to provide to its users. For users of the [Tor Browser Bundle](https://www.torproject.org), a single command can be run to enable all traffic to be routed through Tor. It's a good idea to do this before connecting to any servers.
 
     rein tor true
 
-##Step 4 -- Register and Upload Enrollment
+## Step 4 -- Register and Upload Enrollment
 
 Rein uses microhosting servers to share data between its users. Let's connect python-rein to two such servers that are being operated as a community service by our project.
 

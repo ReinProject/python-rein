@@ -1202,12 +1202,13 @@ def status(multi, identity, jobid):
             else:
                 click.echo("Job id not found")
 
+
 def config_common(key, value):
     """
     Set configuration variable. Parses true/false, on/off, and passes
     anything else unaltered to the db.
     """
-    keys = ['testnet', 'tor', 'debug', 'fee', 'trust_score']
+    keys = ['testnet', 'tor', 'debug', 'fee', 'blockexplorer', 'api', 'trust_score']
     if key not in keys:
         click.echo("Invalid config setting. Try one of " + ', '.join(keys))
         return
@@ -1216,8 +1217,11 @@ def config_common(key, value):
         PersistConfig.set(rein, key, 'true')
     elif value and value.lower() in ['off', 'false', 'disabled']:
         PersistConfig.set(rein, key, 'false')
-    else:
+    elif value:
         PersistConfig.set(rein, key, value)
+
+    click.echo(PersistConfig.get(rein, key))
+
 
 @cli.command()
 @click.argument('key', required=True)
@@ -1286,11 +1290,14 @@ def debug(debug):
 
 def init(multi, identity):
     log = rein.get_log()
+
     if multi:
         rein.set_multiuser()
+
     if rein.has_no_account():
         click.echo("Please run setup.")
         return sys.exit(1)
+
     user = get_user(rein, identity, True)
     key = pubkey(user.dkey)
     urls = Bucket.get_urls(rein)
@@ -1312,11 +1319,13 @@ def is_int(s):
     except ValueError:
         return False
 
+
 def is_tags(s):
     if re.search(r'[^a-z0-9 ,]', s.lower()):
         return False
     else:
         return True
+
 
 def get_user(rein, identity, enrolled):
     if rein.multi and identity:
@@ -1542,11 +1551,16 @@ def start(multi, identity, setup):
             user_jobs = get_user_jobs(rein)
             return render_template("rate.html", form=form, user_sin=user.msin, user=user, user_jobs=user_jobs)
 
-    @app.route('/ratings/<msin>', methods=['GET'])
-    def view_ratings(msin):
+    @app.route('/profile/<msin>', methods=['GET'])
+    def view_profile(msin):
         display_trust_score = PersistConfig.get(rein, 'trust_score', False)
         ratings = get_all_user_ratings(log, url, user, rein, msin)
-        return render_template("ratings.html", user=user, user_rated=get_user_name(log, url, user, rein, msin), msin=msin, ratings=ratings, display_trust_score=display_trust_score)
+        return render_template("profile.html",
+                               user=user,
+                               user_rated=get_user_name(log, url, user, rein, msin),
+                               msin=msin,
+                               ratings=ratings,
+                               display_trust_score=display_trust_score)
 
     @app.route('/hide', methods=['POST'])
     def hide():
@@ -1601,7 +1615,7 @@ def start(multi, identity, setup):
     @app.route('/trust_score/<dest_msin>', defaults={'source_msin': user.msin})
     @app.route('/trust_score/<dest_msin>/<source_msin>', methods=['GET'])
     def trust_score(dest_msin, source_msin):
-        return calculate_trust_score(dest_msin, source_msin, rein)
+        return calculate_trust_score(dest_msin, source_msin, rein, url=url, user=user, log=log)
 
     @app.route('/settings', methods=['GET'])
     def settings():
@@ -1623,6 +1637,42 @@ def start(multi, identity, setup):
         trust_score = PersistConfig.get(rein, 'trust_score', False)
 
         return render_template('settings.html', user=user, hidden_jobs=hidden_jobs, hidden_bids=hidden_bids, hidden_mediators=hidden_mediators, fee=fee, trust_score=trust_score)
+
+    @app.route('/display-users', methods=['GET'])
+    def display_users():
+        data = []
+        try:
+            data = request.args['data']
+
+        except:
+            pass
+
+        data = json.loads(data)
+        users = []
+        for enrollment in data:
+            enrolled_user = {}
+            enrollment = document_to_dict(enrollment)
+            enrolled_user['User'] = '<a href="/profile/{}">{}</a>'.format(enrollment['Master signing address'], enrollment['User'])
+            enrolled_user['Contact'] = '<a href="mailto:/" target="_blank">{}</a>'.format(enrollment['Contact'])
+            enrolled_user['MSIN'] = enrollment['Secure Identity Number']
+            enrolled_user['Rating'] = get_average_user_rating_display(log, url, user, rein, enrolled_user['MSIN'])
+            users.append(enrolled_user)
+
+        return render_template('display-users.html', user=user, users=users)
+
+    @app.route('/user_search/<search_input>', methods=['GET'])
+    def user_search(search_input):
+        if not search_input:
+            return 'false'
+
+        sel_url = "{0}query?owner={1}&query=get_user&testnet={2}&search_input={3}"
+        data = safe_get(log, sel_url.format(url, user.maddr, rein.testnet, search_input))
+        data = data['get_user']
+
+        if 'error' in data or not data:
+            return 'false'
+
+        return json.dumps(data)
 
     @app.route("/post", methods=['POST', 'GET'])
     def job_post():
@@ -1652,8 +1702,11 @@ def start(multi, identity, setup):
                 if m.msin in [hidden_mediator['content_identifier'] for hidden_mediator in hidden_mediator_content]:
                     continue
 
-                mediator_maddrs.append((m.maddr, '{}</td><td>{}%</td><td>{}</td><td><a href="mailto:{}" target="_blank">{}</a></td><td>{}'.\
-                        format(m.username,
+                mediator_maddrs.append((m.maddr,
+                                        '<a href="/profile/{}">{}</a></td><td>{}%</td><td>{}</td>'
+                                        '<td><a href="mailto:{}" target="_blank">{}</a></td><td>{}'.\
+                        format(m.msin,
+                               m.username,
                                m.mediator_fee,
                                get_average_user_rating_display(log, url, user, rein, m.msin),
                                m.contact,
@@ -1775,8 +1828,9 @@ def start(multi, identity, setup):
                 id = d[0].id
             bid_choices.append((
                 str(id), 
-                '{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}'.format(
+                '{}</td><td><a href="/profile/{}">{}</a></td><td>{}</td><td>{}</td><td>{}</td><td>{}'.format(
                     job_link(b),
+                    worker_msin,
                     b['Worker'],
                     get_average_user_rating_display(log, url, user, rein, worker_msin),
                     b['Description'],
@@ -2195,6 +2249,14 @@ def start(multi, identity, setup):
         except ValueError:
             mediator_fee_btc = "NaN"
 
+        worker_msin = generate_sin(combined['Worker master address']) if 'Worker master address' in combined else ''
+
+        explorer = PersistConfig.get(
+                      rein,
+                      'explorer',
+                      'https://testnet.blockexplorer.com' if rein.testnet else 'https://blockexplorer.com'
+                   )
+
         return render_template('job.html',
                             rein=rein,
                             user=user,
@@ -2203,9 +2265,13 @@ def start(multi, identity, setup):
                             urls=urls,
                             state=state,
                             found=found,
-                            fee=PersistConfig.get(rein, 'fee', 0.00025),
+                            fee=PersistConfig.get(rein, 'fee', 0.001),
+                            explorer=explorer,
                             unique=unique_documents,
                             job=combined,
+                            job_creator_msin=generate_sin(combined['Job creator master address']),
+                            mediator_msin=generate_sin(combined['Mediator master address']),
+                            worker_msin=worker_msin,
                             mediator_fee_btc=mediator_fee_btc)
 
 
@@ -2363,9 +2429,13 @@ def start(multi, identity, setup):
                     continue
 
                 creator_msin = generate_sin(j['Job creator master address'])
-                row = '<a href="http://localhost:'+str(port)+'/job/{}">{}</a></td><td>{}</td><td>{}</td><td>{}</td><td>{}</td><td><span title="{}">{}</span></td><td>{}'
+                row = '<a href="http://localhost:'+str(port)+'/job/{}">{}</a></td>' +\
+                      '<td><a href="/profile/{}">{}</a></td>' +\
+                      '<td>{}</td><td>{}</td><td>{}</td>' +\
+                      '<td><span title="{}">{}</span></td><td>{}'
                 job_ids.append((j['Job ID'], row.format(j['Job ID'],
                                                         j['Job name'],
+                                                        creator_msin,
                                                         j['Job creator'],
                                                         get_average_user_rating_display(log, url, user, rein, creator_msin),
                                                         j['Description'],
@@ -2400,6 +2470,7 @@ def start(multi, identity, setup):
                 {'label': 'Job name',                       'value_from': job},
                 {'label': 'Worker',                         'value': user.name},
                 {'label': 'Worker contact',                 'value': user.contact},
+                {'label': 'Worker msin',                    'value': user.msin},
                 {'label': 'Worker delegate address',        'value': user.daddr},
                 {'label': 'Worker master address',          'value': user.maddr},
                 {'label': 'Description',                    'value': form.description.data},
