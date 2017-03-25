@@ -183,11 +183,11 @@ def build_enrollment_from_dict(user_data):
     enrollment['Secure Identity Number'] = user_data['msin']
     enrollment['Delegate signing address'] = user_data['daddr']
     if user_data['will_mediate']:
-        enrollment['Willing to mediate'] = user_data['will_mediate']
+        enrollment['Willing to mediate'] = 'True'
         enrollment['Mediator public key'] = pubkey(user_data['dkey'])
         enrollment['Mediator fee'] = user_data['mediator_fee']
     else:
-        enrollment['Willing to mediate'] = 'no'
+        enrollment['Willing to mediate'] = 'False'
     if user_data['testnet']:
         enrollment['Testnet'] = 'True'    
     return enrollment
@@ -246,11 +246,11 @@ def build_enrollment(rein):
     enrollment['Master signing address'] = user.maddr
     enrollment['Delegate signing address'] = user.daddr
     if user.will_mediate:
-        enrollment['Willing to mediate'] = user.will_mediate
+        enrollment['Willing to mediate'] = 'True'
         enrollment['Mediator public key'] = pubkey(user.dkey)
         enrollment['Mediator fee'] = user.mediator_fee
     else:
-        enrollment['Willing to mediate'] = 'no'
+        enrollment['Willing to mediate'] = 'False'
     if rein.testnet:
         enrollment['Testnet'] = 'True'
     return enrollment
