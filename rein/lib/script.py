@@ -5,8 +5,6 @@ from bitcoin.core.script import CScript, OP_CHECKMULTISIG, OP_CHECKSIGVERIFY
 from bitcoin.wallet import CBitcoinAddress
 from .validate import parse_document
 
-if (rein.testnet): bitcoin.SelectParams('testnet')
-
 def parse_script(text):
     try:
         parsed = bitcoin.core.script.CScript(x(text))
