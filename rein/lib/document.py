@@ -109,7 +109,10 @@ class Document(Base):
     def get_job_id(text):
         try:
             json_object = json.loads(text)
-            return json_object["Job ID"]
+            if "Job ID" in json_object:
+                return json_object["Job ID"]
+            else:
+                return None
         except ValueError, e:
             m = re.search('Job ID: (.+)\n', text)
             if m:
