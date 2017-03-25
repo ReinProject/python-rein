@@ -150,14 +150,12 @@ def create_account(rein):
 
     rein.user = new_identity
     enrollment = build_enrollment_from_dict(user_data)
-    signed_enrollment = '-----BEGIN BITCOIN SIGNED MESSAGE-----\n' + \
-                        enrollment + \
-                        '\n-----BEGIN SIGNATURE-----\n' + \
-                        maddr + '\n' + \
-                        sign(mprv, enrollment) + \
-                        '\n-----END BITCOIN SIGNED MESSAGE-----\n'
+    signature = sign(mprv,json.dumps(enrollment,sort_keys=True))
+    signed_enrollment = enrollment
+    signed_enrollment['signature'] = signature
+    signed_enrollment['signature_address'] = maddr
     User.set_enrolled(rein, new_identity)
-    document = Document(rein, 'enrollment', signed_enrollment, sig_verified=True, testnet=rein.testnet)
+    document = Document(rein, 'enrollment', json.dumps(signed_enrollment,sort_keys=True), sig_verified=True, testnet=rein.testnet)
     rein.session.add(document)
     rein.session.commit()
 
@@ -177,19 +175,22 @@ def create_account(rein):
 
 
 def build_enrollment_from_dict(user_data):
-    mediator_extras = ''
+    enrollment = {}
+    enrollment['Title'] = 'Rein User Enrollment'
+    enrollment['User'] = user_data['name']
+    enrollment['Contact'] = user_data['contact']
+    enrollment['Master signing address'] = user_data['maddr']
+    enrollment['Secure Identity Number'] = user_data['msin']
+    enrollment['Delegate signing address'] = user_data['daddr']
     if user_data['will_mediate']:
-        mediator_extras = "\nMediator public key: %s\nMediator fee: %s%%" % \
-                          (pubkey(user_data['dkey']), user_data['mediator_fee'])
-    enrollment = "Rein User Enrollment\nUser: %s\nContact: %s\nMaster signing address: %s\n" \
-                 "Secure Identity Number: %s\nDelegate signing address: %s\n" \
-                 "Willing to mediate: %s%s" % \
-                 (user_data['name'], user_data['contact'], user_data['maddr'], user_data['msin'],\
-                 user_data['daddr'], user_data['will_mediate'], mediator_extras)
+        enrollment['Willing to mediate'] = user_data['will_mediate']
+        enrollment['Mediator public key'] = pubkey(user_data['dkey'])
+        enrollment['Mediator fee'] = user_data['mediator_fee']
+    else:
+        enrollment['Willing to mediate'] = 'no'
     if user_data['testnet']:
-        enrollment += '\nTestnet: True'
+        enrollment['Testnet'] = 'True'    
     return enrollment
-
 
 def import_account(rein, mprv=None, mnemonic=None):
     Base.metadata.create_all(rein.engine)
@@ -222,40 +223,44 @@ def import_account(rein, mprv=None, mnemonic=None):
         if not privkey_to_address(mprv):
             raise Exception('Invalid master private key.')
 
+
     enrollment = build_enrollment_from_dict(user_data)
-    signed_enrollment = '-----BEGIN BITCOIN SIGNED MESSAGE-----\n' + \
-                        enrollment + \
-                        '\n-----BEGIN SIGNATURE-----\n' + \
-                        user_data['maddr'] + '\n' + \
-                        sign(mprv, enrollment) + \
-                        '\n-----END BITCOIN SIGNED MESSAGE-----\n'
+    signature = sign(mprv,json.dumps(enrollment,sort_keys=True))
+    signed_enrollment = enrollment
+    signed_enrollment['signature'] = signature
+    signed_enrollment['signature_address'] = user_data['maddr']
+
     User.set_enrolled(rein, new_identity)
-    document = Document(rein, 'enrollment', signed_enrollment, sig_verified=True, testnet=rein.testnet)
+    document = Document(rein, 'enrollment', json.dumps(signed_enrollment,sort_keys=True), sig_verified=True, testnet=rein.testnet)
     rein.session.add(document)
     rein.session.commit()
     return rein.user
 
-
 def build_enrollment(rein):
-    user = rein.user
-    mediator_extras = ''
-    if user.will_mediate:
-        mediator_extras = "\nMediator public key: %s\nMediator fee: %s%%" % \
-                          (pubkey(user.dkey), user.mediator_fee)
-    enrollment = "Rein User Enrollment\nUser: %s\nContact: %s\nMaster signing address: %s" \
-                 "\nDelegate signing address: %s\nWilling to mediate: %s%s" % \
-                 (user.name, user.contact, user.maddr, user.daddr, user.will_mediate, mediator_extras)
-    if rein.testnet:
-        enrollment += '\nTestnet: True'
-    return enrollment
 
+    enrollment = {}
+    user = rein.user
+    enrollment['Title'] = 'Rein User Enrollment'
+    enrollment['User'] = user.name
+    enrollment['Contact'] = user.contact
+    enrollment['Master signing address'] = user.maddr
+    enrollment['Delegate signing address'] = user.daddr
+    if user.will_mediate:
+        enrollment['Willing to mediate'] = user.will_mediate
+        enrollment['Mediator public key'] = pubkey(user.dkey)
+        enrollment['Mediator fee'] = user.mediator_fee
+    else:
+        enrollment['Willing to mediate'] = 'no'
+    if rein.testnet:
+        enrollment['Testnet'] = 'True'
+    return enrollment
 
 def enroll(rein):
     user = rein.user
     Base.metadata.create_all(rein.engine)
     enrollment = build_enrollment(rein)
     f = open(rein.enroll_filename, 'w')
-    f.write(enrollment)
+    f.write(json.dumps(enrollment,sort_keys=True))
     f.close()
     click.echo("%s\n" % enrollment)
     done = False

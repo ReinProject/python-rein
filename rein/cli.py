@@ -1458,14 +1458,12 @@ def start(multi, identity, setup):
             
             # Enroll user
             enrollment = build_enrollment_from_dict(user_data)
-            signed_enrollment = '-----BEGIN BITCOIN SIGNED MESSAGE-----\n' + \
-                                enrollment + \
-                                '\n-----BEGIN SIGNATURE-----\n' + \
-                                maddr + '\n' + \
-                                sign(mprv, enrollment) + \
-                                '\n-----END BITCOIN SIGNED MESSAGE-----\n'
+            signature = sign(mprv,json.dumps(enrollment,sort_keys=True))
+            signed_enrollment = enrollment
+            signed_enrollment['signature'] = signature
+            signed_enrollment['signature_address'] = maddr
             User.set_enrolled(rein, new_identity)
-            document = Document(rein, 'enrollment', signed_enrollment, sig_verified=True, testnet=rein.testnet)
+            document = Document(rein, 'enrollment', json.dumps(signed_enrollment,sort_keys=True), sig_verified=True, testnet=rein.testnet)
             rein.session.add(document)
             rein.session.commit()
             return json.dumps({'enrolled': True})

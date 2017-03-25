@@ -218,7 +218,7 @@ def validate_review(reviewer_text):
         strip_armor(reviewer_text).replace('- ----', '-----')
     ]
 
-
+#is this function used?
 def validate_audit(auditor_text):
     a = verify_sig(auditor_text)
     txt = strip_armor(auditor_text)
