@@ -1,6 +1,6 @@
 Key Management in python-rein
 
-###Goals:
+### Goals:
 
  * Privacy - Keys involved in a transaction only need to be known by parties to that transaction. 
 This means knowing a key that is used to sign a document or payment should not lead to the 
@@ -13,7 +13,7 @@ generate a root BIP32 key.
 identity long-term without compromising the root key or needing to expend inordinate processing power 
 to use.
 
-###Current implementation:
+### Current implementation:
 
  * Root key (m) - Derived from the 12-word mnemonic seed.
 
@@ -26,7 +26,7 @@ to use.
  * Delegate key (m/1''/0) - A delegate key is used for day-to-day signatures of documents like job 
  postings, bids, offers, disputes and is also used for controlling payments.
 
-###Deficiencies with current implementation:
+### Deficiencies with current implementation:
 
  * Multisig escrows that involve the same client, worker, and mediator always generate the same 
  redeemScript and by extension, escrow address. This means funds escrowed for such a set of 
@@ -37,7 +37,7 @@ to use.
  their authenticity. Since this same key is used to generate a user''s payment address meaning all 
  incoming payments and document signatures are trivially linked.
  
-###Future directions:
+### Future directions:
 
  * Unique public keys per escrow (m/1''/k with k > 0) - A unique key will be generated from the BIP32 tree
  for each post or bid. This key will be used to build escrow addresses and to sign payments at
