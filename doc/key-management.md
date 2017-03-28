@@ -6,12 +6,11 @@
 This means knowing a key that is used to sign a document or payment should not lead to the 
 discovery of a user''s other keys.
 
- * Multilayered security - An identity is defined by a 12-word mnemonic seed. The seed is used to 
-generate a root BIP32 key.
+ * Multilayered security - An identity is defined by a 12-word mnemonic seed that is meant to be kept offline. The seed is used to generate a BIP32 key that serves as the root of an identity. From that tree, delegate payment and signing addresses are generated.
 
  * Long-term efficiency - Efficient use of BIP32 tree structures should make it possible to use an 
-identity long-term without compromising the root key or needing to expend inordinate processing power 
-to use.
+identity long-term without compromising the root key or needing to expend excessive processing power 
+to enumerate.
 
 ### Current implementation:
 
@@ -28,10 +27,7 @@ to use.
 
 ### Deficiencies with current implementation:
 
- * Multisig escrows that involve the same client, worker, and mediator always generate the same 
- redeemScript and by extension, escrow address. This means funds escrowed for such a set of 
- participants among multiple jobs can get mixed up (e.g. all funds may be sent for the first completed
- job), obviously not desirable when handling money.
+ * Multisig escrows built for a specific client, worker, and mediator always generate the same escrow address. This means funds escrowed for a particular set of participants can get mixed up (e.g. all funds may be sent for the first completed job).
 
  * The public part of the key used to sign documents must be made available so that others can verify 
  their authenticity. Since this same key is used to generate a user''s payment address meaning all 
