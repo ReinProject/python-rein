@@ -188,30 +188,29 @@ def post(multi, identity, defaults, dry_run):
     log.info('got user and key for post')
     job_guid = ''.join(random.SystemRandom().choice(string.ascii_lowercase + string.digits) for _ in range(20))
     fields = [
-                {'label': 'Job name',                       'not_null': form,
-                    'help': 'Choose a brief but descriptive name for the job.'},
-                {'label': 'Job ID',                         'value': job_guid},
-                {'label': 'Tags', 'validator': is_tags, 'not_null': form,
-                    'help': 'Each post can have a set of tags associated with it. Though not implemented yet,\n'
-                            'these tags may be used in searches and filters later. No spaces, dashes, or\n'
-                            'special characters are allowed. Please enter them as a comma-separated list.\n'
-                            'Example: software, 3dprinting'},
-                {'label': 'Description',                    'not_null': form},
-                {'label': 'Block hash',                     'value': block_hash},
-                {'label': 'Time',                           'value': str(block_time)},
-                {'label': 'Expiration (days)',              'validator': is_int},
-                {'label': 'Mediator',                       'value': mediator['User']},
-                {'label': 'Mediator contact',               'value': mediator['Contact']},
-                {'label': 'Mediator fee',                   'value': mediator['Mediator fee']},
-                {'label': 'Mediator public key',            'value': mediator['Mediator public key']},
-                {'label': 'Mediator master address',        'value': mediator['Master signing address']},
-                {'label': 'Job creator',                    'value': user.name},
-                {'label': 'Job creator contact',            'value': user.contact},
-                {'label': 'Job creator public key',         'value': key},
-                {'label': 'Job creator master address',     'value': user.maddr},
-
-        {'label': 'Job creator delegate address',   'value': user.daddr},
-             ]
+        {'label': 'Job name',                       'not_null': form,
+         'help': 'Choose a brief but descriptive name for the job.'},
+        {'label': 'Job ID',                         'value': job_guid},
+        {'label': 'Tags', 'validator': is_tags, 'not_null': form,
+         'help': 'Each post can have a set of tags associated with it. Though not implemented yet,\n'
+         'these tags may be used in searches and filters later. No spaces, dashes, or\n'
+         'special characters are allowed. Please enter them as a comma-separated list.\n'
+         'Example: software, 3dprinting'},
+        {'label': 'Description',                    'not_null': form},
+        {'label': 'Block hash',                     'value': block_hash},
+        {'label': 'Time',                           'value': str(block_time)},
+        {'label': 'Expiration (days)',              'validator': is_int},
+        {'label': 'Mediator',                       'value': mediator['User']},
+        {'label': 'Mediator contact',               'value': mediator['Contact']},
+        {'label': 'Mediator fee',                   'value': mediator['Mediator fee']},
+        {'label': 'Mediator public key',            'value': mediator['Mediator public key']},
+        {'label': 'Mediator master address',        'value': mediator['Master signing address']},
+        {'label': 'Job creator',                    'value': user.name},
+        {'label': 'Job creator contact',            'value': user.contact},
+        {'label': 'Job creator public key',         'value': key},
+        {'label': 'Job creator master address',     'value': user.maddr},
+        {'label': 'Job creator delegate address',   'value': user.daddr}
+    ]
     document_text = assemble_document('Job', fields)
     print("document_text = "+document_text)
     if not rein.testnet:
@@ -1457,7 +1456,7 @@ def start(multi, identity, setup):
             rein.session.add(new_identity)
             rein.session.commit()
             
-            # Enroll users
+            # Enroll user
             enrollment = build_enrollment_from_dict(user_data)
             signature = sign(mprv,json.dumps(enrollment,sort_keys=True))
             signed_enrollment = enrollment
