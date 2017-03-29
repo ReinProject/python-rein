@@ -86,3 +86,14 @@ def get_delegate_extended_key(mxprv):
     delegate_key = get_delegate_key(mxprv)
     return delegate_key.ExtendedKey()
 
+def generate_new_payment_address(dxprv,i):
+    parent_key = get_child_key(dxprv, 0+BIP32_HARDEN)
+    subparent_key = get_child_key(parent_key,i)
+    target_key = get_child_key(parent_key,0)
+    return target_key.Address()
+
+def generate_new_escrow_pubkey(dxprv,i):
+    parent_key = get_child_key(dxprv, 1+BIP32_HARDEN)
+    subparent_key = get_child_key(parent_key,i)
+    target_key = get_child_key(parent_key,0)
+    return target_key.Address()

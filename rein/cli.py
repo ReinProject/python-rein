@@ -209,7 +209,8 @@ def post(multi, identity, defaults, dry_run):
                 {'label': 'Job creator contact',            'value': user.contact},
                 {'label': 'Job creator public key',         'value': key},
                 {'label': 'Job creator master address',     'value': user.maddr},
-                {'label': 'Job creator delegate address',   'value': user.daddr},
+
+        {'label': 'Job creator delegate address',   'value': user.daddr},
              ]
     document_text = assemble_document('Job', fields)
     print("document_text = "+document_text)
@@ -1456,7 +1457,7 @@ def start(multi, identity, setup):
             rein.session.add(new_identity)
             rein.session.commit()
             
-            # Enroll user
+            # Enroll users
             enrollment = build_enrollment_from_dict(user_data)
             signature = sign(mprv,json.dumps(enrollment,sort_keys=True))
             signed_enrollment = enrollment
@@ -1706,7 +1707,7 @@ def start(multi, identity, setup):
                 {'label': 'Mediator master address',        'value': mediator.maddr},
                 {'label': 'Job creator',                    'value': user.name},
                 {'label': 'Job creator contact',            'value': user.contact},
-                {'label': 'Job creator public key',         'value': key},
+                {'label': 'Job creator public key',         'value': pubkey_for_escrow},
                 {'label': 'Job creator delegate address',   'value': user.daddr},
                 {'label': 'Job creator master address',     'value': user.maddr},
                      ]
@@ -1810,19 +1811,35 @@ def start(multi, identity, setup):
         if request.method == 'POST' and form.validate_on_submit():
             bid_doc = Document.get(rein, form.bid_id.data)
             bid = parse_document(bid_doc.contents)
+            next_addr_index_str =  PersistConfig.get(rein, 'next_addr_index')
+            if not next_addr_index:
+                next_addr_index_str = '0'
+            next_addr_index = int(next_addr_index_str)                
+            pubkey_for_escrow = generate_new_escrow_pubkey(user.dxprv,next_addr_index)
+            payment_address = generate_new_payment_address(user.dxprv,next_addr_index)
+            next_addr_index += 1
+            PersistConfig.set(rein,'next_addr_index',str(next_addr_index))
+            stmt = update(users).where(users.c.id==5).values(name='user #5')
+            worker_pubkey_for_escrow = bid['Worker public key for escrow']
+            primary_redeem_script, primary_addr = build_2_of_3([pubkey_for_escrow,job['Mediator public key'],worker_pubkey_for_escrow])
+            mediator_redeem_script, mediator_escrow_addr = build_mandatory_multisig(job['Mediator public key'],pubkey_for_escrow,worker_pubkey_for_escrow])
             fields = [
                 {'label': 'Job name',                       'value': bid['Job name']},
                 {'label': 'Job ID',                         'value': bid['Job ID']},
                 {'label': 'Description',                    'value': bid['Description']},
                 {'label': 'Bid amount (BTC)',               'value': bid['Bid amount (BTC)']},
-                {'label': 'Primary escrow address',         'value': bid['Primary escrow address']},
-                {'label': 'Mediator escrow address',        'value': bid['Mediator escrow address']},
+                {'label': 'Primary escrow address',         'value': primary_addr},
+                {'label': 'Mediator escrow address',        'value': mediator_escrow_addr},
                 {'label': 'Job creator',                    'value': bid['Job creator']},
                 {'label': 'Job creator public key',         'value': bid['Job creator public key']},
                 {'label': 'Mediator public key',            'value': bid['Mediator public key']},
                 {'label': 'Worker public key',              'value': bid['Worker public key']},
-                {'label': 'Primary escrow redeem script',   'value': bid['Primary escrow redeem script']},
-                {'label': 'Mediator escrow redeem script',  'value': bid['Mediator escrow redeem script']},
+                {'label': 'Primary escrow redeem script',   'value': primary_redeem_script},
+                {'label': 'Mediator escrow redeem script',  'value': mediator_redeem_script},
+                {'label': 'Primary payment address', 'value': bid['Primary payment address']},
+                {'label': 'Primary client payment address', 'value': payment_address},
+                {'label': 'Worker public key for escrow', 'value': worker_pubkey_for_escrow},
+                {'label': 'Job creator public key for escrow', 'value': pubkey_for_escrow}
                      ]
             document_text = assemble_document('Offer', fields)
             store = True
@@ -2118,8 +2135,8 @@ def start(multi, identity, setup):
             redeemScript = dispute['Primary escrow redeem script']
             mediatorRedeemScript = dispute['Mediator escrow redeem script']
             mediator_daddr = rein.user.daddr
-            worker_payment_daddr = str(P2PKHBitcoinAddress.from_pubkey(x(dispute['Worker public key'])));
-            client_payment_daddr = str(P2PKHBitcoinAddress.from_pubkey(x(dispute['Job creator public key'])));
+            worker_payment_daddr = dispute['Primary worker payment address'];
+            client_payment_daddr = dispute['Primary client payment address'];
             client_payment_amount = float(form.client_payment_amount.data)
             try:
                 (payment_txins,payment_amount_1,payment_address_1,payment_amount_2,payment_address_2,payment_sig) = partial_spend_p2sh(redeemScript,rein,worker_payment_daddr,client_payment_amount,client_payment_daddr)
@@ -2322,7 +2339,9 @@ def start(multi, identity, setup):
                 {'label': 'Mediator escrow redeem script',  'value_from': doc},
                 {'label': 'Job creator public key', 'value_from': doc},
                 {'label': 'Worker public key', 'value_from':doc},
-                {'label': 'Mediator public key', 'value_from':doc}
+                {'label': 'Mediator public key', 'value_from':doc},
+                {'label': 'Primary worker payment address', 'value':doc['Primary payment address']},
+                {'label': 'Primary client payment address', 'value_from':doc}
                      ]
 
             if key == doc['Job creator public key']:
@@ -2423,13 +2442,15 @@ def start(multi, identity, setup):
                 flash('No matching Job ID found.')
                 return redirect("/")
 
-            primary_redeem_script, primary_addr = \
-                    build_2_of_3([job['Job creator public key'],
-                                  job['Mediator public key'],
-                                  key])
-            mediator_redeem_script, mediator_escrow_addr = \
-                    build_mandatory_multisig(job['Mediator public key'],
-                                            [job['Job creator public key'],key])
+            next_addr_index_str =  PersistConfig.get(rein, 'next_addr_index')
+            if not next_addr_index:
+                next_addr_index_str = '0'
+            next_addr_index = int(next_addr_index_str)
+            pubkey_for_escrow = generate_new_escrow_pubkey(user.dxprv,next_addr_index)
+            primary_payment_address = generate_new_payment_address(user.dxprv,next_addr_index)
+            next_addr_index += 1
+            PersistConfig.set(rein,'next_addr_index',str(next_addr_index))
+            
             fields = [
                 {'label': 'Job name',                       'value_from': job},
                 {'label': 'Worker',                         'value': user.name},
@@ -2439,15 +2460,13 @@ def start(multi, identity, setup):
                 {'label': 'Worker master address',          'value': user.maddr},
                 {'label': 'Description',                    'value': form.description.data},
                 {'label': 'Bid amount (BTC)',               'value': form.bid_amount.data},
-                {'label': 'Primary escrow address',         'value': primary_addr},
-                {'label': 'Mediator escrow address',        'value': mediator_escrow_addr},
                 {'label': 'Job ID',                         'value_from': job},
                 {'label': 'Job creator',                    'value_from': job},
                 {'label': 'Job creator public key',         'value_from': job},
                 {'label': 'Mediator public key',            'value_from': job},
                 {'label': 'Worker public key',              'value': key},
-                {'label': 'Primary escrow redeem script',   'value': primary_redeem_script},
-                {'label': 'Mediator escrow redeem script',  'value': mediator_redeem_script},
+                {'label': 'Primary payment address', 'value': primary_payment_address},
+                {'label': 'Worker public key for escrow', 'value': pubkey_for_escrow}
                      ]
             document_text = assemble_document('Bid', fields)
             store = True
@@ -2521,7 +2540,7 @@ def start(multi, identity, setup):
             mediatorRedeemScript = doc['Mediator escrow redeem script']
             mediator_daddr = str(P2PKHBitcoinAddress.from_pubkey(x(doc['Mediator public key'])))
             try:
-                (payment_txins,payment_amount,payment_address,payment_sig) = partial_spend_p2sh(redeemScript,rein)
+                (payment_txins,payment_amount,payment_address,payment_sig) = partial_spend_p2sh(redeemScript,rein,daddr=doc['Primary payment address'])
                 (mediator_payment_txins,mediator_payment_amount,mediator_payment_address) = partial_spend_p2sh_mediator(mediatorRedeemScript,rein,mediator_daddr)
             except ValueError as e:
                 form.deliverable.errors.append(e.message)
