@@ -1706,7 +1706,7 @@ def start(multi, identity, setup):
                 {'label': 'Mediator master address',        'value': mediator.maddr},
                 {'label': 'Job creator',                    'value': user.name},
                 {'label': 'Job creator contact',            'value': user.contact},
-                {'label': 'Job creator public key',         'value': pubkey_for_escrow},
+                {'label': 'Job creator public key',         'value': key},
                 {'label': 'Job creator delegate address',   'value': user.daddr},
                 {'label': 'Job creator master address',     'value': user.maddr},
                      ]
@@ -1821,7 +1821,7 @@ def start(multi, identity, setup):
             stmt = update(users).where(users.c.id==5).values(name='user #5')
             worker_pubkey_for_escrow = bid['Worker public key for escrow']
             primary_redeem_script, primary_addr = build_2_of_3([pubkey_for_escrow,job['Mediator public key'],worker_pubkey_for_escrow])
-            mediator_redeem_script, mediator_escrow_addr = build_mandatory_multisig(job['Mediator public key'],pubkey_for_escrow,worker_pubkey_for_escrow])
+            mediator_redeem_script, mediator_escrow_addr = build_mandatory_multisig(job['Mediator public key'],[pubkey_for_escrow,worker_pubkey_for_escrow])
             fields = [
                 {'label': 'Job name',                       'value': bid['Job name']},
                 {'label': 'Job ID',                         'value': bid['Job ID']},

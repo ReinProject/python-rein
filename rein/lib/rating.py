@@ -206,8 +206,7 @@ def calculate_trust_score(dest_msin=None, source_msin=None, rein=None, test=Fals
             Document.doc_type == 'rating',
             or_(Document.contents.like('%\nRater msin: {}%'.format(source_msin)),
                 Document.contents.like('%"Rater msin": "{}"%'.format(source_msin))
-        )).all()
-
+        ))).all()
     else:
         ratings_by_source = [test_rating for test_rating in test_ratings if test_rating['Rater msin'] == 'SourceMsin']
 
