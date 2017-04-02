@@ -1390,7 +1390,7 @@ def start(multi, identity, setup):
     from .lib.bitcoinaddress import generate_sin
 
     host = '127.0.0.1'
-    port = 5004
+    port = 5002
 
     tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'html')
 
@@ -1818,10 +1818,9 @@ def start(multi, identity, setup):
             payment_address = bip32.generate_new_payment_address(bip32.from_xprv(user.dxprv),next_addr_index)
             next_addr_index += 1
             PersistConfig.set(rein,'next_addr_index',str(next_addr_index))
-            stmt = update(users).where(users.c.id==5).values(name='user #5')
             worker_pubkey_for_escrow = bid['Worker public key for escrow']
-            primary_redeem_script, primary_addr = build_2_of_3([pubkey_for_escrow,job['Mediator public key'],worker_pubkey_for_escrow])
-            mediator_redeem_script, mediator_escrow_addr = build_mandatory_multisig(job['Mediator public key'],[pubkey_for_escrow,worker_pubkey_for_escrow])
+            primary_redeem_script, primary_addr = build_2_of_3([pubkey_for_escrow,bid['Mediator public key'],worker_pubkey_for_escrow])
+            mediator_redeem_script, mediator_escrow_addr = build_mandatory_multisig(bid['Mediator public key'],[pubkey_for_escrow,worker_pubkey_for_escrow])
             fields = [
                 {'label': 'Job name',                       'value': bid['Job name']},
                 {'label': 'Job ID',                         'value': bid['Job ID']},
