@@ -89,11 +89,15 @@ def get_delegate_extended_key(mxprv):
 def generate_new_payment_address(dxprv,i):
     parent_key = get_child_key(dxprv, 0+BIP32_HARDEN)
     subparent_key = get_child_key(parent_key,i)
-    target_key = get_child_key(parent_key,0)
+    target_key = get_child_key(subparent_key,0)
     return target_key.Address()
 
 def generate_new_escrow_pubkey(dxprv,i):
+    
     parent_key = get_child_key(dxprv, 1+BIP32_HARDEN)
     subparent_key = get_child_key(parent_key,i)
-    target_key = get_child_key(parent_key,0)
-    return target_key.Address()
+    target_key = get_child_key(subparent_key,0)
+    return hexlify(target_key.PublicKey())
+
+def from_xprv(xkey):
+    return BIP32Key.fromExtendedKey(xkey)

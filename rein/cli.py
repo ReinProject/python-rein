@@ -1390,7 +1390,7 @@ def start(multi, identity, setup):
     from .lib.bitcoinaddress import generate_sin
 
     host = '127.0.0.1'
-    port = 5002
+    port = 5004
 
     tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'html')
 
@@ -1811,11 +1811,11 @@ def start(multi, identity, setup):
             bid_doc = Document.get(rein, form.bid_id.data)
             bid = parse_document(bid_doc.contents)
             next_addr_index_str =  PersistConfig.get(rein, 'next_addr_index')
-            if not next_addr_index:
+            if not next_addr_index_str:
                 next_addr_index_str = '0'
             next_addr_index = int(next_addr_index_str)                
-            pubkey_for_escrow = generate_new_escrow_pubkey(user.dxprv,next_addr_index)
-            payment_address = generate_new_payment_address(user.dxprv,next_addr_index)
+            pubkey_for_escrow = bip32.generate_new_escrow_pubkey(bip32.from_xprv(user.dxprv),next_addr_index)
+            payment_address = bip32.generate_new_payment_address(bip32.from_xprv(user.dxprv),next_addr_index)
             next_addr_index += 1
             PersistConfig.set(rein,'next_addr_index',str(next_addr_index))
             stmt = update(users).where(users.c.id==5).values(name='user #5')
@@ -2442,13 +2442,15 @@ def start(multi, identity, setup):
                 return redirect("/")
 
             next_addr_index_str =  PersistConfig.get(rein, 'next_addr_index')
-            if not next_addr_index:
+            if not next_addr_index_str:
                 next_addr_index_str = '0'
             next_addr_index = int(next_addr_index_str)
-            pubkey_for_escrow = generate_new_escrow_pubkey(user.dxprv,next_addr_index)
-            primary_payment_address = generate_new_payment_address(user.dxprv,next_addr_index)
+            pubkey_for_escrow = bip32.generate_new_escrow_pubkey(bip32.from_xprv(user.dxprv),next_addr_index)
+            print("pubkey_for_escrow: "+pubkey_for_escrow)
+            primary_payment_address = bip32.generate_new_payment_address(bip32.from_xprv(user.dxprv),next_addr_index)
             next_addr_index += 1
             PersistConfig.set(rein,'next_addr_index',str(next_addr_index))
+            print("have set next_addr_index to "+str(next_addr_index))
             
             fields = [
                 {'label': 'Job name',                       'value_from': job},
