@@ -18,7 +18,7 @@ class Pubkeys(Base):
 
     @classmethod
     def get(self, rein, pubkey, default=False):
-        res = rein.session.query(Wallet).filter(Wallet.pubkey == pubkey).first()
+        res = rein.session.query(Pubkeys).filter(Pubkeys.pubkey == pubkey).first()
         if res:
             return res.privkey
         else:
@@ -26,9 +26,9 @@ class Pubkeys(Base):
 
     @classmethod
     def set(self, rein, pubkey, privkey=''):
-        res = rein.session.query(Wallet).filter(Wallet.pubkey == pubkey).first()
+        res = rein.session.query(Pubkeys).filter(Pubkeys.pubkey == pubkey).first()
         if res:
             res.privkey = privkey
             rein.session.commit()
         else:
-            p = Wallet(rein.session, pubkey, privkey)
+            p = Pubkeys(rein.session, pubkey, privkey)

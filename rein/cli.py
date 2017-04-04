@@ -2162,7 +2162,7 @@ def start(multi, identity, setup):
                 {'label': 'Worker public key', 'value_from':dispute},
                 {'label': 'Mediator public key', 'value_from':dispute},
                 {'label': 'Worker public key for escrow',              'value_from': dispute},
-                {'label': 'Job creator public key for escrow',         'value_from': dispute}
+                {'label': 'Job creator public key for escrow',         'value_from': dispute},
                 {'label': 'Primary escrow redeem script',   'value_from': dispute},
                 {'label': 'Mediator escrow redeem script',  'value_from': dispute},
                 {'label':'Primary payment inputs','value':payment_txins},
