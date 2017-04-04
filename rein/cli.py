@@ -38,6 +38,8 @@ import rein.lib.models
 
 # Import models
 from .lib.persistconfig import PersistConfig
+from .lib.wallet import Wallet
+from .lib.pubkeys import Pubkeys
 from .lib.user import User
 from .lib.bucket import Bucket
 from .lib.document import Document
@@ -1814,10 +1816,12 @@ def start(multi, identity, setup):
             if not next_addr_index_str:
                 next_addr_index_str = '0'
             next_addr_index = int(next_addr_index_str)                
-            pubkey_for_escrow = bip32.generate_new_escrow_pubkey(bip32.from_xprv(user.dxprv),next_addr_index)
-            payment_address = bip32.generate_new_payment_address(bip32.from_xprv(user.dxprv),next_addr_index)
+            (pubkey_for_escrow,privkey_for_escrow) = bip32.generate_new_escrow_pubkey(bip32.from_xprv(user.dxprv),next_addr_index)
+            (payment_address,payment_privkey) = bip32.generate_new_payment_address(bip32.from_xprv(user.dxprv),next_addr_index)
             next_addr_index += 1
             PersistConfig.set(rein,'next_addr_index',str(next_addr_index))
+            Pubkeys.set(rein,pubkey_for_escrow,privkey_for_escrow)
+            Wallet.set(rein,payment_address,payment_privkey)
             worker_pubkey_for_escrow = bid['Worker public key for escrow']
             primary_redeem_script, primary_addr = build_2_of_3([pubkey_for_escrow,bid['Mediator public key'],worker_pubkey_for_escrow])
             mediator_redeem_script, mediator_escrow_addr = build_mandatory_multisig(bid['Mediator public key'],[pubkey_for_escrow,worker_pubkey_for_escrow])
@@ -1910,8 +1914,10 @@ def start(multi, identity, setup):
             txins_mediator = delivery['Mediator payment inputs']
             amount_mediator = delivery['Mediator payment amount']
             daddr_mediator = delivery['Mediator payment address']
-            (payment_txid,client_sig) = spend_p2sh(redeemScript,txins,[float(amount)],[daddr],worker_sig,rein)
-            tx_for_mediator = partial_spend_p2sh_mediator_2(redeemScript_mediator,txins_mediator,float(amount_mediator),daddr_mediator,rein)
+            pubkey_for_escrow = delivery['Job creator public key for escrow']
+            privkey_for_escrow = Pubkeys.get(rein,pubkey_for_escrow)
+            (payment_txid,client_sig) = spend_p2sh(redeemScript,txins,[float(amount)],[daddr],worker_sig,rein,privkey=privkey_for_escrow)
+            tx_for_mediator = partial_spend_p2sh_mediator_2(redeemScript_mediator,txins_mediator,float(amount_mediator),daddr_mediator,rein,privkey=privkey_for_escrow)
             fields = [
                 {'label': 'Job name',                       'value_from': delivery},
                 {'label': 'Job ID',                         'value_from': delivery},
@@ -2016,11 +2022,16 @@ def start(multi, identity, setup):
             daddr_mediator = delivery['Mediator payment address']
             sig_mediator = delivery['Mediator payment signature']
 
+            pubkey_for_escrow = ''
             reverse_sigs = False
             if key == delivery['Worker public key']:
                 reverse_sigs = True
-            (payment_txid,second_sig) = spend_p2sh(redeemScript,txins,[float(amount1),float(amount2)],[daddr1,daddr2],sig_primary,rein,reverse_sigs)
-            (payment_txid_mediator,second_sig_mediator) = spend_p2sh_mediator(redeemScript_mediator,txins_mediator,[float(amount_mediator)],[daddr_mediator],sig_mediator,rein)
+                pubkey_for_escrow = delivery['Worker public key for escrow']
+            else:
+                pubkey_for_escrow = delivery['Job creator public key for escrow']
+            privkey_for_escrow = Pubkeys.get(pubkey_for_escrow)
+            (payment_txid,second_sig) = spend_p2sh(redeemScript,txins,[float(amount1),float(amount2)],[daddr1,daddr2],sig_primary,rein,reverse_sigs,privkey=privkey_for_escrow)
+            (payment_txid_mediator,second_sig_mediator) = spend_p2sh_mediator(redeemScript_mediator,txins_mediator,[float(amount_mediator)],[daddr_mediator],sig_mediator,rein,privkey=privkey_for_escrow)
             fields = [
                 {'label': 'Job name',                       'value_from': delivery},
                 {'label': 'Job ID',                         'value_from': delivery},
@@ -2150,6 +2161,8 @@ def start(multi, identity, setup):
                 {'label': 'Job creator public key', 'value_from': dispute},
                 {'label': 'Worker public key', 'value_from':dispute},
                 {'label': 'Mediator public key', 'value_from':dispute},
+                {'label': 'Worker public key for escrow',              'value_from': dispute},
+                {'label': 'Job creator public key for escrow',         'value_from': dispute}
                 {'label': 'Primary escrow redeem script',   'value_from': dispute},
                 {'label': 'Mediator escrow redeem script',  'value_from': dispute},
                 {'label':'Primary payment inputs','value':payment_txins},
@@ -2339,7 +2352,9 @@ def start(multi, identity, setup):
                 {'label': 'Worker public key', 'value_from':doc},
                 {'label': 'Mediator public key', 'value_from':doc},
                 {'label': 'Primary worker payment address', 'value':doc['Primary payment address']},
-                {'label': 'Primary client payment address', 'value_from':doc}
+                {'label': 'Primary client payment address', 'value_from':doc},
+                {'label': 'Worker public key for escrow',              'value_from': doc},
+                {'label': 'Job creator public key for escrow',         'value_from': doc}
                      ]
 
             if key == doc['Job creator public key']:
@@ -2440,15 +2455,17 @@ def start(multi, identity, setup):
                 flash('No matching Job ID found.')
                 return redirect("/")
 
-            next_addr_index_str =  PersistConfig.get(rein, 'next_addr_index')
+            next_addr_index_str = PersistConfig.get(rein, 'next_addr_index')
             if not next_addr_index_str:
                 next_addr_index_str = '0'
             next_addr_index = int(next_addr_index_str)
-            pubkey_for_escrow = bip32.generate_new_escrow_pubkey(bip32.from_xprv(user.dxprv),next_addr_index)
+            (pubkey_for_escrow,privkey_for_escrow) = bip32.generate_new_escrow_pubkey(bip32.from_xprv(user.dxprv),next_addr_index)
             print("pubkey_for_escrow: "+pubkey_for_escrow)
-            primary_payment_address = bip32.generate_new_payment_address(bip32.from_xprv(user.dxprv),next_addr_index)
+            (primary_payment_address,primary_payment_privkey) = bip32.generate_new_payment_address(bip32.from_xprv(user.dxprv),next_addr_index)
             next_addr_index += 1
             PersistConfig.set(rein,'next_addr_index',str(next_addr_index))
+            Pubkeys.set(rein,pubkey_for_escrow,privkey_for_escrow)
+            Wallet.set(rein,primary_payment_address,primary_payment_privkey)
             print("have set next_addr_index to "+str(next_addr_index))
             
             fields = [
@@ -2539,8 +2556,10 @@ def start(multi, identity, setup):
             redeemScript = doc['Primary escrow redeem script']
             mediatorRedeemScript = doc['Mediator escrow redeem script']
             mediator_daddr = str(P2PKHBitcoinAddress.from_pubkey(x(doc['Mediator public key'])))
+            pubkey_for_escrow = doc['Worker public key for escrow']
+            privkey_for_escrow = Pubkeys.get(rein,pubkey_for_escrow)
             try:
-                (payment_txins,payment_amount,payment_address,payment_sig) = partial_spend_p2sh(redeemScript,rein,daddr=doc['Primary payment address'])
+                (payment_txins,payment_amount,payment_address,payment_sig) = partial_spend_p2sh(redeemScript,rein,daddr=doc['Primary payment address'],privkey=privkey_for_escrow)
                 (mediator_payment_txins,mediator_payment_amount,mediator_payment_address) = partial_spend_p2sh_mediator(mediatorRedeemScript,rein,mediator_daddr)
             except ValueError as e:
                 form.deliverable.errors.append(e.message)
@@ -2558,6 +2577,8 @@ def start(multi, identity, setup):
                 {'label': 'Worker public key',              'value_from': doc},
                 {'label': 'Mediator public key',            'value_from': doc},
                 {'label': 'Job creator public key',         'value_from': doc},
+                {'label': 'Worker public key for escrow',              'value_from': doc},
+                {'label': 'Job creator public key for escrow',         'value_from': doc},
                 {'label':'Primary payment inputs','value':payment_txins},
                 {'label':'Primary payment amount','value':payment_amount},
                 {'label':'Primary payment address','value':payment_address},
