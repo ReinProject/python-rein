@@ -41,4 +41,10 @@ Base.metadata.create_all(engine)
 from .hidden_content import Base
 Base.metadata.create_all(engine)
 
+from .pubkeys import Base
+Base.metadata.create_all(engine)
+
+from .wallet import Base
+Base.metadata.create_all(engine)
+
 log.info('database tables updated')
