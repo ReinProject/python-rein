@@ -10,8 +10,8 @@ class Wallet(Base):
     address = Column(String(34), primary_key=True)
     privkey = Column(String(52))
 
-    def __init__(self, session, pubkey, privkey):
-        self.pubkey = pubkey
+    def __init__(self, session, address, privkey):
+        self.address = address
         self.privkey = privkey
         session.add(self)
         session.commit()
