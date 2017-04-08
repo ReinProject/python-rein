@@ -9,10 +9,12 @@ class Wallet(Base):
 
     address = Column(String(34), primary_key=True)
     privkey = Column(String(52))
+    ref = Column(String(64))
 
-    def __init__(self, session, address, privkey):
+    def __init__(self, session, address, privkey, ref=None):
         self.address = address
         self.privkey = privkey
+        self.ref = ref
         session.add(self)
         session.commit()
 
@@ -25,10 +27,10 @@ class Wallet(Base):
             return default
 
     @classmethod
-    def set(self, rein, address, privkey=''):
+    def set(self, rein, address, privkey='', ref=None):
         res = rein.session.query(Wallet).filter(Wallet.address == address).first()
         if res:
             res.privkey = privkey
             rein.session.commit()
         else:
-            p = Wallet(rein.session, address, privkey)
+            p = Wallet(rein.session, address, privkey, ref=ref)
