@@ -10,7 +10,6 @@ from .io import safe_get
 from .persistconfig import PersistConfig
 import click
 
-
 def unspent_txins(rein, address, testnet, txin_value=False):
     api = PersistConfig.get(rein, 'api', 'blockr')
     
@@ -224,5 +223,11 @@ def spend_p2sh_mediator (redeemScript,txins_str,amounts,daddrs,sig,rein):
     txid_causeway = broadcast_tx(b2x(tx_bytes),rein)
     return (txid,sig2_str[1:])
 
+def withdraw_from_job (job_id, amount, destaddr):
+    
+    txins_obj = []
+    wallet_entries = rein.session.query(Wallet).filter(Wallet.ref == job_id)
+    for we in wallet_entries:
+        print "considering address "+we.address+" for spending transaction"
 
-
+    

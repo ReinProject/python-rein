@@ -1647,17 +1647,36 @@ def start(multi, identity, setup):
         balance = 0.
         txs = []
         for we in wallet_entries:
-            ref = we.ref
-            txs_we = []
+            txs_we = {}
+            txs_we['ref'] = we.ref
+            txs_we['txs'] = []
             (txins,value) = unspent_txins(rein,we.address,rein.testnet,txin_value=True)
             for (txid,txvalue) in txins:
                 tx = {}
                 tx['txid'] = txid
                 tx['value'] = txvalue
-                txs_we.append(tx)
+                txs_we['txs'].append(tx)
             balance += value
-            txs.append(tx)
-        return render_template('wallet.html', user=user, fee=fee, balance=balance, txs=txs)
+            txs.append(txs_we)
+
+        explorer = PersistConfig.get(rein,
+                          'explorer',
+                          'https://testnet.blockexplorer.com' if rein.testnet else 'https://blockexplorer.com'
+        )
+            
+        return render_template('wallet.html', user=user, fee=fee, balance=balance, txs=txs, explorer=explorer)
+
+    @app.route("/withdraw", methods=['GET','POST'])
+    def withdraw():
+        try:
+            job_id = request.json['job']
+            amount = request.json['amount']
+            destaddr = request.json['addr']
+            print("withdraw from job "+job_id+" "+amount+" "+destaddr)
+            withdraw_from_job(job_id,float(amount),destaddr)
+        except:
+            return 'false'
+        return 'true'
 
     @app.route("/post", methods=['POST', 'GET'])
     def job_post():

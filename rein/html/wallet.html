@@ -2,31 +2,46 @@
 {% from "_form_helpers.html" import render_error %}
 {% block body %}
 
-<script src="/js/settings.js"></script>
+<script src="/js/wallet.js"></script>
 
 <br>
 <div class="well">
   <h2>Wallet</h2>
   <br />
-  Balance: {{ balance }}
+  Overall Balance: {{balance}}
   <br />
   {% if txs %}
   {% for txj in txs %}
-  <h3>Transactions for Job {{ txj[0].ref }}/h3>
+  <br />
+  <h3>Unspent Payments for Job <a href="/job/{{txj.ref}}">{{txj.ref}}</a></h3>
   <table class="table m-table table-bordered table-hover table-heading">
     <thead>
       <th class="col-md-5">txid</th>
       <th>value</th>
     </thead>
     <tbody>
-      {% for tx in txj %}
+      {% for tx in txj.txs %}
       <tr>
-	<td class="col-md-5">{{ tx.txid }}</td>
-	<td>{{ tx.value }}</td>
+	<td class="col-md-5"><a href="{{explorer}}/tx/{{tx.txid}}">{{tx.txid}}</a></td>
+	<td>{{tx.value}}</td>
       </tr>
       {% endfor %}
     </tbody>
   </table>
+  <form onsubmit="withdraw_from_job('{{txj.ref}}'); return false;" class="form-inline">
+    <h4>&emsp;Withdraw from this job's payments</h4>
+    <div class="form-group">
+      &emsp;<label for="withdraw_amount" class="control-label">amount in BTC:</label>
+      <input type="text" name="withdraw_amount" id="withdraw_amount_{{txj.ref}}" pattern="[0-9.]{1,10}" value="" style="width:100px;">
+    </div>
+    <div class="form-group">
+      &emsp;<label for="withdraw_address" class="control-label">destination address:</label>
+      <input type="text" name="withdraw_address" id="withdraw_address_{{txj.ref}}" value="{{withdraw_amount}}" style="width:200px;">
+    </div>
+    <div class="form-group">
+      &emsp;<input type="submit" value="Withdraw"/>
+    </div>
+  </form>
   {% endfor %}
   {% else %}
   <p>No transactions.</p>
