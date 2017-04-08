@@ -1,0 +1,36 @@
+{% extends "layout.html" %}
+{% from "_form_helpers.html" import render_error %}
+{% block body %}
+
+<script src="/js/settings.js"></script>
+
+<br>
+<div class="well">
+  <h2>Wallet</h2>
+  <br />
+  Balance: {{ balance }}
+  <br />
+  {% if txs %}
+  <h3>Transactions</h3>
+  <table class="table m-table table-bordered table-hover table-heading">
+    <thead>
+      <th class="col-md-2">txid</th>
+      <th>value</th>
+      <th class="col-md-6">job id</th>
+    </thead>
+    <tbody>
+      {% for tx in txs %}
+      <tr>
+	<td class="col-md-2">{{ tx.txid }}</td>
+	<td>{{ tx.value }}</td>
+	<td class="col-md-6">{{ tx.job_id }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p>No transactions.</p>
+  {% endif %}
+</div>
+
+{% endblock %}

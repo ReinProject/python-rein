@@ -27,7 +27,7 @@ from .lib.util import unique, get_user_name, document_to_dict
 from .lib.io import safe_get
 from .lib.script import build_2_of_3, build_mandatory_multisig, check_redeem_scripts
 from .lib.localization import init_localization
-from .lib.transaction import partial_spend_p2sh, spend_p2sh, spend_p2sh_mediator, partial_spend_p2sh_mediator, partial_spend_p2sh_mediator_2
+from .lib.transaction import partial_spend_p2sh, spend_p2sh, spend_p2sh_mediator, partial_spend_p2sh_mediator, partial_spend_p2sh_mediator_2, unspent_txins
 from .lib.rating import add_rating, get_user_jobs, get_average_user_rating, get_average_user_rating_display, get_all_user_ratings, calculate_trust_score
 
 # Import config
@@ -1392,7 +1392,7 @@ def start(multi, identity, setup):
     from .lib.bitcoinaddress import generate_sin
 
     host = '127.0.0.1'
-    port = 5002
+    port = 5004
 
     tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'html')
 
@@ -1639,6 +1639,23 @@ def start(multi, identity, setup):
         trust_score = PersistConfig.get(rein, 'trust_score', False)
 
         return render_template('settings.html', user=user, hidden_jobs=hidden_jobs, hidden_bids=hidden_bids, hidden_mediators=hidden_mediators, fee=fee, trust_score=trust_score)
+
+    @app.route("/wallet", methods=['GET'])
+    def wallet():
+        fee = float(PersistConfig.get(rein, 'fee', 0.001))
+        wallet_entries = rein.session.query(Wallet)
+        balance = 0.
+        txs = []
+        for we in wallet_entries:
+            (txins,value) = unspent_txins(rein,we.address,rein.testnet,txin_value=True)
+            tx = {}
+            for (txid,txvalue) in txins:
+                tx['txid'] = txid
+                tx['value'] = txvalue
+                print("txvalue = "+str(txvalue))
+            txs.append(tx)
+            balance += value
+        return render_template('wallet.html', user=user, fee=fee, balance=balance, txs=txs)
 
     @app.route("/post", methods=['POST', 'GET'])
     def job_post():
@@ -2465,6 +2482,7 @@ def start(multi, identity, setup):
             next_addr_index += 1
             PersistConfig.set(rein,'next_addr_index',str(next_addr_index))
             Pubkeys.set(rein,pubkey_for_escrow,privkey_for_escrow)
+            print("primary payment address = "+primary_payment_address)
             Wallet.set(rein,primary_payment_address,primary_payment_privkey)
             print("have set next_addr_index to "+str(next_addr_index))
             

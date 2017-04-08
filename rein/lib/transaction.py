@@ -11,7 +11,7 @@ from .persistconfig import PersistConfig
 import click
 
 
-def unspent_txins(rein, address, testnet):
+def unspent_txins(rein, address, testnet, txin_value=False):
     api = PersistConfig.get(rein, 'api', 'blockr')
     
     if (api == "blockr"):
@@ -30,7 +30,10 @@ def unspent_txins(rein, address, testnet):
             vout = tx['n'];
             value = float(tx['amount']);
             total_value += value;
-            txins.append((txid, vout))
+            if txin_value:
+                txins.append((txid, value))
+            else:
+                txins.append((txid, vout))
     else:
         if testnet:
             url = "https://api.blocktrail.com/v1/tbtc/address/"+str(address)+"/unspent-outputs?api_key=1e1ebd7ae629e031310ae9d61fe8549c82d0c589"
@@ -47,7 +50,10 @@ def unspent_txins(rein, address, testnet):
             vout = tx['index'];
             value = tx['value']/100000000.;
             total_value += value;
-            txins.append((txid, vout))
+            if txin_value:
+                txins.append((txid, value))
+            else:
+                txins.append((txid, vout))
             
     return (txins,total_value)
 
