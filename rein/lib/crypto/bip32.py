@@ -8,6 +8,8 @@ import json
 import hmac
 import os
 import rein.lib.config as config
+from rein.lib.wallet import Wallet
+from rein.lib.persistconfig import PersistConfig
 
 # TODO Make Python index this file automatically
 script_dir = os.path.dirname(__file__)
@@ -92,8 +94,7 @@ def generate_new_payment_address(dxprv,i):
     target_key = get_child_key(subparent_key,0)
     return (target_key.Address(),target_key.WalletImportFormat())
 
-def generate_new_escrow_pubkey(dxprv,i):
-    
+def generate_new_escrow_pubkey(dxprv,i):    
     parent_key = get_child_key(dxprv, 1+BIP32_HARDEN)
     subparent_key = get_child_key(parent_key,i)
     target_key = get_child_key(subparent_key,0)
@@ -101,3 +102,23 @@ def generate_new_escrow_pubkey(dxprv,i):
 
 def from_xprv(xkey):
     return BIP32Key.fromExtendedKey(xkey)
+
+def get_new_change_address(dxprv,ref):
+    wallet_entries = rein.session.query(Wallet).filter(Wallet.ref == ref).all()
+    j = len(wallet_entries)
+    print("j = "+str(j))
+    if j > 0:
+        parent_key = get_child_key(dxprv,0+BIP32_HARDEN)
+        next_addr_index = int(PersistConfig.get(rein, 'next_addr_index'))
+        for i in range(next_addr_index):
+            subparent_key = get_child_key(parent_key,i)
+            target_key_address = get_child_key(subparent_key,0).Address()
+            for we in wallet_entries:
+                wallet_address = we.address
+                if wallet_address == target_key_address:
+                    change_key = get_child_key(subparent_key,j)
+                    change_key_address = change_key.Address()
+                    change_key_privkey = change_key.WalletImportFormat()
+                    Wallet.set(rein,change_key_address,change_key_privkey,ref=ref)
+                    return change_key_address
+    return None

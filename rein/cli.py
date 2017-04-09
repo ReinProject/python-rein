@@ -27,7 +27,7 @@ from .lib.util import unique, get_user_name, document_to_dict
 from .lib.io import safe_get
 from .lib.script import build_2_of_3, build_mandatory_multisig, check_redeem_scripts
 from .lib.localization import init_localization
-from .lib.transaction import partial_spend_p2sh, spend_p2sh, spend_p2sh_mediator, partial_spend_p2sh_mediator, partial_spend_p2sh_mediator_2, unspent_txins
+from .lib.transaction import partial_spend_p2sh, spend_p2sh, spend_p2sh_mediator, partial_spend_p2sh_mediator, partial_spend_p2sh_mediator_2, unspent_txins, withdraw_from_wallet
 from .lib.rating import add_rating, get_user_jobs, get_average_user_rating, get_average_user_rating_display, get_all_user_ratings, calculate_trust_score
 
 # Import config
@@ -1647,9 +1647,18 @@ def start(multi, identity, setup):
         balance = 0.
         txs = []
         for we in wallet_entries:
-            txs_we = {}
-            txs_we['ref'] = we.ref
-            txs_we['txs'] = []
+            ref = we.ref
+            txs_we = None
+            new_job = False
+            for txj in txs:
+                if txj['ref'] == ref:
+                    txs_we = txj
+                    break
+            else:
+                new_job = True
+                txs_we = {}
+                txs_we['ref'] = we.ref
+                txs_we['txs'] = []
             (txins,value) = unspent_txins(rein,we.address,rein.testnet,txin_value=True)
             for (txid,txvalue) in txins:
                 tx = {}
@@ -1657,7 +1666,8 @@ def start(multi, identity, setup):
                 tx['value'] = txvalue
                 txs_we['txs'].append(tx)
             balance += value
-            txs.append(txs_we)
+            if new_job:
+                txs.append(txs_we)
 
         explorer = PersistConfig.get(rein,
                           'explorer',
@@ -1672,9 +1682,10 @@ def start(multi, identity, setup):
             job_id = request.json['job']
             amount = request.json['amount']
             destaddr = request.json['addr']
-            print("withdraw from job "+job_id+" "+amount+" "+destaddr)
-            withdraw_from_job(job_id,float(amount),destaddr)
-        except:
+            wallet_entries = rein.session.query(Wallet).filter(Wallet.ref == job_id).all()
+            withdraw_from_wallet(rein,wallet_entries,float(amount),destaddr)
+        except Exception as detail:
+            print "Unexpected error: ", detail
             return 'false'
         return 'true'
 

@@ -9,6 +9,7 @@ from .bucket import Bucket
 from .io import safe_get
 from .persistconfig import PersistConfig
 import click
+from .crypto.bip32 import get_new_change_address, from_xprv
 
 def unspent_txins(rein, address, testnet, txin_value=False):
     api = PersistConfig.get(rein, 'api', 'blockr')
@@ -223,11 +224,46 @@ def spend_p2sh_mediator (redeemScript,txins_str,amounts,daddrs,sig,rein):
     txid_causeway = broadcast_tx(b2x(tx_bytes),rein)
     return (txid,sig2_str[1:])
 
-def withdraw_from_job (job_id, amount, destaddr):
-    
+def withdraw_from_wallet (rein, wallet_entries, amount, destaddr):
     txins_obj = []
-    wallet_entries = rein.session.query(Wallet).filter(Wallet.ref == job_id)
+    scriptpubkeys = []
+    seckeys = []
+    total_value = 0.
     for we in wallet_entries:
-        print "considering address "+we.address+" for spending transaction"
-
-    
+        address = we.address
+        privkey = we.privkey
+        (txins,entry_value) = unspent_txins(rein, address, rein.testnet)
+        total_value += entry_value
+        for txid,vout in txins:
+            txins_obj.append(CMutableTxIn(COutPoint(lx(txid),vout)))
+            scriptpubkeys.append(CBitcoinAddress(address).to_scriptPubKey())
+            seckeys.append(CBitcoinSecret(privkey))            
+    fee = float(PersistConfig.get(rein, 'fee', 0.001))
+    total_amount = round(total_value-fee,8)
+    if total_amount <= 0:
+        raise ValueError('There is not enough funds available to withdraw')
+    amount_requested = round(amount,8)
+    if (amount_requested > total_amount+fee):
+        raise ValueError('The value of your funds for this job is less than what you requested')
+    change_address = None
+    if (amount_requested < total_amount):
+        change_address = get_new_change_address(from_xprv(rein.user.dxprv),wallet_entries[0].ref)
+        if change_address is None:
+            raise ValueError('Error generating a change address')
+    txouts = []
+    txout = CMutableTxOut(amount_requested*COIN, CBitcoinAddress(destaddr).to_scriptPubKey())
+    txouts.append(txout)
+    if change_address:
+        txout_change = CMutableTxOut(round(total_value-fee-amount_requested,8)*COIN, CBitcoinAddress(change_address).to_scriptPubKey())
+        txouts.append(txout_change)
+    tx = CMutableTransaction(txins_obj, txouts)
+    ntxins = len(txins_obj)
+    for i in range(0,ntxins):
+        sighash = SignatureHash(scriptpubkeys[i],tx,i,SIGHASH_ALL)
+        sig = seckeys[i].sign(sighash)+x("01")
+        txins_obj[i].scriptSig = CScript([sig, seckeys[i].pub])
+        VerifyScript(txins_obj[i].scriptSig,scriptpubkeys[i],tx,i,(SCRIPT_VERIFY_P2SH,))
+    tx_bytes = tx.serialize()
+    hash = sha256(sha256(tx_bytes).digest()).digest()
+    txid = b2x(hash[::-1])
+    txid_causeway = broadcast_tx(b2x(tx_bytes),rein)
