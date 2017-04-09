@@ -194,7 +194,7 @@ def spend_p2sh (redeemScript,txins_str,amounts,daddrs,sig,rein,reverse_sigs=Fals
     txid_causeway = broadcast_tx(b2x(tx_bytes),rein)
     return (txid,sig2_str[1:])
 
-def spend_p2sh_mediator (redeemScript,txins_str,amounts,daddrs,sig,rein):
+def spend_p2sh_mediator (redeemScript,txins_str,amounts,daddrs,sig,rein,privkey=None):
     txin_redeemScript = CScript(x(redeemScript))
     txin_scriptPubKey = txin_redeemScript.to_p2sh_scriptPubKey()
     txins_obj = []
@@ -206,7 +206,10 @@ def spend_p2sh_mediator (redeemScript,txins_str,amounts,daddrs,sig,rein):
     for i in range(0,len_amounts):
         txouts.append(CMutableTxOut(round(amounts[i],8)*COIN,CBitcoinAddress(daddrs[i]).to_scriptPubKey()))
     tx = CMutableTransaction(txins_obj,txouts)
-    seckey = CBitcoinSecret(rein.user.dkey)
+    if privkey:
+        seckey = CBitcoinSecret(privkey)
+    else:
+        seckey = CBitcoinSecret(rein.user.dkey)
     ntxins = len(txins_obj)
     sig_list = []
     for s in sig.split():

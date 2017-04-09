@@ -1392,7 +1392,7 @@ def start(multi, identity, setup):
     from .lib.bitcoinaddress import generate_sin
 
     host = '127.0.0.1'
-    port = 5004
+    port = 5002
 
     tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'html')
 
@@ -2078,7 +2078,7 @@ def start(multi, identity, setup):
                 pubkey_for_escrow = delivery['Worker public key for escrow']
             else:
                 pubkey_for_escrow = delivery['Job creator public key for escrow']
-            privkey_for_escrow = Pubkeys.get(pubkey_for_escrow)
+            privkey_for_escrow = Pubkeys.get(rein,pubkey_for_escrow)
             (payment_txid,second_sig) = spend_p2sh(redeemScript,txins,[float(amount1),float(amount2)],[daddr1,daddr2],sig_primary,rein,reverse_sigs,privkey=privkey_for_escrow)
             (payment_txid_mediator,second_sig_mediator) = spend_p2sh_mediator(redeemScript_mediator,txins_mediator,[float(amount_mediator)],[daddr_mediator],sig_mediator,rein,privkey=privkey_for_escrow)
             fields = [
