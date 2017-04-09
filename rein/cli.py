@@ -289,7 +289,6 @@ def bid(multi, identity, defaults, dry_run):
         return
 
     log.info('got job for bid')
-                                                                            [job['Job creator public key'],key])
     next_addr_index_str = PersistConfig.get(rein, 'next_addr_index')
     if not next_addr_index_str:
         next_addr_index_str = '0'
@@ -391,7 +390,7 @@ def offer(multi, identity, defaults, dry_run):
     Wallet.set(rein,payment_address,payment_privkey,ref=bid['Job ID'])
     worker_pubkey_for_escrow = bid['Worker public key for escrow']
     primary_redeem_script, primary_addr = build_2_of_3([pubkey_for_escrow,bid['Mediator public key'],worker_pubkey_for_escrow])
-            mediator_redeem_script, mediator_escrow_addr = build_mandatory_multisig(bid['Mediator public key'],[pubkey_for_escrow,worker_pubkey_for_escrow])
+    mediator_redeem_script, mediator_escrow_addr = build_mandatory_multisig(bid['Mediator public key'],[pubkey_for_escrow,worker_pubkey_for_escrow])
     fields = [
                 {'label': 'Job name',                       'value_from': bid},
                 {'label': 'Worker',                         'value_from': bid},
