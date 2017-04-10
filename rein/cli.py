@@ -1707,7 +1707,7 @@ def start(multi, identity, setup):
             for (txid,txvalue) in txins:
                 tx = {}
                 tx['txid'] = txid
-                tx['value'] = txvalue
+                tx['value'] = round(txvalue,8)
                 txs_we['txs'].append(tx)
             balance += value
             if new_job:
@@ -1718,7 +1718,7 @@ def start(multi, identity, setup):
                           'https://testnet.blockexplorer.com' if rein.testnet else 'https://blockexplorer.com'
         )
             
-        return render_template('wallet.html', user=user, fee=fee, balance=balance, txs=txs, explorer=explorer)
+        return render_template('wallet.html', user=user, fee=fee, balance=round(balance,8), txs=txs, explorer=explorer)
 
     @app.route("/withdraw", methods=['GET','POST'])
     def withdraw():
