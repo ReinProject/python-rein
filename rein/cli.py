@@ -1763,6 +1763,7 @@ def start(multi, identity, setup):
     def user_search(search_input):
         if not search_input:
             return 'false'
+
         sel_url = "{0}query?owner={1}&query=get_user&testnet={2}&search_input={3}"
         data = safe_get(log, sel_url.format(url, user.maddr, rein.testnet, search_input))
         data = data['get_user']

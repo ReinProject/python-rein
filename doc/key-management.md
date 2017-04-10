@@ -1,19 +1,18 @@
-Key Management in python-rein
+# Key Management in Rein
 
-###Goals:
+### Goals:
 
  * Privacy - Keys involved in a transaction only need to be known by parties to that transaction. 
 This means knowing a key that is used to sign a document or payment should not lead to the 
 discovery of a user''s other keys.
 
- * Multilayered security - An identity is defined by a 12-word mnemonic seed. The seed is used to 
-generate a root BIP32 key.
+ * Multilayered security - An identity is defined by a 12-word mnemonic seed that is meant to be kept offline. The seed is used to generate a BIP32 key that serves as the root of an identity. From that tree, delegate payment and signing addresses are generated.
 
  * Long-term efficiency - Efficient use of BIP32 tree structures should make it possible to use an 
-identity long-term without compromising the root key or needing to expend inordinate processing power 
-to use.
+identity long-term without compromising the root key or needing to expend excessive processing power 
+to enumerate.
 
-###Current implementation:
+### Current implementation:
 
  * Root key (m) - Derived from the 12-word mnemonic seed.
 
@@ -26,18 +25,15 @@ to use.
  * Delegate key (m/1''/0) - A delegate key is used for day-to-day signatures of documents like job 
  postings, bids, offers, disputes and is also used for controlling payments.
 
-###Deficiencies with current implementation:
+### Deficiencies with current implementation:
 
- * Multisig escrows that involve the same client, worker, and mediator always generate the same 
- redeemScript and by extension, escrow address. This means funds escrowed for such a set of 
- participants among multiple jobs can get mixed up (e.g. all funds may be sent for the first completed
- job), obviously not desirable when handling money.
+ * Multisig escrows built for a specific client, worker, and mediator always generate the same escrow address. This means funds escrowed for a particular set of participants can get mixed up (e.g. all funds may be sent for the first completed job).
 
  * The public part of the key used to sign documents must be made available so that others can verify 
  their authenticity. Since this same key is used to generate a user''s payment address meaning all 
  incoming payments and document signatures are trivially linked.
  
-###Future directions:
+### Future directions:
 
  * Unique public keys per escrow (m/1''/k with k > 0) - A unique key will be generated from the BIP32 tree
  for each post or bid. This key will be used to build escrow addresses and to sign payments at
