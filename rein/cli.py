@@ -1687,7 +1687,7 @@ def start(multi, identity, setup):
     @app.route("/wallet", methods=['GET'])
     def wallet():
         fee = float(PersistConfig.get(rein, 'fee', 0.001))
-        wallet_entries = rein.session.query(Wallet)
+        wallet_entries = rein.session.query(Wallet).filter(Wallet.userid == rein.user.id).all()
         balance = 0.
         txs = []
         for we in wallet_entries:
