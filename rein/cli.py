@@ -298,8 +298,8 @@ def bid(multi, identity, defaults, dry_run):
     (primary_payment_address,primary_payment_privkey) = bip32.generate_new_payment_address(bip32.from_xprv(user.dxprv),next_addr_index)
     next_addr_index += 1
     PersistConfig.set(rein,'next_addr_index',str(next_addr_index))
-    Pubkeys.set(rein,pubkey_for_escrow,privkey_for_escrow)
-    Wallet.set(rein,primary_payment_address,primary_payment_privkey,ref=job['Job ID'])
+    Pubkeys.set(rein,pubkey_for_escrow,privkey_for_escrow,userid=rein.user.id)
+    Wallet.set(rein,primary_payment_address,primary_payment_privkey,ref=job['Job ID'],userid=rein.user.id)
     
     fields = [
                 {'label': 'Job name',                       'value_from': job},
@@ -385,8 +385,8 @@ def offer(multi, identity, defaults, dry_run):
     (payment_address,payment_privkey) = bip32.generate_new_payment_address(bip32.from_xprv(user.dxprv),next_addr_index)
     next_addr_index += 1
     PersistConfig.set(rein,'next_addr_index',str(next_addr_index))
-    Pubkeys.set(rein,pubkey_for_escrow,privkey_for_escrow)
-    Wallet.set(rein,payment_address,payment_privkey,ref=bid['Job ID'])
+    Pubkeys.set(rein,pubkey_for_escrow,privkey_for_escrow,userid=rein.user.id)
+    Wallet.set(rein,payment_address,payment_privkey,ref=bid['Job ID'],userid=rein.user.id)
     worker_pubkey_for_escrow = bid['Worker public key for escrow']
     primary_redeem_script, primary_addr = build_2_of_3([pubkey_for_escrow,bid['Mediator public key'],worker_pubkey_for_escrow])
     mediator_redeem_script, mediator_escrow_addr = build_mandatory_multisig(bid['Mediator public key'],[pubkey_for_escrow,worker_pubkey_for_escrow])
@@ -1953,8 +1953,8 @@ def start(multi, identity, setup):
             (payment_address,payment_privkey) = bip32.generate_new_payment_address(bip32.from_xprv(user.dxprv),next_addr_index)
             next_addr_index += 1
             PersistConfig.set(rein,'next_addr_index',str(next_addr_index))
-            Pubkeys.set(rein,pubkey_for_escrow,privkey_for_escrow)
-            Wallet.set(rein,payment_address,payment_privkey,ref=bid['Job ID'])
+            Pubkeys.set(rein,pubkey_for_escrow,privkey_for_escrow,userid=rein.user.id)
+            Wallet.set(rein,payment_address,payment_privkey,ref=bid['Job ID'],userid=rein.user.id)
             worker_pubkey_for_escrow = bid['Worker public key for escrow']
             primary_redeem_script, primary_addr = build_2_of_3([pubkey_for_escrow,bid['Mediator public key'],worker_pubkey_for_escrow])
             mediator_redeem_script, mediator_escrow_addr = build_mandatory_multisig(bid['Mediator public key'],[pubkey_for_escrow,worker_pubkey_for_escrow])
@@ -2596,8 +2596,8 @@ def start(multi, identity, setup):
             (primary_payment_address,primary_payment_privkey) = bip32.generate_new_payment_address(bip32.from_xprv(user.dxprv),next_addr_index)
             next_addr_index += 1
             PersistConfig.set(rein,'next_addr_index',str(next_addr_index))
-            Pubkeys.set(rein,pubkey_for_escrow,privkey_for_escrow)
-            Wallet.set(rein,primary_payment_address,primary_payment_privkey,ref=job['Job ID'])
+            Pubkeys.set(rein,pubkey_for_escrow,privkey_for_escrow,userid=rein.user.id)
+            Wallet.set(rein,primary_payment_address,primary_payment_privkey,ref=job['Job ID'],userid=rein.user.id)
             
             fields = [
                 {'label': 'Job name',                       'value_from': job},
