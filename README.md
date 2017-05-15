@@ -12,6 +12,10 @@ Servers can be paid for their services but they do not necessarily need to commu
 
 To read more about the project, visit http://reinproject.org. Our development roadmap can be found at: https://bitcointalk.org/index.php?topic=1232915.msg17244400#msg17244400
 
+## Development mailing list
+
+https://groups.google.com/forum/#!forum/rein-development
+
 ## Getting started
 
 Please see the [setup guide](doc/HOWTO-setup-rein.md). In a nutshell, run `rein start` to be guided through a web-based setup process.
