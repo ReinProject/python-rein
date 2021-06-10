@@ -2,7 +2,7 @@ appdirs==1.4.0
 bip32utils==0.3.post3
 click==6.7
 ecdsa==0.13
-Flask==0.12
+Flask==1.0
 Flask-WTF==0.14.2
 itsdangerous==0.24
 Jinja2==2.9.5
